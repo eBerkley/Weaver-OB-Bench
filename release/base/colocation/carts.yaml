@@ -1,0 +1,5 @@
+groups:
+  - name: carts
+    components:
+    - "github.com/ServiceWeaver/onlineboutique/cartservice/CartService"
+    - "github.com/ServiceWeaver/onlineboutique/cartservice/cartCache"

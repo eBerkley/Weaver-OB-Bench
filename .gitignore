@@ -1,1 +1,5 @@
 onlineboutique
+test/weaverOut
+test/gRPCOut
+test/inputs.txt
+benchmark/*/*

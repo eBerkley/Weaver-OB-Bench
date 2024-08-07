@@ -1,0 +1,31 @@
+appConfig: weaver.toml
+repo: docker.io/eberkley
+
+listeners:
+  - name: boutique
+    port: 8080
+    public: true
+
+
+resourceSpec:
+  # requests:
+  #   memory: "256Mi"
+  #   cpu: "400m"
+  # limits:
+  #   memory: "1024Mi"
+  #   cpu: "3200m"
+  limits:
+    memory: "1024Mi"
+    cpu: "1"
+  
+scalingSpec:
+  minReplicas: 1
+  maxReplicas: 5
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 80
+
