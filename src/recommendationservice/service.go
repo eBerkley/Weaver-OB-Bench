@@ -22,13 +22,13 @@ import (
 	"github.com/ServiceWeaver/weaver"
 )
 
-type RecommendationService interface {
+type RecService interface {
 	ListRecommendations(ctx context.Context, userID string, productIDs []string) ([]string, error)
 }
 
 type impl struct {
-	weaver.Implements[RecommendationService]
-	catalogService weaver.Ref[productcatalogservice.ProductCatalogService]
+	weaver.Implements[RecService]
+	catalogService weaver.Ref[productcatalogservice.CatalogService]
 }
 
 func (s *impl) ListRecommendations(ctx context.Context, userID string, userProductIDs []string) ([]string, error) {

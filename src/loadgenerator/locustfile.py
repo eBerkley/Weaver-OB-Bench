@@ -15,7 +15,7 @@
 # limitations under the License.
 
 import random
-from locust import FastHttpUser, TaskSet, User, between, events, LoadTestShape, task, tag, constant_pacing
+from locust import FastHttpUser, between, LoadTestShape, task, tag
 from typing import Tuple, Optional
 from faker import Faker
 import logging
@@ -23,10 +23,6 @@ import datetime
 
 import locust.stats
 locust.stats.CSV_STATS_INTERVAL_SEC = 10
-
-from locust.runners import MasterRunner, WorkerRunner
-from locust.env import Environment
-from http.cookiejar import Cookie, CookieJar
 
 fake = Faker()
 
@@ -41,58 +37,26 @@ products = [
     'LS4PSXUNUM',
     'OLJCESPC7Z']
 
-def set_user_count(environment, msg, **kwargs):
-    user_count = msg.data
-    
-    logging.info(f"set user count ({user_count}).")
-
-    WebsiteUser.userCount = user_count
-
-def reset_user_count(environment, msg, **kwargs):
-    WebsiteUser.userCount = 0
-    logging.info("reset user count")
-
-@events.init.add_listener
-def on_locust_init(environment: Environment, **_kwargs):
-    if not isinstance(environment.runner, MasterRunner):
-        environment.runner.register_message("spawning_start", reset_user_count)
-        environment.runner.register_message("spawning_stop", set_user_count)
-    # if not isinstance(environment.runner, WorkerRunner):
-    #     environment.runner.register_message("acknowledge_users", on_acknowledge)
-    #     environment.runner.register_message("concurrent_message", on_concurrent_message, concurrent=True)
-
 class WebsiteUser(FastHttpUser):
-
-    userCount = 0
     def __init__(self, environment):
         super().__init__(environment)
-        self._userCount = -1
 
     def on_start(self):
-        self.fix_cookies()
         self.index()
 
-    def fix_cookies(self):
-        if self._userCount != self.userCount:
-            self._userCount = self.userCount
-            self.client.cookiejar.set_cookie(Cookie(version=0, name="shop_user_count", value=str(self.userCount), port= None, port_specified=None, domain="", domain_specified=False, domain_initial_dot=False, path="", path_specified=False, secure=False, expires=None, discard=False, comment=None, comment_url=None, rest={}, rfc2109=False))
-
     @tag('refresh')
-    @task(1)
+    @task(3)
     def reset_index(self):
-        self.fix_cookies()
         self.client.get("/", headers={"Connection": "close"})
 
     # 1 req
     @task(10)
     def index(self):
-        self.fix_cookies()
         self.client.get("/")
 
     # 1 req
     @task(20)
     def setCurrency(self):
-        self.fix_cookies()
         currencies = ['EUR', 'USD', 'JPY', 'CAD', 'GBP', 'TRY']
         self.client.post("/setCurrency",
             {'currency_code': random.choice(currencies)})
@@ -100,19 +64,16 @@ class WebsiteUser(FastHttpUser):
     # 1 req
     @task(100)
     def browseProduct(self):
-        self.fix_cookies()
         self.client.get("/product/" + random.choice(products))
 
     # 1 req
     @task(30)
     def viewCart(self):
-        self.fix_cookies()
         self.client.get("/cart")
 
     # 2 reqs
     @task(30)
     def addToCart(self):
-        self.fix_cookies()
         product = random.choice(products)
         self.client.get("/product/" + product)
         self.client.post("/cart", {
@@ -122,13 +83,12 @@ class WebsiteUser(FastHttpUser):
     # 1 req
     @task(10)
     def empty_cart(self):
-        self.fix_cookies()
         self.client.post('/cart/empty')
 
     # 3 reqs
     @task(20)
     def checkout(self):
-        self.addToCart() # calls self.fix_cookies()
+        self.addToCart()
         current_year = datetime.datetime.now().year+1
         self.client.post("/cart/checkout", {
             'email': fake.email(),
@@ -149,52 +109,6 @@ class WebsiteUser(FastHttpUser):
 
     wait_time = between(1, 5)
 
-# class SingleLoad(LoadTestShape):
-#     """
-#     A load shape that only steps up to a single value, specified by --max-users
-
-#     Keyword arguments:
-
-#         wait_time   -- time to wait after user goal is met
-
-#         spawn_rate  -- users spawned per second while still spawning
-    
-#     """
-
-#     abstract=True
-
-#     wait_time: int = 15 * 60 
-#     spawn_rate: int = 5
-#     users: int = 0
-
-#     def __init__(self, *args, **kwargs):
-#         self._target_timestamp: float = 0
-
-#         # if self.runner == None or self.runner.environment.parsed_options == None:
-#         #     logging.fatal("UH OH! self.runner==None or self.runner.env.parsed_options == None!!")
-#         #     exit(4)
-        
-#         # self.users = self.runner.environment.parsed_options.max_users
-
-#         # self.runner.environment.reset_stats = True
-#         self.users = get_max_users()
-#         super().__init__(*args, **kwargs)
-
-#     def tick(self):
-#         cur_users = self.get_current_user_count()
-#         cur_time = self.get_run_time()
-
-#         if cur_users == self.users:
-#             if self._target_timestamp == 0:
-#                 self._target_timestamp = cur_time
-
-#             elif cur_time - self._target_timestamp >= self.wait_time:
-#                 #all done running
-#                 return None
-
-#         return self.users, self.spawn_rate
-
-
 class MultiLoad(LoadTestShape):
     """
     A step load shape
@@ -211,16 +125,14 @@ class MultiLoad(LoadTestShape):
     """
     
     # Time between steps
-    step_time = 1 * 60 # 8 minutes
+    step_time = 10 * 60 # 10 minutes
     
     # Users at each step
     # step_load = [1000, 2000, 4000, 6000, 8000, 10000, 12000, 14000, 16000]
-    step_load = [1000, 2500, 5000, 7500, 10000, 12500, 15000, 17500]
+    step_load = [1000, 2500, 5000, 7500, 10000, 12500, 15000, 17500, 20000, 25000, 30000]
 
     # Users to stop/start per second while amount is changing.
-    spawn_rate = 15
-
-    # abstract=True
+    spawn_rate = 8
 
     # When to terminate
     num_steps = len(step_load)
@@ -244,8 +156,7 @@ class MultiLoad(LoadTestShape):
             # if we *just* reached target
             if self._target_timestamp == 0:
                 # start timer
-                self._target_timestamp = cur_time
-                self.runner.send_message("spawning_stop", cur_users)
+                self._target_timestamp = cur_time 
             else:
                 elapsed = cur_time - self._target_timestamp
                 # out_str += f"\t time remaining: {self.step_time[self._step] - elapsed:.2f}"
@@ -254,8 +165,6 @@ class MultiLoad(LoadTestShape):
 
                 # if time has gone on long enough
                 if elapsed >= self.step_time:
-                    
-                    self.runner.send_message("spawning_start")
                     self._target_timestamp = 0
                     self._step += 1
 

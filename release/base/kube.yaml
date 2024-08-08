@@ -8,12 +8,6 @@ listeners:
 
 
 resourceSpec:
-  # requests:
-  #   memory: "256Mi"
-  #   cpu: "400m"
-  # limits:
-  #   memory: "1024Mi"
-  #   cpu: "3200m"
   requests:
     memory: "1024Mi"
     cpu: "1"
@@ -23,12 +17,12 @@ resourceSpec:
   
 scalingSpec:
   minReplicas: 1
-  maxReplicas: 6
+  maxReplicas: 15
   metrics:
     - type: Resource
       resource:
         name: cpu
         target:
           type: Utilization
-          averageUtilization: 80
+          averageUtilization: 70
 

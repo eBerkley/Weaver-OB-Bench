@@ -1,5 +1,6 @@
-onlineboutique
+release/generated/ob
 test/weaverOut
 test/gRPCOut
 test/inputs.txt
 benchmark/*/*
+logs.txt

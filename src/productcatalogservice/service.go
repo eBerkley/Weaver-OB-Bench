@@ -52,14 +52,14 @@ type Product struct {
 	Categories []string `json:"categories"`
 }
 
-type ProductCatalogService interface {
+type CatalogService interface {
 	ListProducts(ctx context.Context) ([]Product, error)
 	GetProduct(ctx context.Context, productID string) (Product, error)
 	SearchProducts(ctx context.Context, query string) ([]Product, error)
 }
 
 type impl struct {
-	weaver.Implements[ProductCatalogService]
+	weaver.Implements[CatalogService]
 
 	extraLatency time.Duration
 

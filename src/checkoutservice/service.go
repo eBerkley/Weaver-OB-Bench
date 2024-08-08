@@ -46,7 +46,7 @@ type CheckoutService interface {
 type impl struct {
 	weaver.Implements[CheckoutService]
 
-	catalogService  weaver.Ref[productcatalogservice.ProductCatalogService]
+	catalogService  weaver.Ref[productcatalogservice.CatalogService]
 	cartService     weaver.Ref[cartservice.CartService]
 	currencyService weaver.Ref[currencyservice.CurrencyService]
 	shippingService weaver.Ref[shippingservice.ShippingService]

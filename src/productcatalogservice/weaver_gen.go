@@ -17,52 +17,52 @@ import (
 
 func init() {
 	codegen.Register(codegen.Registration{
-		Name:  "github.com/ServiceWeaver/onlineboutique/productcatalogservice/ProductCatalogService",
-		Iface: reflect.TypeOf((*ProductCatalogService)(nil)).Elem(),
+		Name:  "github.com/ServiceWeaver/onlineboutique/productcatalogservice/CatalogService",
+		Iface: reflect.TypeOf((*CatalogService)(nil)).Elem(),
 		Impl:  reflect.TypeOf(impl{}),
 		LocalStubFn: func(impl any, caller string, tracer trace.Tracer) any {
-			return productCatalogService_local_stub{impl: impl.(ProductCatalogService), tracer: tracer, getProductMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/ServiceWeaver/onlineboutique/productcatalogservice/ProductCatalogService", Method: "GetProduct", Remote: false, Generated: true}), listProductsMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/ServiceWeaver/onlineboutique/productcatalogservice/ProductCatalogService", Method: "ListProducts", Remote: false, Generated: true}), searchProductsMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/ServiceWeaver/onlineboutique/productcatalogservice/ProductCatalogService", Method: "SearchProducts", Remote: false, Generated: true})}
+			return catalogService_local_stub{impl: impl.(CatalogService), tracer: tracer, getProductMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/ServiceWeaver/onlineboutique/productcatalogservice/CatalogService", Method: "GetProduct", Remote: false, Generated: true}), listProductsMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/ServiceWeaver/onlineboutique/productcatalogservice/CatalogService", Method: "ListProducts", Remote: false, Generated: true}), searchProductsMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/ServiceWeaver/onlineboutique/productcatalogservice/CatalogService", Method: "SearchProducts", Remote: false, Generated: true})}
 		},
 		ClientStubFn: func(stub codegen.Stub, caller string) any {
-			return productCatalogService_client_stub{stub: stub, getProductMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/ServiceWeaver/onlineboutique/productcatalogservice/ProductCatalogService", Method: "GetProduct", Remote: true, Generated: true}), listProductsMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/ServiceWeaver/onlineboutique/productcatalogservice/ProductCatalogService", Method: "ListProducts", Remote: true, Generated: true}), searchProductsMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/ServiceWeaver/onlineboutique/productcatalogservice/ProductCatalogService", Method: "SearchProducts", Remote: true, Generated: true})}
+			return catalogService_client_stub{stub: stub, getProductMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/ServiceWeaver/onlineboutique/productcatalogservice/CatalogService", Method: "GetProduct", Remote: true, Generated: true}), listProductsMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/ServiceWeaver/onlineboutique/productcatalogservice/CatalogService", Method: "ListProducts", Remote: true, Generated: true}), searchProductsMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/ServiceWeaver/onlineboutique/productcatalogservice/CatalogService", Method: "SearchProducts", Remote: true, Generated: true})}
 		},
 		ServerStubFn: func(impl any, addLoad func(uint64, float64)) codegen.Server {
-			return productCatalogService_server_stub{impl: impl.(ProductCatalogService), addLoad: addLoad}
+			return catalogService_server_stub{impl: impl.(CatalogService), addLoad: addLoad}
 		},
 		ReflectStubFn: func(caller func(string, context.Context, []any, []any) error) any {
-			return productCatalogService_reflect_stub{caller: caller}
+			return catalogService_reflect_stub{caller: caller}
 		},
 		RefData: "",
 	})
 }
 
 // weaver.InstanceOf checks.
-var _ weaver.InstanceOf[ProductCatalogService] = (*impl)(nil)
+var _ weaver.InstanceOf[CatalogService] = (*impl)(nil)
 
 // weaver.Router checks.
 var _ weaver.Unrouted = (*impl)(nil)
 
 // Local stub implementations.
 
-type productCatalogService_local_stub struct {
-	impl                  ProductCatalogService
+type catalogService_local_stub struct {
+	impl                  CatalogService
 	tracer                trace.Tracer
 	getProductMetrics     *codegen.MethodMetrics
 	listProductsMetrics   *codegen.MethodMetrics
 	searchProductsMetrics *codegen.MethodMetrics
 }
 
-// Check that productCatalogService_local_stub implements the ProductCatalogService interface.
-var _ ProductCatalogService = (*productCatalogService_local_stub)(nil)
+// Check that catalogService_local_stub implements the CatalogService interface.
+var _ CatalogService = (*catalogService_local_stub)(nil)
 
-func (s productCatalogService_local_stub) GetProduct(ctx context.Context, a0 string) (r0 Product, err error) {
+func (s catalogService_local_stub) GetProduct(ctx context.Context, a0 string) (r0 Product, err error) {
 	// Update metrics.
 	begin := s.getProductMetrics.Begin()
 	defer func() { s.getProductMetrics.End(begin, err != nil, 0, 0) }()
 	span := trace.SpanFromContext(ctx)
 	if span.SpanContext().IsValid() {
 		// Create a child span for this method.
-		ctx, span = s.tracer.Start(ctx, "productcatalogservice.ProductCatalogService.GetProduct", trace.WithSpanKind(trace.SpanKindInternal))
+		ctx, span = s.tracer.Start(ctx, "productcatalogservice.CatalogService.GetProduct", trace.WithSpanKind(trace.SpanKindInternal))
 		defer func() {
 			if err != nil {
 				span.RecordError(err)
@@ -75,14 +75,14 @@ func (s productCatalogService_local_stub) GetProduct(ctx context.Context, a0 str
 	return s.impl.GetProduct(ctx, a0)
 }
 
-func (s productCatalogService_local_stub) ListProducts(ctx context.Context) (r0 []Product, err error) {
+func (s catalogService_local_stub) ListProducts(ctx context.Context) (r0 []Product, err error) {
 	// Update metrics.
 	begin := s.listProductsMetrics.Begin()
 	defer func() { s.listProductsMetrics.End(begin, err != nil, 0, 0) }()
 	span := trace.SpanFromContext(ctx)
 	if span.SpanContext().IsValid() {
 		// Create a child span for this method.
-		ctx, span = s.tracer.Start(ctx, "productcatalogservice.ProductCatalogService.ListProducts", trace.WithSpanKind(trace.SpanKindInternal))
+		ctx, span = s.tracer.Start(ctx, "productcatalogservice.CatalogService.ListProducts", trace.WithSpanKind(trace.SpanKindInternal))
 		defer func() {
 			if err != nil {
 				span.RecordError(err)
@@ -95,14 +95,14 @@ func (s productCatalogService_local_stub) ListProducts(ctx context.Context) (r0 
 	return s.impl.ListProducts(ctx)
 }
 
-func (s productCatalogService_local_stub) SearchProducts(ctx context.Context, a0 string) (r0 []Product, err error) {
+func (s catalogService_local_stub) SearchProducts(ctx context.Context, a0 string) (r0 []Product, err error) {
 	// Update metrics.
 	begin := s.searchProductsMetrics.Begin()
 	defer func() { s.searchProductsMetrics.End(begin, err != nil, 0, 0) }()
 	span := trace.SpanFromContext(ctx)
 	if span.SpanContext().IsValid() {
 		// Create a child span for this method.
-		ctx, span = s.tracer.Start(ctx, "productcatalogservice.ProductCatalogService.SearchProducts", trace.WithSpanKind(trace.SpanKindInternal))
+		ctx, span = s.tracer.Start(ctx, "productcatalogservice.CatalogService.SearchProducts", trace.WithSpanKind(trace.SpanKindInternal))
 		defer func() {
 			if err != nil {
 				span.RecordError(err)
@@ -117,17 +117,17 @@ func (s productCatalogService_local_stub) SearchProducts(ctx context.Context, a0
 
 // Client stub implementations.
 
-type productCatalogService_client_stub struct {
+type catalogService_client_stub struct {
 	stub                  codegen.Stub
 	getProductMetrics     *codegen.MethodMetrics
 	listProductsMetrics   *codegen.MethodMetrics
 	searchProductsMetrics *codegen.MethodMetrics
 }
 
-// Check that productCatalogService_client_stub implements the ProductCatalogService interface.
-var _ ProductCatalogService = (*productCatalogService_client_stub)(nil)
+// Check that catalogService_client_stub implements the CatalogService interface.
+var _ CatalogService = (*catalogService_client_stub)(nil)
 
-func (s productCatalogService_client_stub) GetProduct(ctx context.Context, a0 string) (r0 Product, err error) {
+func (s catalogService_client_stub) GetProduct(ctx context.Context, a0 string) (r0 Product, err error) {
 	// Update metrics.
 	var requestBytes, replyBytes int
 	begin := s.getProductMetrics.Begin()
@@ -136,7 +136,7 @@ func (s productCatalogService_client_stub) GetProduct(ctx context.Context, a0 st
 	span := trace.SpanFromContext(ctx)
 	if span.SpanContext().IsValid() {
 		// Create a child span for this method.
-		ctx, span = s.stub.Tracer().Start(ctx, "productcatalogservice.ProductCatalogService.GetProduct", trace.WithSpanKind(trace.SpanKindClient))
+		ctx, span = s.stub.Tracer().Start(ctx, "productcatalogservice.CatalogService.GetProduct", trace.WithSpanKind(trace.SpanKindClient))
 	}
 
 	defer func() {
@@ -183,7 +183,7 @@ func (s productCatalogService_client_stub) GetProduct(ctx context.Context, a0 st
 	return
 }
 
-func (s productCatalogService_client_stub) ListProducts(ctx context.Context) (r0 []Product, err error) {
+func (s catalogService_client_stub) ListProducts(ctx context.Context) (r0 []Product, err error) {
 	// Update metrics.
 	var requestBytes, replyBytes int
 	begin := s.listProductsMetrics.Begin()
@@ -192,7 +192,7 @@ func (s productCatalogService_client_stub) ListProducts(ctx context.Context) (r0
 	span := trace.SpanFromContext(ctx)
 	if span.SpanContext().IsValid() {
 		// Create a child span for this method.
-		ctx, span = s.stub.Tracer().Start(ctx, "productcatalogservice.ProductCatalogService.ListProducts", trace.WithSpanKind(trace.SpanKindClient))
+		ctx, span = s.stub.Tracer().Start(ctx, "productcatalogservice.CatalogService.ListProducts", trace.WithSpanKind(trace.SpanKindClient))
 	}
 
 	defer func() {
@@ -230,7 +230,7 @@ func (s productCatalogService_client_stub) ListProducts(ctx context.Context) (r0
 	return
 }
 
-func (s productCatalogService_client_stub) SearchProducts(ctx context.Context, a0 string) (r0 []Product, err error) {
+func (s catalogService_client_stub) SearchProducts(ctx context.Context, a0 string) (r0 []Product, err error) {
 	// Update metrics.
 	var requestBytes, replyBytes int
 	begin := s.searchProductsMetrics.Begin()
@@ -239,7 +239,7 @@ func (s productCatalogService_client_stub) SearchProducts(ctx context.Context, a
 	span := trace.SpanFromContext(ctx)
 	if span.SpanContext().IsValid() {
 		// Create a child span for this method.
-		ctx, span = s.stub.Tracer().Start(ctx, "productcatalogservice.ProductCatalogService.SearchProducts", trace.WithSpanKind(trace.SpanKindClient))
+		ctx, span = s.stub.Tracer().Start(ctx, "productcatalogservice.CatalogService.SearchProducts", trace.WithSpanKind(trace.SpanKindClient))
 	}
 
 	defer func() {
@@ -291,7 +291,7 @@ func (s productCatalogService_client_stub) SearchProducts(ctx context.Context, a
 // you run "go build" or "go run".
 var _ codegen.LatestVersion = codegen.Version[[0][24]struct{}](`
 
-ERROR: You generated this file with 'weaver generate' v0.24.2 (codegen
+ERROR: You generated this file with 'weaver generate' v0.24.3 (codegen
 version v0.24.0). The generated code is incompatible with the version of the
 github.com/ServiceWeaver/weaver module that you're using. The weaver module
 version can be found in your go.mod file or by running the following command.
@@ -311,16 +311,16 @@ please file an issue at https://github.com/ServiceWeaver/weaver/issues.
 
 // Server stub implementations.
 
-type productCatalogService_server_stub struct {
-	impl    ProductCatalogService
+type catalogService_server_stub struct {
+	impl    CatalogService
 	addLoad func(key uint64, load float64)
 }
 
-// Check that productCatalogService_server_stub implements the codegen.Server interface.
-var _ codegen.Server = (*productCatalogService_server_stub)(nil)
+// Check that catalogService_server_stub implements the codegen.Server interface.
+var _ codegen.Server = (*catalogService_server_stub)(nil)
 
 // GetStubFn implements the codegen.Server interface.
-func (s productCatalogService_server_stub) GetStubFn(method string) func(ctx context.Context, args []byte) ([]byte, error) {
+func (s catalogService_server_stub) GetStubFn(method string) func(ctx context.Context, args []byte) ([]byte, error) {
 	switch method {
 	case "GetProduct":
 		return s.getProduct
@@ -333,7 +333,7 @@ func (s productCatalogService_server_stub) GetStubFn(method string) func(ctx con
 	}
 }
 
-func (s productCatalogService_server_stub) getProduct(ctx context.Context, args []byte) (res []byte, err error) {
+func (s catalogService_server_stub) getProduct(ctx context.Context, args []byte) (res []byte, err error) {
 	// Catch and return any panics detected during encoding/decoding/rpc.
 	defer func() {
 		if err == nil {
@@ -358,7 +358,7 @@ func (s productCatalogService_server_stub) getProduct(ctx context.Context, args 
 	return enc.Data(), nil
 }
 
-func (s productCatalogService_server_stub) listProducts(ctx context.Context, args []byte) (res []byte, err error) {
+func (s catalogService_server_stub) listProducts(ctx context.Context, args []byte) (res []byte, err error) {
 	// Catch and return any panics detected during encoding/decoding/rpc.
 	defer func() {
 		if err == nil {
@@ -378,7 +378,7 @@ func (s productCatalogService_server_stub) listProducts(ctx context.Context, arg
 	return enc.Data(), nil
 }
 
-func (s productCatalogService_server_stub) searchProducts(ctx context.Context, args []byte) (res []byte, err error) {
+func (s catalogService_server_stub) searchProducts(ctx context.Context, args []byte) (res []byte, err error) {
 	// Catch and return any panics detected during encoding/decoding/rpc.
 	defer func() {
 		if err == nil {
@@ -405,24 +405,24 @@ func (s productCatalogService_server_stub) searchProducts(ctx context.Context, a
 
 // Reflect stub implementations.
 
-type productCatalogService_reflect_stub struct {
+type catalogService_reflect_stub struct {
 	caller func(string, context.Context, []any, []any) error
 }
 
-// Check that productCatalogService_reflect_stub implements the ProductCatalogService interface.
-var _ ProductCatalogService = (*productCatalogService_reflect_stub)(nil)
+// Check that catalogService_reflect_stub implements the CatalogService interface.
+var _ CatalogService = (*catalogService_reflect_stub)(nil)
 
-func (s productCatalogService_reflect_stub) GetProduct(ctx context.Context, a0 string) (r0 Product, err error) {
+func (s catalogService_reflect_stub) GetProduct(ctx context.Context, a0 string) (r0 Product, err error) {
 	err = s.caller("GetProduct", ctx, []any{a0}, []any{&r0})
 	return
 }
 
-func (s productCatalogService_reflect_stub) ListProducts(ctx context.Context) (r0 []Product, err error) {
+func (s catalogService_reflect_stub) ListProducts(ctx context.Context) (r0 []Product, err error) {
 	err = s.caller("ListProducts", ctx, []any{}, []any{&r0})
 	return
 }
 
-func (s productCatalogService_reflect_stub) SearchProducts(ctx context.Context, a0 string) (r0 []Product, err error) {
+func (s catalogService_reflect_stub) SearchProducts(ctx context.Context, a0 string) (r0 []Product, err error) {
 	err = s.caller("SearchProducts", ctx, []any{a0}, []any{&r0})
 	return
 }

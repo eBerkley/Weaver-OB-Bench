@@ -36,14 +36,14 @@ cp $yaml $WEAVER_GEN_YAML
 sed -i "s/frontend:80/boutique-$deployment:80/g" $LOAD_GEN_YAML
 
 # kubectl apply -f $LOAD_GEN_YAML
-kubectl apply -f $WEAVER_GEN_YAML
 
 # echo
 # echo http://boutique-$deployment:80
 # echo kubectl port-forward service/boutique-$deployment 8080:80
 
 if [[ "$1" = "test" ]]; then
-  
+
+  kubectl apply -f $WEAVER_GEN_YAML
   echo waiting to port-forward frontend... ^C to cancel.
   
   sleep 20
@@ -52,7 +52,9 @@ if [[ "$1" = "test" ]]; then
   
   echo kubectl port-forward service/boutique-$deployment 8080:80
 else
+
   kubectl apply -f $LOAD_GEN_YAML
+  kubectl apply -f $WEAVER_GEN_YAML
 
 
   echo frontend address:

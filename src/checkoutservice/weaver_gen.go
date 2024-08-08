@@ -34,7 +34,7 @@ func init() {
 		ReflectStubFn: func(caller func(string, context.Context, []any, []any) error) any {
 			return checkoutService_reflect_stub{caller: caller}
 		},
-		RefData: "⟦3c20d0cc:wEaVeReDgE:github.com/ServiceWeaver/onlineboutique/checkoutservice/CheckoutService→github.com/ServiceWeaver/onlineboutique/productcatalogservice/ProductCatalogService⟧\n⟦eea5d395:wEaVeReDgE:github.com/ServiceWeaver/onlineboutique/checkoutservice/CheckoutService→github.com/ServiceWeaver/onlineboutique/cartservice/CartService⟧\n⟦c2b535dd:wEaVeReDgE:github.com/ServiceWeaver/onlineboutique/checkoutservice/CheckoutService→github.com/ServiceWeaver/onlineboutique/currencyservice/CurrencyService⟧\n⟦48b34240:wEaVeReDgE:github.com/ServiceWeaver/onlineboutique/checkoutservice/CheckoutService→github.com/ServiceWeaver/onlineboutique/shippingservice/ShippingService⟧\n⟦e3a5f8ee:wEaVeReDgE:github.com/ServiceWeaver/onlineboutique/checkoutservice/CheckoutService→github.com/ServiceWeaver/onlineboutique/emailservice/EmailService⟧\n⟦3e18f39d:wEaVeReDgE:github.com/ServiceWeaver/onlineboutique/checkoutservice/CheckoutService→github.com/ServiceWeaver/onlineboutique/paymentservice/PaymentService⟧\n",
+		RefData: "⟦a9d1a703:wEaVeReDgE:github.com/ServiceWeaver/onlineboutique/checkoutservice/CheckoutService→github.com/ServiceWeaver/onlineboutique/productcatalogservice/CatalogService⟧\n⟦eea5d395:wEaVeReDgE:github.com/ServiceWeaver/onlineboutique/checkoutservice/CheckoutService→github.com/ServiceWeaver/onlineboutique/cartservice/CartService⟧\n⟦c2b535dd:wEaVeReDgE:github.com/ServiceWeaver/onlineboutique/checkoutservice/CheckoutService→github.com/ServiceWeaver/onlineboutique/currencyservice/CurrencyService⟧\n⟦48b34240:wEaVeReDgE:github.com/ServiceWeaver/onlineboutique/checkoutservice/CheckoutService→github.com/ServiceWeaver/onlineboutique/shippingservice/ShippingService⟧\n⟦e3a5f8ee:wEaVeReDgE:github.com/ServiceWeaver/onlineboutique/checkoutservice/CheckoutService→github.com/ServiceWeaver/onlineboutique/emailservice/EmailService⟧\n⟦3e18f39d:wEaVeReDgE:github.com/ServiceWeaver/onlineboutique/checkoutservice/CheckoutService→github.com/ServiceWeaver/onlineboutique/paymentservice/PaymentService⟧\n",
 	})
 }
 
@@ -141,7 +141,7 @@ func (s checkoutService_client_stub) PlaceOrder(ctx context.Context, a0 PlaceOrd
 // you run "go build" or "go run".
 var _ codegen.LatestVersion = codegen.Version[[0][24]struct{}](`
 
-ERROR: You generated this file with 'weaver generate' v0.24.2 (codegen
+ERROR: You generated this file with 'weaver generate' v0.24.3 (codegen
 version v0.24.0). The generated code is incompatible with the version of the
 github.com/ServiceWeaver/weaver module that you're using. The weaver module
 version can be found in your go.mod file or by running the following command.

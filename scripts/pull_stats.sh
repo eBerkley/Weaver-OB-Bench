@@ -1,6 +1,6 @@
 #!/bin/bash
 cd $(dirname $0)
-
+sleep 15
 podname=$(kubectl get pod | grep 'loadgenerator-[a-z0-9]\+-[a-z0-9]\+ ' | awk '{print $1}')
 
 SECONDS=0
@@ -37,7 +37,7 @@ while [ $size -ge 20 ]; do
   str=$(get_line)
   size=${#str}
 
-  echo -e $reprint$str
+  echo -e $reprint$str | tee -a ../logs.txt
   
 done
 

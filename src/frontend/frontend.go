@@ -40,8 +40,6 @@ const (
 	cookiePrefix    = "shop_"
 	cookieSessionID = cookiePrefix + "session-id"
 	cookieCurrency  = cookiePrefix + "currency"
-
-	cookieUsers = cookiePrefix + "user_count"
 )
 
 var (
@@ -64,10 +62,10 @@ type Server struct {
 	platform platformDetails
 	hostname string
 
-	catalogService        weaver.Ref[productcatalogservice.ProductCatalogService]
+	catalogService        weaver.Ref[productcatalogservice.CatalogService]
 	currencyService       weaver.Ref[currencyservice.CurrencyService]
 	cartService           weaver.Ref[cartservice.CartService]
-	recommendationService weaver.Ref[recommendationservice.RecommendationService]
+	recommendationService weaver.Ref[recommendationservice.RecService]
 	checkoutService       weaver.Ref[checkoutservice.CheckoutService]
 	shippingService       weaver.Ref[shippingservice.ShippingService]
 	adService             weaver.Ref[adservice.AdService]

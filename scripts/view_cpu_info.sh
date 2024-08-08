@@ -1,6 +1,6 @@
 #!/bin/bash
 
-OB=/weaver/onlineboutique
+OB=/weaver/ob
 LOCUST=locust
 
 type=$LOCUST

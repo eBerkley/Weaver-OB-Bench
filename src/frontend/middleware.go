@@ -78,7 +78,6 @@ func (lh *logHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	logger.Debug("request started")
 	defer func() {
 		logger.Debug("request complete",
-			"user_count", currentUsers(r),
 			"duration", time.Since(start),
 			"status", rr.status,
 			"bytes", rr.b,

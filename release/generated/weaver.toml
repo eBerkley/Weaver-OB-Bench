@@ -1,5 +1,5 @@
 [serviceweaver]
-binary = "./onlineboutique"
+binary = "./ob"
 rollout = "5m"
 
 [single]

@@ -505,14 +505,6 @@ func currentCurrency(r *http.Request) string {
 	return defaultCurrency
 }
 
-func currentUsers(r *http.Request) string {
-	c, _ := r.Cookie(cookieUsers)
-	if c != nil {
-		return c.Value
-	}
-	return "0"
-}
-
 func sessionID(r *http.Request) string {
 	v := r.Context().Value(ctxKeySessionID{})
 	if v != nil {

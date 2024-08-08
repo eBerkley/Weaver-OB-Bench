@@ -25,7 +25,7 @@ COLOCATION_FNAMES := $(wildcard $(BASE)/colocation/*.yaml)
 COLOCATION_BASE := $(foreach var, $(COLOCATION_FNAMES), $(shell basename $(var) .yaml))
 
 
-BIN := $(GENERATED)/onlineboutique
+BIN := $(GENERATED)/ob
 
 LOAD_SRC := $(SRC)/loadgenerator
 LOAD_SRC_ALL := $(LOAD_SRC)/entrypoint.sh $(LOAD_SRC)/locustfile.py
@@ -35,12 +35,14 @@ MAIN_SRC := $(filter-out %weaver_gen.go, $(wildcard $(SRC)/*/*.go))
 
 VERSION_FILE := $(GENERATED)/version.txt
 
-.PHONY: all clean minikube_start minikube_restart check_smt toggle_smt deploy bench bench_all plot plot_quick stop 
+LOGS_FILE := $(TOP)/logs.txt
+
+.PHONY: all clean minikube_start minikube_restart check_smt toggle_smt deploy bench bench_all plot plot_quick stop clear_logs
 
 all:
 	@echo valid arguments:
 	@echo
-	@echo	"minikube_[re]start   - [re]start minikube"
+	@echo "minikube_[re]start   - [re]start minikube"
 	@echo "check_smt            - View if hyperthreading is enabled"
 	@echo "toggle_smt           - Toggle hyperthreading. NOTE: May require root."
 	@echo "deploy               - Starts minikube / builds new version of app if necessary, then deploys."
@@ -51,11 +53,11 @@ all:
 
 minikube_start:
 	@ lines=$(shell minikube status | wc -l);	\
-	if [ $$lines -le 5 ]; then 								\
-		echo Starting minikube;									\
-		./scripts/minikube_start.sh;						\
-	else 																			\
-		echo Minikube already running. ;				\
+	if [ $$lines -le 5 ]; then 					\
+		echo Starting minikube;					\
+		./scripts/minikube_start.sh;			\
+	else 										\
+		echo Minikube already running. ;		\
 	fi 
 
 minikube_restart:
@@ -69,26 +71,32 @@ toggle_smt:
 	./scripts/hyperthreading.sh 2
 
 deploy: minikube_start $(WEAVER_GEN_YAML) $(LOAD_GEN_YAML)
-	-./scripts/stop.sh
-	kubectl apply -f $(WEAVER_GEN_YAML)
-	kubectl apply -f $(LOAD_GEN_YAML)
+	@echo deploying onlineboutique, loadgenerator...
+	-./scripts/stop.sh 2>/dev/null
+	
+	@# must be first so first socket is entirely used.
+	@kubectl apply -f $(LOAD_GEN_YAML) >> $(LOGS_FILE)
+	@kubectl apply -f $(WEAVER_GEN_YAML) >> $(LOGS_FILE)
 
 bench: deploy
 	./scripts/pull_stats.sh
-	./scripts/stop.sh
+	@echo deleting deployment...
+	./scripts/stop.sh >/dev/null
 
-bench_all: minikube_start $(WEAVER_GEN_YAML) $(LOAD_GEN_YAML)
+# ./bench_all changes $(WEAVER_GEN_YAML) every time it runs, 
+# 	new images built each time.
+bench_all: minikube_start clear_logs $(WEAVER_GEN_YAML) $(LOAD_GEN_YAML)
 	@echo Colocation Schemes: $(COLOCATION_BASE)
 	@echo 
-	./bench_all.sh
+	./make_scripts/bench_all.sh
 
 plot:
 	@for var in $(COLOCATION_BASE); do		\
-		echo $$var;													\
-		./benchmark/bar.py $$var;						\
-		./benchmark/make_csv.py $$var;			\
+		echo $$var;							\
+		./benchmark/bar.py $$var;			\
+		./benchmark/make_csv.py $$var;		\
 		./benchmark/plot_compare.py $$var;	\
-	done;
+	done
 
 stop:
 	./scripts/stop.sh
@@ -97,17 +105,34 @@ stop:
 # if deployment specifications or src code was modified,
 # 	Update Weaver kubernetes yaml
 # 	modifies version file, will trigger LOAD_GEN_YAML
-$(WEAVER_GEN_YAML): $(KUBE_GEN_YAML) $(BIN)
-	
-	./make_scripts/weaver_gen_yaml.sh 
+$(WEAVER_GEN_YAML): $(KUBE_GEN_YAML) $(BIN)	
+	@echo rebuilding onlineboutique container...
+
+	@./make_scripts/weaver_gen_yaml.sh 
+
+$(KUBE_GEN_YAML): $(KUBE_BASE_YAML)
+	@cp $(KUBE_BASE_YAML) $(KUBE_GEN_YAML)
 
 # if Loadgen code was modified,
 #	Update Load Generator
 $(LOAD_GEN_YAML): $(LOAD_SRC_ALL) $(VERSION_FILE)
-	./make_scripts/load_gen_yaml.sh
+	@echo rebuilding loadgenerator container...
+
+	@./make_scripts/load_gen_yaml.sh
 
 # If src code was modified, 
 #	Update binary
 $(BIN): $(MAIN_SRC)
-	weaver generate src/...
-	cd $(SRC); go build -o ../release/generated; cd ..
+	@echo rebuilding binary...
+
+	@cd $(SRC); weaver generate ./...; go build -o ../release/generated; cd ..
+	@mv release/generated/onlineboutique release/generated/ob
+
+clear_logs: $(LOGS_FILE)
+	@echo clearing logs...
+
+	@printf "" > $(LOGS_FILE)
+
+$(LOGS_FILE):
+	@echo creating $(LOGS_FILE)...
+	@touch $(LOGS_FILE)
