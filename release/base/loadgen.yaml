@@ -56,17 +56,14 @@ spec:
               - ALL
           privileged: false
           readOnlyRootFilesystem: false
-        image: docker.io/eberkley/loadgen:VERSION
+        image: <DOCKER>/loadgen:<VERSION>
         imagePullPolicy: IfNotPresent
-        # image: gcr.io/google-samples/microservices-demo/loadgenerator:v0.10.0
         env:
         - name: LOCUST_MODE
           value: MASTER
 
         - name: FRONTEND_ADDR
-          value: "frontend:80"
-        - name: USERS
-          value: "10"
+          value: <ADDR>
 
         resources:
           limits:
@@ -94,7 +91,7 @@ metadata:
     role: loadgenerator-worker
   name: loadgenerator-worker
 spec:
-  replicas: 10
+  replicas: 18
   selector:
     matchLabels:
       app: loadgenerator-worker
@@ -122,7 +119,7 @@ spec:
           readOnlyRootFilesystem: true
 
 
-        image: docker.io/eberkley/loadgen:VERSION
+        image: <DOCKER>/loadgen:<VERSION>
         imagePullPolicy: IfNotPresent
         env:
         - name: LOCUST_MODE
@@ -132,7 +129,7 @@ spec:
           value: loadgenerator
         
         - name: FRONTEND_ADDR
-          value: "frontend:80"
+          value: "<ADDR>"
 
         resources:
           requests: 

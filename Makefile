@@ -1,6 +1,6 @@
 .EXPORT_ALL_VARIABLES:
 
-DOCKER := docker.io/eberkley
+DOCKER ?= docker.io/eberkley
 
 TOP := .
 
@@ -52,12 +52,12 @@ all:
 	@echo "stop                 - remove deployments"
 
 minikube_start:
-	@ lines=$(shell minikube status | wc -l);	\
-	if [ $$lines -le 5 ]; then 					\
-		echo Starting minikube;					\
-		./scripts/minikube_start.sh;			\
-	else 										\
-		echo Minikube already running. ;		\
+	@ lines=$(shell minikube status | wc -l);\
+	if [ $$lines -le 5 ]; then\
+		echo Starting minikube;\
+		./scripts/minikube_start.sh;\
+	else\
+		echo Minikube already running. ;\
 	fi 
 
 minikube_restart:
@@ -91,11 +91,11 @@ bench_all: minikube_start clear_logs $(WEAVER_GEN_YAML) $(LOAD_GEN_YAML)
 	./make_scripts/bench_all.sh
 
 plot:
-	@for var in $(COLOCATION_BASE); do		\
-		echo $$var;							\
-		./benchmark/bar.py $$var;			\
-		./benchmark/make_csv.py $$var;		\
-		./benchmark/plot_compare.py $$var;	\
+	@for var in $(COLOCATION_BASE); do\
+		echo $$var;\
+		./benchmark/bar.py $$var;\
+		./benchmark/make_csv.py $$var;\
+		./benchmark/plot_compare.py $$var;\
 	done
 
 stop:
@@ -112,6 +112,7 @@ $(WEAVER_GEN_YAML): $(KUBE_GEN_YAML) $(BIN)
 
 $(KUBE_GEN_YAML): $(KUBE_BASE_YAML)
 	@cp $(KUBE_BASE_YAML) $(KUBE_GEN_YAML)
+	@sed -i "s#<DOCKER>#$$DOCKER#g" $(KUBE_GEN_YAML)
 
 # if Loadgen code was modified,
 #	Update Load Generator

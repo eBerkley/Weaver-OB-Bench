@@ -1,5 +1,5 @@
 appConfig: weaver.toml
-repo: docker.io/eberkley
+repo: <DOCKER>
 
 listeners:
   - name: boutique
