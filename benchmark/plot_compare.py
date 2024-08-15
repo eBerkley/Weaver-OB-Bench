@@ -15,7 +15,7 @@ if len(argv) < 1:
     exit(1)
 
 TEST_NAME=argv[1]
-OTHER_NAME="none"
+OTHER_NAME="microservices"
 
 DIRNAME = os.path.dirname(__file__)
 
@@ -27,7 +27,7 @@ STATSDIR = os.path.join(DIRNAME, "out")
 OUT_DIR=os.path.join(STATSDIR,TEST_NAME, "imgs")
 
 
-CSV_NONE = os.path.join(STATSDIR, "none", "stats", "none.csv")
+CSV_NONE = os.path.join(STATSDIR, OTHER_NAME, "stats", f"{OTHER_NAME}.csv")
 CSV_TEST = os.path.join(STATSDIR, TEST_NAME, "stats", f"{TEST_NAME}.csv")
 
 df_none = pd.read_csv(CSV_NONE)
@@ -67,13 +67,13 @@ def plot(testArr, baseArr, yLabel: str, name: str, out: str):
 
 
     offset = width * multiplier
-    rects = ax.bar(x + offset, testArr, width, label='Test', color='green')
+    rects = ax.bar(x + offset, testArr, width, label=TEST_NAME, color='green')
     ax.bar_label(rects, padding=3)
 
     multiplier += 1
 
     offset = width * multiplier
-    rects = ax.bar(x + offset, baseArr, width, label='Control', color='blue')
+    rects = ax.bar(x + offset, baseArr, width, label=OTHER_NAME, color='blue')
     ax.bar_label(rects, padding=3)
 
 

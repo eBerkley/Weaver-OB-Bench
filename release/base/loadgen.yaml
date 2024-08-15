@@ -66,8 +66,11 @@ spec:
           value: <ADDR>
 
         resources:
+          requests:
+            cpu: 1
+            memory: 512Mi
           limits:
-            cpu: 300m
+            cpu: 1
             memory: 512Mi
 
         ports:
@@ -133,35 +136,9 @@ spec:
 
         resources:
           requests: 
-            memory: "512Mi"
             cpu: "1"
+            memory: "1024Mi"
           limits:
-            memory: "512Mi"
             cpu: "1"
+            memory: "1024Mi"
 
-
-# ---
-# apiVersion: autoscaling/v2
-# kind: HorizontalPodAutoscaler
-# metadata:
-#   annotations:
-#     description: This HorizontalPodAutoscaler scales the "loadgenerator-worker"
-#       Deployment.
-#   labels:
-#     serviceweaver/app: onlineboutique
-#   name: loadgenerator-worker
-#   namespace: default
-# spec:
-#   maxReplicas: 10
-#   metrics:
-#   - resource:
-#       name: cpu
-#       target:
-#         averageUtilization: 75
-#         type: Utilization
-#     type: Resource
-#   minReplicas: 1
-#   scaleTargetRef:
-#     apiVersion: apps/v1
-#     kind: Deployment
-#     name: loadgenerator-worker

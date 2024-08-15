@@ -125,18 +125,17 @@ class MultiLoad(LoadTestShape):
     """
     
     # Time between steps
-    step_time = 10 * 60 # 10 minutes
+    step_time = 12 * 60 # 12 minutes
     
     # Users at each step
-    # step_load = [1000, 2000, 4000, 6000, 8000, 10000, 12000, 14000, 16000]
     step_load = [1000, 2500, 5000, 7500, 10000, 12500, 15000, 17500, 20000, 25000, 30000]
 
     # Users to stop/start per second while amount is changing.
-    spawn_rate = 8
+    spawn_rate = 5
 
     # When to terminate
     num_steps = len(step_load)
-
+ 
     def __init__(self, *args, **kwargs):
         self._step = 0
         self._target_timestamp = 0

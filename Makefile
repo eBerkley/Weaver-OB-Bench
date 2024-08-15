@@ -21,7 +21,8 @@ KUBE_GEN_YAML := $(GENERATED)/kube.yaml
 WEAVER_GEN_YAML := $(GENERATED)/gen.yaml
 LOAD_GEN_YAML := $(GENERATED)/loadgen.yaml
 
-COLOCATION_FNAMES := $(wildcard $(BASE)/colocation/*.yaml)
+SCHEME_DIR := $(BASE)/colocation
+COLOCATION_FNAMES := $(wildcard $(SCHEME_DIR)/*.yaml)
 COLOCATION_BASE := $(foreach var, $(COLOCATION_FNAMES), $(shell basename $(var) .yaml))
 
 
@@ -72,20 +73,21 @@ toggle_smt:
 
 deploy: minikube_start $(WEAVER_GEN_YAML) $(LOAD_GEN_YAML)
 	@echo deploying onlineboutique, loadgenerator...
-	-./scripts/stop.sh 2>/dev/null
+	@-./scripts/stop.sh >/dev/null 2>/dev/null
 	
 	@# must be first so first socket is entirely used.
 	@kubectl apply -f $(LOAD_GEN_YAML) >> $(LOGS_FILE)
+	sleep 30
 	@kubectl apply -f $(WEAVER_GEN_YAML) >> $(LOGS_FILE)
 
 bench: deploy
-	./scripts/pull_stats.sh
+	./scripts/pull_stats.sh 
 	@echo deleting deployment...
 	./scripts/stop.sh >/dev/null
 
 # ./bench_all changes $(WEAVER_GEN_YAML) every time it runs, 
 # 	new images built each time.
-bench_all: minikube_start clear_logs $(WEAVER_GEN_YAML) $(LOAD_GEN_YAML)
+bench_all: minikube_start clear_logs 
 	@echo Colocation Schemes: $(COLOCATION_BASE)
 	@echo 
 	./make_scripts/bench_all.sh

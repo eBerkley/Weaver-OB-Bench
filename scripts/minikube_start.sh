@@ -7,8 +7,8 @@ cd $(dirname $0)
 
 flags=""
 
-# flags+=' --feature-gates=CPUManagerPolicyAlphaOptions=true'
-# flags+=' --extra-config=kubelet.cpu-manager-policy-options=align-by-socket'
+flags+=' --feature-gates=CPUManagerPolicyAlphaOptions=true'
+flags+=' --extra-config=kubelet.cpu-manager-policy-options=align-by-socket=true'
 
 flags+=' --cpus=max'
 
@@ -22,5 +22,9 @@ flags+=' --extra-config=kubelet.reserved-cpus=0'
 minikube start $flags
 
 minikube addons enable metrics-server
+sleep 30
+
 
 # minikube dashboard
+# kubectl label nodes minikube type=master
+# kubectl label nodes minikube-m02 type=worker

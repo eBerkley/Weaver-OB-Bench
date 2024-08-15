@@ -9,20 +9,36 @@ listeners:
 
 resourceSpec:
   requests:
-    memory: "1024Mi"
     cpu: "1"
+    memory: "2048Mi"
   limits:
-    memory: "1024Mi"
     cpu: "1"
+    memory: "2048Mi"
   
 scalingSpec:
   minReplicas: 1
-  maxReplicas: 15
+  maxReplicas: 20
   metrics:
     - type: Resource
       resource:
         name: cpu
         target:
           type: Utilization
-          averageUtilization: 70
+          averageUtilization: 65
 
+groups:
+  - name: mainad
+    components:
+    - "github.com/ServiceWeaver/weaver/Main"
+    - "github.com/ServiceWeaver/onlineboutique/adservice/AdService"
+  
+  - name: checkoutemailpay
+    components:
+    - "github.com/ServiceWeaver/onlineboutique/checkoutservice/CheckoutService"
+    - "github.com/ServiceWeaver/onlineboutique/emailservice/EmailService"
+    - "github.com/ServiceWeaver/onlineboutique/paymentservice/PaymentService"
+  
+  - name: carts
+    components:
+    - "github.com/ServiceWeaver/onlineboutique/cartservice/CartService"
+    - "github.com/ServiceWeaver/onlineboutique/cartservice/cartCache"

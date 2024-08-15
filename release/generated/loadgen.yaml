@@ -56,22 +56,23 @@ spec:
               - ALL
           privileged: false
           readOnlyRootFilesystem: false
-        image: docker.io/eberkley/loadgen:2b7f6a17
+        image: docker.io/eberkley/loadgen:0997663c
         imagePullPolicy: IfNotPresent
-        # image: gcr.io/google-samples/microservices-demo/loadgenerator:v0.10.0
         env:
         - name: LOCUST_MODE
           value: MASTER
 
         - name: FRONTEND_ADDR
-          value: "boutique-2b7f6a17:80"
-        - name: USERS
-          value: "10"
+          value: boutique-0997663c:80
 
         resources:
-          limits:
-            cpu: 300m
+          requests:
+            cpu: 1
             memory: 512Mi
+          limits:
+            cpu: 1
+            memory: 512Mi
+
 
         ports:
         - containerPort: 5557
@@ -94,7 +95,7 @@ metadata:
     role: loadgenerator-worker
   name: loadgenerator-worker
 spec:
-  replicas: 10
+  replicas: 18
   selector:
     matchLabels:
       app: loadgenerator-worker
@@ -122,7 +123,7 @@ spec:
           readOnlyRootFilesystem: true
 
 
-        image: docker.io/eberkley/loadgen:2b7f6a17
+        image: docker.io/eberkley/loadgen:0997663c
         imagePullPolicy: IfNotPresent
         env:
         - name: LOCUST_MODE
@@ -132,39 +133,13 @@ spec:
           value: loadgenerator
         
         - name: FRONTEND_ADDR
-          value: "boutique-2b7f6a17:80"
+          value: "boutique-0997663c:80"
 
         resources:
           requests: 
-            memory: "512Mi"
             cpu: "1"
+            memory: "1024Mi"
           limits:
-            memory: "512Mi"
             cpu: "1"
+            memory: "1024Mi"
 
-
-# ---
-# apiVersion: autoscaling/v2
-# kind: HorizontalPodAutoscaler
-# metadata:
-#   annotations:
-#     description: This HorizontalPodAutoscaler scales the "loadgenerator-worker"
-#       Deployment.
-#   labels:
-#     serviceweaver/app: onlineboutique
-#   name: loadgenerator-worker
-#   namespace: default
-# spec:
-#   maxReplicas: 10
-#   metrics:
-#   - resource:
-#       name: cpu
-#       target:
-#         averageUtilization: 75
-#         type: Utilization
-#     type: Resource
-#   minReplicas: 1
-#   scaleTargetRef:
-#     apiVersion: apps/v1
-#     kind: Deployment
-#     name: loadgenerator-worker

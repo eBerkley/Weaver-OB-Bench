@@ -14,7 +14,7 @@ case `echo ${LOCUST_MODE} | tr 'a-z' 'A-Z'` in
     # LOCUST_OPTS="--master --master-bind-port=${LOCUST_MASTER_PORT} $LOCUST_OPTS"
 
     # Benchmarking mode:
-    LOCUST_OPTS="--master --master-bind-port=${LOCUST_MASTER_PORT} $LOCUST_OPTS --headless --host="http://${FRONTEND_ADDR}" --only-summary --csv /stats/lat --csv-full-history"
+    LOCUST_OPTS="--master --master-bind-port=${LOCUST_MASTER_PORT} $LOCUST_OPTS --headless --host="http://${FRONTEND_ADDR}" --only-summary --csv /stats/lat --csv-full-history --expect-workers 18"
     
     
     ;;
