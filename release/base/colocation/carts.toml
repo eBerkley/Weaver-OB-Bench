@@ -1,0 +1,7 @@
+# carts
+colocate = [
+  [
+    "github.com/ServiceWeaver/onlineboutique/cartservice/CartService",
+    "github.com/ServiceWeaver/onlineboutique/cartservice/cartCache"
+  ]
+]

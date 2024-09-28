@@ -1,0 +1,25 @@
+# all but main
+cpus="0-7"
+
+colocate = [
+  [
+    "github.com/ServiceWeaver/weaver/Main"
+  ],
+  [
+    "github.com/ServiceWeaver/onlineboutique/adservice/AdService",
+    "github.com/ServiceWeaver/onlineboutique/cartservice/CartService",
+    "github.com/ServiceWeaver/onlineboutique/cartservice/cartCache",
+    "github.com/ServiceWeaver/onlineboutique/checkoutservice/CheckoutService",
+    "github.com/ServiceWeaver/onlineboutique/currencyservice/CurrencyService",
+    "github.com/ServiceWeaver/onlineboutique/emailservice/EmailService",
+    "github.com/ServiceWeaver/onlineboutique/paymentservice/PaymentService",
+    "github.com/ServiceWeaver/onlineboutique/productcatalogservice/CatalogService",
+    "github.com/ServiceWeaver/onlineboutique/recommendationservice/RecService",
+    "github.com/ServiceWeaver/onlineboutique/shippingservice/ShippingService"
+  ]
+]
+
+replicas = [
+  {group = "github.com/ServiceWeaver/weaver/Main", cpus="1-3"},
+  {group = "github.com/ServiceWeaver/onlineboutique/adservice/AdService", cpus="4-7"}
+]

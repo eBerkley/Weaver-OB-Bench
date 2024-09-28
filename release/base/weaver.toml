@@ -1,10 +1,12 @@
 [serviceweaver]
 binary = "./onlineboutique"
-
-
+rollout = "5m"
 
 [single]
 listeners.boutique = {address = "localhost:12345"}
 
 [multi]
 listeners.boutique = {address = "localhost:12345"}
+
+# Generated code below:
+

@@ -12,7 +12,7 @@ KUBE_YAML=release/generated/kube.yaml
 WEAVER_GEN_YAML=release/generated/gen.yaml
 LOAD_GEN_YAML=release/generated/loadgen.yaml
 
-weaver generate src/...
+ generate src/...
 cd src; go build -o ../release/generated; cd ..
 
 yaml=$(weaver kube deploy $KUBE_YAML)

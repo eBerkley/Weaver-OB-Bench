@@ -11,16 +11,16 @@ loop_body () {
   local name=$2
 
   echo $fname
-  echo                    | tee -a logs.txt
+  date +%T                | tee -a logs.txt
   echo ===== $name =====  | tee -a logs.txt
   echo                    | tee -a logs.txt
 
-  cp $KUBE_BASE_YAML $KUBE_GEN_YAML
-  sed -i "s#<DOCKER>#$DOCKER#g" $KUBE_GEN_YAML
-  cat $fname >> $KUBE_GEN_YAML
+  cp $KUBE_BASE_TOML $KUBE_GEN_TOML
+  cat $fname >> $KUBE_GEN_TOML
 
   # ./benchmark/benchmark.sh
   make bench
+
   # if there are already results in here
   if [ -d "benchmark/out/$name" ]; then
     rm -rf benchmark/out_old/$name
@@ -38,12 +38,12 @@ loop_body () {
 
 # ===== Specify tests =====
 for name in frontend monolith mixed; do
-  fname=$SCHEME_DIR/$name.yaml
+  fname=$SCHEME_DIR/$name.toml
 # =========================
 
 # ======== Run all ========
 # for fname in $COLOCATION_FNAMES; do
-#   name=$(basename $fname .yaml)
+#   name=$(basename $fname .toml)
 # =========================
 
   loop_body $fname $name
