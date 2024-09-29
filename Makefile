@@ -4,7 +4,7 @@ TOP := .
 
 WEAVER_DIR := $(TOP)/weaver
 WEAVER_CMD := $(WEAVER_DIR)/cmd/weaver
-WEAVER := weaver #$(WEAVER_CMD)/weaver
+WEAVER := $(WEAVER_CMD)/weaver
 
 RELEASE := $(TOP)/release
 SRC := $(TOP)/src

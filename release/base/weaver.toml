@@ -1,6 +1,5 @@
 [serviceweaver]
-binary = "./onlineboutique"
-rollout = "5m"
+binary = "./ob"
 
 [single]
 listeners.boutique = {address = "localhost:12345"}
