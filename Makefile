@@ -47,9 +47,9 @@ all:
 	@echo "plot                 - For when 'bench' has finished running"
 	@echo "stop                 - remove deployments"
 
+
 deploy: $(WEAVER) $(BIN)
 	$(WEAVER) multi deploy $(WEAVER_GEN_TOML)
-	# weaver multi deploy $(WEAVER_GEN_TOML)
 
 check_smt:
 	./scripts/hyperthreading.sh
@@ -66,8 +66,10 @@ bench: deploy
 	./scripts/stop.sh >/dev/null
 
 $(WEAVER):
-	cd $(WEAVER_CMD); go build .
-
+	go build -C $(WEAVER_CMD) .
+	$(WEAVER) generate $(WEAVER_DIR)/...
+	@# Just in case? This could change the weaver_gen.go files in the weaver dir.
+	go build -C $(WEAVER_CMD) .
 
 
 # ./bench_all changes $(WEAVER_GEN_YAML) every time it runs, 
