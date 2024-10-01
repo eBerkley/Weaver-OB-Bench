@@ -48,7 +48,7 @@ all:
 	@echo "stop                 - remove deployments"
 
 
-deploy: $(WEAVER) $(BIN)
+deploy: $(BIN)
 	$(WEAVER) multi deploy $(WEAVER_GEN_TOML)
 
 check_smt:
@@ -67,7 +67,7 @@ bench: deploy
 
 $(WEAVER):
 	go build -C $(WEAVER_CMD) .
-	$(WEAVER) generate $(WEAVER_DIR)/...
+	$(WEAVER) generate weaver/...
 	@# Just in case? This could change the weaver_gen.go files in the weaver dir.
 	go build -C $(WEAVER_CMD) .
 
@@ -89,7 +89,7 @@ plot:
 
 # If src code was modified, 
 #	Update binary
-$(BIN): $(MAIN_SRC)
+$(BIN): $(MAIN_SRC) $(WEAVER)
 	@echo rebuilding binary...
 
 	@cd $(SRC); $(WEAVER) generate ./...; go build -o ../release/generated; cd ..
