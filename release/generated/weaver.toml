@@ -30,8 +30,8 @@ cpus="0-7"
 
 
 replicas = [
-  {group = "github.com/ServiceWeaver/weaver/Main", cpus="1"},
-  {group = "github.com/ServiceWeaver/weaver/Main", cpus="2"},
-  {group = "github.com/ServiceWeaver/weaver/Main", cpus="3"},
-  {group = "github.com/ServiceWeaver/onlineboutique/adservice/AdService", cpus="4-7"}
+  {group = "github.com/ServiceWeaver/weaver/Main", cpus="1", mems="0"},
+  {group = "github.com/ServiceWeaver/weaver/Main", cpus="2", mems="0"},
+  {group = "github.com/ServiceWeaver/weaver/Main", cpus="3", mems="0"},
+  {group = "github.com/ServiceWeaver/onlineboutique/adservice/AdService", cpus="4-7", mems="0"}
 ]
