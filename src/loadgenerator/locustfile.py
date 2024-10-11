@@ -125,10 +125,10 @@ class MultiLoad(LoadTestShape):
     """
     
     # Time between steps
-    step_time = 12 * 60 # 12 minutes
+    step_time = 60 # 12 minutes
     
     # Users at each step
-    step_load = [1000, 2500, 5000, 7500, 10000, 12500, 15000, 17500, 20000, 25000, 30000]
+    step_load = [x for x in range(0,10000, 100)]
 
     # Users to stop/start per second while amount is changing.
     spawn_rate = 5
