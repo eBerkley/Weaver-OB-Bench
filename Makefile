@@ -29,7 +29,7 @@ COLOCATION_BASE := $(foreach var, $(COLOCATION_FNAMES), $(shell basename $(var) 
 BIN := $(GENERATED)/ob
 
 LOAD_SRC := $(SRC)/loadgenerator
-LOAD_SRC_ALL := $(LOAD_SRC)/entrypoint.sh $(LOAD_SRC)/locustfile.py
+LOAD_SRC_ALL := $(LOAD_SRC)/entrypoint.sh $(LOAD_SRC)/locustfile.py $(LOAD_SRC)/Dockerfile
 
 # All .go files in src/** that aren't generated
 MAIN_SRC := $(filter-out %weaver_gen.go, $(wildcard $(SRC)/*/*.go))

@@ -1,6 +1,11 @@
 FROM python:3.12.4-slim@sha256:2fba8e70a87bcc9f6edd20dda0a1d4adb32046d2acbca7361bc61da5a106a914 as base
-
 FROM base as builder
+RUN apt-get update -y && \
+  apt-get install --no-install-recommends -y -q \
+  git libpq-dev python-dev-is-python3 build-essential libsnappy-dev && \
+  apt-get clean && \
+  rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
 
 COPY requirements.txt .
 
