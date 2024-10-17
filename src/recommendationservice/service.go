@@ -16,6 +16,7 @@ package recommendationservice
 
 import (
 	"context"
+	"runtime"
 	// "math/rand"
 
 	"github.com/ServiceWeaver/onlineboutique/productcatalogservice"
@@ -29,6 +30,11 @@ type RecService interface {
 type impl struct {
 	weaver.Implements[RecService]
 	catalogService weaver.Ref[productcatalogservice.CatalogService]
+}
+
+func (s *impl) Init(_ context.Context) error {
+	runtime.GOMAXPROCS(1)
+	return nil
 }
 
 func (s *impl) ListRecommendations(ctx context.Context, userID string, userProductIDs []string) ([]string, error) {

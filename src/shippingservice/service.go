@@ -17,6 +17,7 @@ package shippingservice
 import (
 	"context"
 	"fmt"
+	"runtime"
 
 	"github.com/ServiceWeaver/onlineboutique/cartservice"
 	"github.com/ServiceWeaver/onlineboutique/types/money"
@@ -39,6 +40,11 @@ type ShippingService interface {
 
 type impl struct {
 	weaver.Implements[ShippingService]
+}
+
+func (s *impl) Init(_ context.Context) error {
+	runtime.GOMAXPROCS(1)
+	return nil
 }
 
 // GetQuote produces a shipping quote (cost) in USD.

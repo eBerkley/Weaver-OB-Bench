@@ -16,6 +16,7 @@ package cartservice
 
 import (
 	"context"
+	"runtime"
 
 	"github.com/ServiceWeaver/weaver"
 	lru "github.com/hashicorp/golang-lru/v2"
@@ -45,6 +46,7 @@ type cartCacheImpl struct {
 }
 
 func (c *cartCacheImpl) Init(context.Context) error {
+	runtime.GOMAXPROCS(1)
 	cache, err := lru.New[string, []CartItem](cacheSize)
 	c.cache = cache
 	return err

@@ -26,5 +26,3 @@ sleep 30
 
 
 # minikube dashboard
-# kubectl label nodes minikube type=master
-# kubectl label nodes minikube-m02 type=worker

@@ -17,6 +17,7 @@ package adservice
 import (
 	"context"
 	"math/rand"
+	"runtime"
 	"strings"
 
 	"golang.org/x/exp/maps"
@@ -47,6 +48,7 @@ type impl struct {
 }
 
 func (s *impl) Init(ctx context.Context) error {
+	runtime.GOMAXPROCS(1)
 	s.Logger(ctx).Info("Ad Service started")
 	s.ads = createAdsMap()
 	return nil

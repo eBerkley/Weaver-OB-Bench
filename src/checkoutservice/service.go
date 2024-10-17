@@ -17,6 +17,7 @@ package checkoutservice
 import (
 	"context"
 	"fmt"
+	"runtime"
 
 	"github.com/ServiceWeaver/onlineboutique/cartservice"
 	"github.com/ServiceWeaver/onlineboutique/currencyservice"
@@ -52,6 +53,11 @@ type impl struct {
 	shippingService weaver.Ref[shippingservice.ShippingService]
 	emailService    weaver.Ref[emailservice.EmailService]
 	paymentService  weaver.Ref[paymentservice.PaymentService]
+}
+
+func (s *impl) Init(_ context.Context) error {
+	runtime.GOMAXPROCS(1)
+	return nil
 }
 
 func (s *impl) PlaceOrder(ctx context.Context, req PlaceOrderRequest) (types.Order, error) {

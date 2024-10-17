@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"runtime"
 	"strings"
 	"sync"
 	"syscall"
@@ -69,6 +70,7 @@ type impl struct {
 }
 
 func (s *impl) Init(ctx context.Context) error {
+	runtime.GOMAXPROCS(1)
 	var extraLatency time.Duration
 	if extra := os.Getenv("EXTRA_LATENCY"); extra != "" {
 		v, err := time.ParseDuration(extra)

@@ -24,7 +24,6 @@ to see some basic usage, run `make` in the root of the directory.
 - To benchmark specific colocation schemes, in `make_scripts/bench_all.sh`, modify line 40 and write the specific schemes you want to use.
   - These schemes can be found in `release/base/colocation`
 - Assuming `make bench_all` is used to run the benchmarks, the output should appear in the benchmark dir.
-- The environment variable GOMAXPROCS=1 should be set for every component process, but currently this functionality is not implemented.
 
 Note that most code is not production grade, and has not been thoroughly tested to work on every machine. If something breaks, let me know and I'll do my best to fix it.
 

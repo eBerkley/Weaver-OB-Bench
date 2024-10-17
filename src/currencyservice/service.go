@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"runtime"
 	"strconv"
 
 	"github.com/ServiceWeaver/onlineboutique/types/money"
@@ -45,6 +46,7 @@ type impl struct {
 }
 
 func (s *impl) Init(context.Context) error {
+	runtime.GOMAXPROCS(1)
 	// m, err := createConversionMap()
 	// s.conversionMap = m
 	om, err := createConversionOM()
