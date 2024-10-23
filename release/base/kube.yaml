@@ -9,10 +9,10 @@ listeners:
 
 resourceSpec:
   requests:
-    cpu: "1"
+    cpu: <OB_CORES>
     memory: "2048Mi"
   limits:
-    cpu: "1"
+    cpu: <OB_CORES>
     memory: "2048Mi"
   
 scalingSpec:

@@ -20,6 +20,8 @@ COPY --from=builder /install /usr/local
 # Add application code.
 COPY locustfile.py .
 COPY entrypoint.sh .
+COPY multiload.py .
+COPY rampload.py .
 
 RUN chmod +x entrypoint.sh
 
