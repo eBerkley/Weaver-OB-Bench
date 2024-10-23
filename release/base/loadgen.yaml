@@ -66,7 +66,7 @@ spec:
           value: <ADDR>
         
         - name: LOADGEN_REPLICAS
-          value: <LOADGEN_REPLICAS>
+          value: <LOADGEN_REPLICAS_ENV>
 
         - name: LOCUST_SHAPE
           value: <LOCUST_SHAPE>

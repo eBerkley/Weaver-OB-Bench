@@ -1,9 +1,7 @@
 .EXPORT_ALL_VARIABLES:
 
-# sets LOADGEN_REPLICAS, DOCKER, OB_CORES
+# sets LOADGEN_REPLICAS, DOCKER, OB_CORES, LOCUST_SHAPE
 include CONFIG.cfg
-
-# DOCKER ?= docker.io/eberkley
 
 TOP := .
 
@@ -82,6 +80,7 @@ toggle_smt:
 	./scripts/hyperthreading.sh 2
 
 deploy: check_docker minikube_start $(WEAVER_GEN_YAML) $(LOAD_GEN_YAML)
+	@# check_docker should prevent gen yaml scripts from firing without `$$DOCKER` being set.
 	@echo deploying onlineboutique, loadgenerator...
 	@-./scripts/stop.sh >/dev/null 2>/dev/null
 	

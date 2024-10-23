@@ -21,7 +21,6 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
-	"runtime"
 	"strings"
 	"sync"
 	"syscall"
@@ -29,6 +28,7 @@ import (
 
 	"github.com/ServiceWeaver/onlineboutique/types/money"
 	"github.com/ServiceWeaver/weaver"
+	_ "go.uber.org/automaxprocs"
 )
 
 var (
@@ -70,7 +70,6 @@ type impl struct {
 }
 
 func (s *impl) Init(ctx context.Context) error {
-	runtime.GOMAXPROCS(1)
 	var extraLatency time.Duration
 	if extra := os.Getenv("EXTRA_LATENCY"); extra != "" {
 		v, err := time.ParseDuration(extra)

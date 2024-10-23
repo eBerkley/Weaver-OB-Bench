@@ -16,11 +16,11 @@ package paymentservice
 
 import (
 	"context"
-	"runtime"
 	"time"
 
 	"github.com/ServiceWeaver/onlineboutique/types/money"
 	"github.com/ServiceWeaver/weaver"
+	_ "go.uber.org/automaxprocs"
 )
 
 type CreditCardInfo struct {
@@ -46,11 +46,6 @@ type PaymentService interface {
 
 type impl struct {
 	weaver.Implements[PaymentService]
-}
-
-func (s *impl) Init(_ context.Context) error {
-	runtime.GOMAXPROCS(1)
-	return nil
 }
 
 // Charge charges the given amount of money to the given credit card, returning

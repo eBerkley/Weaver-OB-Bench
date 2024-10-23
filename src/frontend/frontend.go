@@ -22,7 +22,6 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"runtime"
 	"slices"
 
 	"github.com/ServiceWeaver/onlineboutique/adservice"
@@ -33,6 +32,7 @@ import (
 	"github.com/ServiceWeaver/onlineboutique/recommendationservice"
 	"github.com/ServiceWeaver/onlineboutique/shippingservice"
 	"github.com/ServiceWeaver/weaver"
+	_ "go.uber.org/automaxprocs"
 )
 
 const (
@@ -75,7 +75,6 @@ type Server struct {
 }
 
 func Serve(ctx context.Context, s *Server) error {
-	runtime.GOMAXPROCS(1)
 	// Find out where we're running.
 	// Set ENV_PLATFORM (default to local if not set; use env var if set;
 	// otherwise detect GCP, which overrides env).

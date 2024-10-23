@@ -10,7 +10,7 @@ listeners:
 resourceSpec:
   requests:
     cpu: <OB_CORES>
-    memory: "2048Mi"
+    memory: "512" # revert this
   limits:
     cpu: <OB_CORES>
     memory: "2048Mi"

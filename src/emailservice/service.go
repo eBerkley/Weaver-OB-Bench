@@ -20,10 +20,10 @@ import (
 	_ "embed"
 	"fmt"
 	"html/template"
-	"runtime"
 
 	"github.com/ServiceWeaver/onlineboutique/types"
 	"github.com/ServiceWeaver/weaver"
+	_ "go.uber.org/automaxprocs"
 )
 
 var (
@@ -43,11 +43,6 @@ type EmailService interface {
 
 type impl struct {
 	weaver.Implements[EmailService]
-}
-
-func (s *impl) Init(_ context.Context) error {
-	runtime.GOMAXPROCS(1)
-	return nil
 }
 
 // SendOrderConfirmation sends the confirmation email for the order to the

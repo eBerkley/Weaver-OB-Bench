@@ -9,6 +9,7 @@ require (
 	github.com/iancoleman/orderedmap v0.3.0
 	go.opentelemetry.io/otel v1.19.0
 	go.opentelemetry.io/otel/trace v1.19.0
+	go.uber.org/automaxprocs v1.6.0
 	golang.org/x/exp v0.0.0-20230713183714-613f0c0eb8a1
 )
 

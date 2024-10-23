@@ -17,11 +17,11 @@ package shippingservice
 import (
 	"context"
 	"fmt"
-	"runtime"
 
 	"github.com/ServiceWeaver/onlineboutique/cartservice"
 	"github.com/ServiceWeaver/onlineboutique/types/money"
 	"github.com/ServiceWeaver/weaver"
+	_ "go.uber.org/automaxprocs"
 )
 
 type Address struct {
@@ -43,7 +43,6 @@ type impl struct {
 }
 
 func (s *impl) Init(_ context.Context) error {
-	runtime.GOMAXPROCS(1)
 	return nil
 }
 

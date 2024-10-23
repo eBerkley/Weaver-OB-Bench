@@ -16,9 +16,9 @@ package cartservice
 
 import (
 	"context"
-	"runtime"
 
 	"github.com/ServiceWeaver/weaver"
+	_ "go.uber.org/automaxprocs"
 )
 
 type CartItem struct {
@@ -40,7 +40,7 @@ type impl struct {
 }
 
 func (s *impl) Init(ctx context.Context) error {
-	runtime.GOMAXPROCS(1)
+
 	store, err := newCartStore(s.Logger(ctx), s.cache.Get())
 	s.store = store
 	return err
