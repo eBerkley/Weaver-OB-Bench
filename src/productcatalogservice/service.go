@@ -18,6 +18,7 @@ import (
 	"context"
 	_ "embed"
 	"encoding/json"
+	_ "go.uber.org/automaxprocs"
 	"fmt"
 	"os"
 	"os/signal"

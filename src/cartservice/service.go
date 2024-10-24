@@ -16,6 +16,7 @@ package cartservice
 
 import (
 	"context"
+	_ "go.uber.org/automaxprocs"
 
 	"github.com/ServiceWeaver/weaver"
 )

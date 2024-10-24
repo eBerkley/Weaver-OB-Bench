@@ -1,4 +1,5 @@
 appConfig: weaver.toml
+
 repo: <DOCKER>
 
 listeners:
@@ -9,20 +10,20 @@ listeners:
 
 resourceSpec:
   requests:
-    cpu: "1"
+    cpu: <OB_CORES>
     memory: "2048Mi"
   limits:
-    cpu: "1"
+    cpu: <OB_CORES>
     memory: "2048Mi"
   
 scalingSpec:
   minReplicas: 1
-  maxReplicas: 20
+  maxReplicas: <OB_REPLICAS>
   metrics:
     - type: Resource
       resource:
         name: cpu
         target:
           type: Utilization
-          averageUtilization: 65
+          averageUtilization: 5
 

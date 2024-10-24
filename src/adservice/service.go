@@ -20,6 +20,7 @@ import (
 	"strings"
 
 	"golang.org/x/exp/maps"
+	_ "go.uber.org/automaxprocs"
 
 	"github.com/ServiceWeaver/weaver"
 	"go.opentelemetry.io/otel/attribute"

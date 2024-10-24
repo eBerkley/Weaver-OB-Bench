@@ -1,6 +1,8 @@
 .EXPORT_ALL_VARIABLES:
 
-DOCKER ?= docker.io/eberkley
+#DOCKER ?= docker.io/dmquinn
+# sets LOADGEN_REPLICAS, DOCKER, OB_CORES
+include CONFIG.cfg
 
 TOP := .
 
@@ -32,7 +34,8 @@ LOAD_SRC := $(SRC)/loadgenerator
 LOAD_SRC_ALL := $(LOAD_SRC)/entrypoint.sh $(LOAD_SRC)/locustfile.py
 
 # All .go files in src/** that aren't generated
-MAIN_SRC := $(filter-out %weaver_gen.go, $(wildcard $(SRC)/*/*.go))
+MAIN_SRC := $(SRC)/main.go $(filter-out %weaver_gen.go, $(wildcard $(SRC)/*/*.go))
+
 
 VERSION_FILE := $(GENERATED)/version.txt
 
@@ -77,7 +80,6 @@ deploy: minikube_start $(WEAVER_GEN_YAML) $(LOAD_GEN_YAML)
 	
 	@# must be first so first socket is entirely used.
 	@kubectl apply -f $(LOAD_GEN_YAML) >> $(LOGS_FILE)
-	sleep 30
 	@kubectl apply -f $(WEAVER_GEN_YAML) >> $(LOGS_FILE)
 
 bench: deploy
@@ -112,15 +114,17 @@ $(WEAVER_GEN_YAML): $(KUBE_GEN_YAML) $(BIN)
 
 	@./make_scripts/weaver_gen_yaml.sh 
 
-$(KUBE_GEN_YAML): $(KUBE_BASE_YAML)
+$(KUBE_GEN_YAML): $(KUBE_BASE_YAML) CONFIG.cfg
 	@cp $(KUBE_BASE_YAML) $(KUBE_GEN_YAML)
 	@sed -i "s#<DOCKER>#$$DOCKER#g" $(KUBE_GEN_YAML)
+	@echo "OB_CORES: $(OB_CORES)"
+	@sed -i "s/<OB_CORES>/$$OB_CORES/g" $(KUBE_GEN_YAML)
+
 
 # if Loadgen code was modified,
 #	Update Load Generator
-$(LOAD_GEN_YAML): $(LOAD_SRC_ALL) $(VERSION_FILE)
+$(LOAD_GEN_YAML): $(LOAD_SRC_ALL) $(VERSION_FILE) $(LOAD_BASE_YAML) CONFIG.cfg
 	@echo rebuilding loadgenerator container...
-
 	@./make_scripts/load_gen_yaml.sh
 
 # If src code was modified, 

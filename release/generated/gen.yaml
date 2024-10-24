@@ -2,26 +2,20 @@
 # application:
 #
 #     app: ob
-#     version: 0997663c
+#     version: a594f88f
 #     components groups:
 #     - 
-#       - github.com/ServiceWeaver/onlineboutique/cartservice/CartService
-#       - github.com/ServiceWeaver/onlineboutique/cartservice/cartCache
-#     - 
+#       - github.com/ServiceWeaver/weaver/Main
+#       - github.com/ServiceWeaver/onlineboutique/adservice/AdService
+#       - github.com/ServiceWeaver/onlineboutique/productcatalogservice/CatalogService
 #       - github.com/ServiceWeaver/onlineboutique/checkoutservice/CheckoutService
+#       - github.com/ServiceWeaver/onlineboutique/currencyservice/CurrencyService
 #       - github.com/ServiceWeaver/onlineboutique/emailservice/EmailService
 #       - github.com/ServiceWeaver/onlineboutique/paymentservice/PaymentService
-#     - 
-#       - github.com/ServiceWeaver/onlineboutique/currencyservice/CurrencyService
-#     - 
-#       - github.com/ServiceWeaver/onlineboutique/productcatalogservice/CatalogService
-#     - 
 #       - github.com/ServiceWeaver/onlineboutique/recommendationservice/RecService
-#     - 
 #       - github.com/ServiceWeaver/onlineboutique/shippingservice/ShippingService
-#     - 
-#       - github.com/ServiceWeaver/onlineboutique/adservice/AdService
-#       - github.com/ServiceWeaver/weaver/Main
+#       - github.com/ServiceWeaver/onlineboutique/cartservice/CartService
+#       - github.com/ServiceWeaver/onlineboutique/cartservice/cartCache
 #     listeners:
 #     - boutique
 #
@@ -34,19 +28,19 @@
 #
 # To deploy these resources, run:
 #
-#     kubectl apply -f /tmp/kube_0997663c.yaml
+#     kubectl apply -f /tmp/kube_a594f88f.yaml
 #
 # To view the deployed resources, run:
 #
-#     kubectl get all,configmaps --selector=serviceweaver/version=0997663c
+#     kubectl get all,configmaps --selector=serviceweaver/version=a594f88f
 #
 # To view a description of every resource, run:
 #
-#     kubectl get all,configmaps --selector=serviceweaver/version=0997663c -o custom-columns=KIND:.kind,NAME:.metadata.name,APP:.metadata.labels.serviceweaver/app,VERSION:.metadata.labels.serviceweaver/version,DESCRIPTION:.metadata.annotations.description
+#     kubectl get all,configmaps --selector=serviceweaver/version=a594f88f -o custom-columns=KIND:.kind,NAME:.metadata.name,APP:.metadata.labels.serviceweaver/app,VERSION:.metadata.labels.serviceweaver/version,DESCRIPTION:.metadata.annotations.description
 #
 # To delete the resources, run:
 #
-#     kubectl delete all,configmaps --selector=serviceweaver/version=0997663c
+#     kubectl delete all,configmaps --selector=serviceweaver/version=a594f88f
 
 
 # Roles.
@@ -90,60 +84,60 @@ subjects:
 apiVersion: v1
 data:
   config.textpb: |
-    namespace:  "default"
-    deployment_id:  "0997663c-a590-4fff-9146-c8eff3521589"
-    listeners:  {
-      key:  "boutique"
-      value:  8080
+    namespace: "default"
+    deployment_id: "a594f88f-3f06-450a-ac21-b9896b176f8b"
+    listeners: {
+      key: "boutique"
+      value: 8080
     }
-    groups:  {
-      key:  "github.com/ServiceWeaver/onlineboutique/adservice/AdService"
-      value:  "mainad"
+    groups: {
+      key: "github.com/ServiceWeaver/onlineboutique/adservice/AdService"
+      value: "all"
     }
-    groups:  {
-      key:  "github.com/ServiceWeaver/onlineboutique/cartservice/CartService"
-      value:  "carts"
+    groups: {
+      key: "github.com/ServiceWeaver/onlineboutique/cartservice/CartService"
+      value: "all"
     }
-    groups:  {
-      key:  "github.com/ServiceWeaver/onlineboutique/cartservice/cartCache"
-      value:  "carts"
+    groups: {
+      key: "github.com/ServiceWeaver/onlineboutique/cartservice/cartCache"
+      value: "all"
     }
-    groups:  {
-      key:  "github.com/ServiceWeaver/onlineboutique/checkoutservice/CheckoutService"
-      value:  "checkoutemailpay"
+    groups: {
+      key: "github.com/ServiceWeaver/onlineboutique/checkoutservice/CheckoutService"
+      value: "all"
     }
-    groups:  {
-      key:  "github.com/ServiceWeaver/onlineboutique/currencyservice/CurrencyService"
-      value:  "github.com/ServiceWeaver/onlineboutique/currencyservice/CurrencyService"
+    groups: {
+      key: "github.com/ServiceWeaver/onlineboutique/currencyservice/CurrencyService"
+      value: "all"
     }
-    groups:  {
-      key:  "github.com/ServiceWeaver/onlineboutique/emailservice/EmailService"
-      value:  "checkoutemailpay"
+    groups: {
+      key: "github.com/ServiceWeaver/onlineboutique/emailservice/EmailService"
+      value: "all"
     }
-    groups:  {
-      key:  "github.com/ServiceWeaver/onlineboutique/paymentservice/PaymentService"
-      value:  "checkoutemailpay"
+    groups: {
+      key: "github.com/ServiceWeaver/onlineboutique/paymentservice/PaymentService"
+      value: "all"
     }
-    groups:  {
-      key:  "github.com/ServiceWeaver/onlineboutique/productcatalogservice/CatalogService"
-      value:  "github.com/ServiceWeaver/onlineboutique/productcatalogservice/CatalogService"
+    groups: {
+      key: "github.com/ServiceWeaver/onlineboutique/productcatalogservice/CatalogService"
+      value: "all"
     }
-    groups:  {
-      key:  "github.com/ServiceWeaver/onlineboutique/recommendationservice/RecService"
-      value:  "github.com/ServiceWeaver/onlineboutique/recommendationservice/RecService"
+    groups: {
+      key: "github.com/ServiceWeaver/onlineboutique/recommendationservice/RecService"
+      value: "all"
     }
-    groups:  {
-      key:  "github.com/ServiceWeaver/onlineboutique/shippingservice/ShippingService"
-      value:  "github.com/ServiceWeaver/onlineboutique/shippingservice/ShippingService"
+    groups: {
+      key: "github.com/ServiceWeaver/onlineboutique/shippingservice/ShippingService"
+      value: "all"
     }
-    groups:  {
-      key:  "github.com/ServiceWeaver/weaver/Main"
-      value:  "mainad"
+    groups: {
+      key: "github.com/ServiceWeaver/weaver/Main"
+      value: "all"
     }
-    telemetry:  {
-      metrics:  {
-        export_interval:  {
-          seconds:  30
+    telemetry: {
+      metrics: {
+        export_interval: {
+          seconds: 30
         }
       }
     }
@@ -164,654 +158,17 @@ data:
 kind: ConfigMap
 metadata:
   annotations:
-    description: This ConfigMap contains config files for app "ob" version "0997663c".
+    description: This ConfigMap contains config files for app "ob" version "a594f88f".
   creationTimestamp: null
   labels:
     serviceweaver/app: ob
-    serviceweaver/version: 0997663c
-  name: config-0997663c
+    serviceweaver/version: a594f88f
+  name: config-a594f88f
   namespace: default
 
 ---
 
-# Deployment for group carts
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  annotations:
-    description: This Deployment hosts components github.com/ServiceWeaver/onlineboutique/cartservice/CartService,
-      github.com/ServiceWeaver/onlineboutique/cartservice/cartCache.
-  creationTimestamp: null
-  labels:
-    serviceweaver/app: ob
-    serviceweaver/version: 0997663c
-  name: ob-carts-0997663c-c205a882
-  namespace: default
-spec:
-  selector:
-    matchLabels:
-      serviceweaver/name: ob-carts-0997663c-c205a882
-  strategy: {}
-  template:
-    metadata:
-      annotations:
-        description: This Pod hosts components github.com/ServiceWeaver/onlineboutique/cartservice/CartService,
-          github.com/ServiceWeaver/onlineboutique/cartservice/cartCache.
-      creationTimestamp: null
-      labels:
-        serviceweaver/app: ob
-        serviceweaver/name: ob-carts-0997663c-c205a882
-        serviceweaver/version: 0997663c
-      namespace: default
-    spec:
-      affinity:
-        podAntiAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-          - podAffinityTerm:
-              labelSelector:
-                matchLabels:
-                  serviceweaver/name: ob-carts-0997663c-c205a882
-              topologyKey: kubernetes.io/hostname
-            weight: 100
-      containers:
-      - args:
-        - babysitter
-        - /weaver/weaver.toml
-        - /weaver/config.textpb
-        - github.com/ServiceWeaver/onlineboutique/cartservice/CartService
-        - github.com/ServiceWeaver/onlineboutique/cartservice/cartCache
-        image: docker.io/eberkley/ob:0997663c
-        imagePullPolicy: IfNotPresent
-        name: serviceweaver
-        resources:
-          limits:
-            cpu: "1"
-            memory: 2Gi
-          requests:
-            cpu: "1"
-            memory: 2Gi
-        stdin: true
-        tty: true
-        volumeMounts:
-        - mountPath: /weaver/weaver.toml
-          name: config
-          subPath: weaver.toml
-        - mountPath: /weaver/config.textpb
-          name: config
-          subPath: config.textpb
-      dnsPolicy: ClusterFirst
-      serviceAccountName: default
-      volumes:
-      - configMap:
-          name: config-0997663c
-        name: config
-status: {}
-
----
-
-# Autoscaler for group carts
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-metadata:
-  annotations:
-    description: This HorizontalPodAutoscaler scales the "ob-carts-0997663c-c205a882"
-      Deployment.
-  creationTimestamp: null
-  labels:
-    serviceweaver/app: ob
-    serviceweaver/version: 0997663c
-  name: ob-carts-0997663c-c205a882
-  namespace: default
-spec:
-  maxReplicas: 20
-  metrics:
-  - resource:
-      name: cpu
-      target:
-        averageUtilization: 65
-        type: Utilization
-    type: Resource
-  minReplicas: 1
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: ob-carts-0997663c-c205a882
-status:
-  currentMetrics: null
-  desiredReplicas: 0
-
----
-
-# Deployment for group checkoutemailpay
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  annotations:
-    description: This Deployment hosts components github.com/ServiceWeaver/onlineboutique/checkoutservice/CheckoutService,
-      github.com/ServiceWeaver/onlineboutique/emailservice/EmailService, github.com/ServiceWeaver/onlineboutique/paymentservice/PaymentService.
-  creationTimestamp: null
-  labels:
-    serviceweaver/app: ob
-    serviceweaver/version: 0997663c
-  name: ob-checkoutemailpay-0997663c-04690cec
-  namespace: default
-spec:
-  selector:
-    matchLabels:
-      serviceweaver/name: ob-checkoutemailpay-0997663c-04690cec
-  strategy: {}
-  template:
-    metadata:
-      annotations:
-        description: This Pod hosts components github.com/ServiceWeaver/onlineboutique/checkoutservice/CheckoutService,
-          github.com/ServiceWeaver/onlineboutique/emailservice/EmailService, github.com/ServiceWeaver/onlineboutique/paymentservice/PaymentService.
-      creationTimestamp: null
-      labels:
-        serviceweaver/app: ob
-        serviceweaver/name: ob-checkoutemailpay-0997663c-04690cec
-        serviceweaver/version: 0997663c
-      namespace: default
-    spec:
-      affinity:
-        podAntiAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-          - podAffinityTerm:
-              labelSelector:
-                matchLabels:
-                  serviceweaver/name: ob-checkoutemailpay-0997663c-04690cec
-              topologyKey: kubernetes.io/hostname
-            weight: 100
-      containers:
-      - args:
-        - babysitter
-        - /weaver/weaver.toml
-        - /weaver/config.textpb
-        - github.com/ServiceWeaver/onlineboutique/checkoutservice/CheckoutService
-        - github.com/ServiceWeaver/onlineboutique/emailservice/EmailService
-        - github.com/ServiceWeaver/onlineboutique/paymentservice/PaymentService
-        image: docker.io/eberkley/ob:0997663c
-        imagePullPolicy: IfNotPresent
-        name: serviceweaver
-        resources:
-          limits:
-            cpu: "1"
-            memory: 2Gi
-          requests:
-            cpu: "1"
-            memory: 2Gi
-        stdin: true
-        tty: true
-        volumeMounts:
-        - mountPath: /weaver/weaver.toml
-          name: config
-          subPath: weaver.toml
-        - mountPath: /weaver/config.textpb
-          name: config
-          subPath: config.textpb
-      dnsPolicy: ClusterFirst
-      serviceAccountName: default
-      volumes:
-      - configMap:
-          name: config-0997663c
-        name: config
-status: {}
-
----
-
-# Autoscaler for group checkoutemailpay
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-metadata:
-  annotations:
-    description: This HorizontalPodAutoscaler scales the "ob-checkoutemailpay-0997663c-04690cec"
-      Deployment.
-  creationTimestamp: null
-  labels:
-    serviceweaver/app: ob
-    serviceweaver/version: 0997663c
-  name: ob-checkoutemailpay-0997663c-04690cec
-  namespace: default
-spec:
-  maxReplicas: 20
-  metrics:
-  - resource:
-      name: cpu
-      target:
-        averageUtilization: 65
-        type: Utilization
-    type: Resource
-  minReplicas: 1
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: ob-checkoutemailpay-0997663c-04690cec
-status:
-  currentMetrics: null
-  desiredReplicas: 0
-
----
-
-# Deployment for group github.com/ServiceWeaver/onlineboutique/currencyservice/CurrencyService
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  annotations:
-    description: This Deployment hosts components github.com/ServiceWeaver/onlineboutique/currencyservice/CurrencyService.
-  creationTimestamp: null
-  labels:
-    serviceweaver/app: ob
-    serviceweaver/version: 0997663c
-  name: ob-currencyservice-currencyservice-0997663c-c3fc62ee
-  namespace: default
-spec:
-  selector:
-    matchLabels:
-      serviceweaver/name: ob-currencyservice-currencyservice-0997663c-c3fc62ee
-  strategy: {}
-  template:
-    metadata:
-      annotations:
-        description: This Pod hosts components github.com/ServiceWeaver/onlineboutique/currencyservice/CurrencyService.
-      creationTimestamp: null
-      labels:
-        serviceweaver/app: ob
-        serviceweaver/name: ob-currencyservice-currencyservice-0997663c-c3fc62ee
-        serviceweaver/version: 0997663c
-      namespace: default
-    spec:
-      affinity:
-        podAntiAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-          - podAffinityTerm:
-              labelSelector:
-                matchLabels:
-                  serviceweaver/name: ob-currencyservice-currencyservice-0997663c-c3fc62ee
-              topologyKey: kubernetes.io/hostname
-            weight: 100
-      containers:
-      - args:
-        - babysitter
-        - /weaver/weaver.toml
-        - /weaver/config.textpb
-        - github.com/ServiceWeaver/onlineboutique/currencyservice/CurrencyService
-        image: docker.io/eberkley/ob:0997663c
-        imagePullPolicy: IfNotPresent
-        name: serviceweaver
-        resources:
-          limits:
-            cpu: "1"
-            memory: 2Gi
-          requests:
-            cpu: "1"
-            memory: 2Gi
-        stdin: true
-        tty: true
-        volumeMounts:
-        - mountPath: /weaver/weaver.toml
-          name: config
-          subPath: weaver.toml
-        - mountPath: /weaver/config.textpb
-          name: config
-          subPath: config.textpb
-      dnsPolicy: ClusterFirst
-      serviceAccountName: default
-      volumes:
-      - configMap:
-          name: config-0997663c
-        name: config
-status: {}
-
----
-
-# Autoscaler for group github.com/ServiceWeaver/onlineboutique/currencyservice/CurrencyService
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-metadata:
-  annotations:
-    description: This HorizontalPodAutoscaler scales the "ob-currencyservice-currencyservice-0997663c-c3fc62ee"
-      Deployment.
-  creationTimestamp: null
-  labels:
-    serviceweaver/app: ob
-    serviceweaver/version: 0997663c
-  name: ob-currencyservice-currencyservice-0997663c-c3fc62ee
-  namespace: default
-spec:
-  maxReplicas: 20
-  metrics:
-  - resource:
-      name: cpu
-      target:
-        averageUtilization: 65
-        type: Utilization
-    type: Resource
-  minReplicas: 1
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: ob-currencyservice-currencyservice-0997663c-c3fc62ee
-status:
-  currentMetrics: null
-  desiredReplicas: 0
-
----
-
-# Deployment for group github.com/ServiceWeaver/onlineboutique/productcatalogservice/CatalogService
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  annotations:
-    description: This Deployment hosts components github.com/ServiceWeaver/onlineboutique/productcatalogservice/CatalogService.
-  creationTimestamp: null
-  labels:
-    serviceweaver/app: ob
-    serviceweaver/version: 0997663c
-  name: ob-productcatalogservice-catalogservice-0997663c-ef666ca5
-  namespace: default
-spec:
-  selector:
-    matchLabels:
-      serviceweaver/name: ob-productcatalogservice-catalogservice-0997663c-ef666ca5
-  strategy: {}
-  template:
-    metadata:
-      annotations:
-        description: This Pod hosts components github.com/ServiceWeaver/onlineboutique/productcatalogservice/CatalogService.
-      creationTimestamp: null
-      labels:
-        serviceweaver/app: ob
-        serviceweaver/name: ob-productcatalogservice-catalogservice-0997663c-ef666ca5
-        serviceweaver/version: 0997663c
-      namespace: default
-    spec:
-      affinity:
-        podAntiAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-          - podAffinityTerm:
-              labelSelector:
-                matchLabels:
-                  serviceweaver/name: ob-productcatalogservice-catalogservice-0997663c-ef666ca5
-              topologyKey: kubernetes.io/hostname
-            weight: 100
-      containers:
-      - args:
-        - babysitter
-        - /weaver/weaver.toml
-        - /weaver/config.textpb
-        - github.com/ServiceWeaver/onlineboutique/productcatalogservice/CatalogService
-        image: docker.io/eberkley/ob:0997663c
-        imagePullPolicy: IfNotPresent
-        name: serviceweaver
-        resources:
-          limits:
-            cpu: "1"
-            memory: 2Gi
-          requests:
-            cpu: "1"
-            memory: 2Gi
-        stdin: true
-        tty: true
-        volumeMounts:
-        - mountPath: /weaver/weaver.toml
-          name: config
-          subPath: weaver.toml
-        - mountPath: /weaver/config.textpb
-          name: config
-          subPath: config.textpb
-      dnsPolicy: ClusterFirst
-      serviceAccountName: default
-      volumes:
-      - configMap:
-          name: config-0997663c
-        name: config
-status: {}
-
----
-
-# Autoscaler for group github.com/ServiceWeaver/onlineboutique/productcatalogservice/CatalogService
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-metadata:
-  annotations:
-    description: This HorizontalPodAutoscaler scales the "ob-productcatalogservice-catalogservice-0997663c-ef666ca5"
-      Deployment.
-  creationTimestamp: null
-  labels:
-    serviceweaver/app: ob
-    serviceweaver/version: 0997663c
-  name: ob-productcatalogservice-catalogservice-0997663c-ef666ca5
-  namespace: default
-spec:
-  maxReplicas: 20
-  metrics:
-  - resource:
-      name: cpu
-      target:
-        averageUtilization: 65
-        type: Utilization
-    type: Resource
-  minReplicas: 1
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: ob-productcatalogservice-catalogservice-0997663c-ef666ca5
-status:
-  currentMetrics: null
-  desiredReplicas: 0
-
----
-
-# Deployment for group github.com/ServiceWeaver/onlineboutique/recommendationservice/RecService
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  annotations:
-    description: This Deployment hosts components github.com/ServiceWeaver/onlineboutique/recommendationservice/RecService.
-  creationTimestamp: null
-  labels:
-    serviceweaver/app: ob
-    serviceweaver/version: 0997663c
-  name: ob-recommendationservice-recservice-0997663c-486444e0
-  namespace: default
-spec:
-  selector:
-    matchLabels:
-      serviceweaver/name: ob-recommendationservice-recservice-0997663c-486444e0
-  strategy: {}
-  template:
-    metadata:
-      annotations:
-        description: This Pod hosts components github.com/ServiceWeaver/onlineboutique/recommendationservice/RecService.
-      creationTimestamp: null
-      labels:
-        serviceweaver/app: ob
-        serviceweaver/name: ob-recommendationservice-recservice-0997663c-486444e0
-        serviceweaver/version: 0997663c
-      namespace: default
-    spec:
-      affinity:
-        podAntiAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-          - podAffinityTerm:
-              labelSelector:
-                matchLabels:
-                  serviceweaver/name: ob-recommendationservice-recservice-0997663c-486444e0
-              topologyKey: kubernetes.io/hostname
-            weight: 100
-      containers:
-      - args:
-        - babysitter
-        - /weaver/weaver.toml
-        - /weaver/config.textpb
-        - github.com/ServiceWeaver/onlineboutique/recommendationservice/RecService
-        image: docker.io/eberkley/ob:0997663c
-        imagePullPolicy: IfNotPresent
-        name: serviceweaver
-        resources:
-          limits:
-            cpu: "1"
-            memory: 2Gi
-          requests:
-            cpu: "1"
-            memory: 2Gi
-        stdin: true
-        tty: true
-        volumeMounts:
-        - mountPath: /weaver/weaver.toml
-          name: config
-          subPath: weaver.toml
-        - mountPath: /weaver/config.textpb
-          name: config
-          subPath: config.textpb
-      dnsPolicy: ClusterFirst
-      serviceAccountName: default
-      volumes:
-      - configMap:
-          name: config-0997663c
-        name: config
-status: {}
-
----
-
-# Autoscaler for group github.com/ServiceWeaver/onlineboutique/recommendationservice/RecService
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-metadata:
-  annotations:
-    description: This HorizontalPodAutoscaler scales the "ob-recommendationservice-recservice-0997663c-486444e0"
-      Deployment.
-  creationTimestamp: null
-  labels:
-    serviceweaver/app: ob
-    serviceweaver/version: 0997663c
-  name: ob-recommendationservice-recservice-0997663c-486444e0
-  namespace: default
-spec:
-  maxReplicas: 20
-  metrics:
-  - resource:
-      name: cpu
-      target:
-        averageUtilization: 65
-        type: Utilization
-    type: Resource
-  minReplicas: 1
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: ob-recommendationservice-recservice-0997663c-486444e0
-status:
-  currentMetrics: null
-  desiredReplicas: 0
-
----
-
-# Deployment for group github.com/ServiceWeaver/onlineboutique/shippingservice/ShippingService
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  annotations:
-    description: This Deployment hosts components github.com/ServiceWeaver/onlineboutique/shippingservice/ShippingService.
-  creationTimestamp: null
-  labels:
-    serviceweaver/app: ob
-    serviceweaver/version: 0997663c
-  name: ob-shippingservice-shippingservice-0997663c-643eb7e5
-  namespace: default
-spec:
-  selector:
-    matchLabels:
-      serviceweaver/name: ob-shippingservice-shippingservice-0997663c-643eb7e5
-  strategy: {}
-  template:
-    metadata:
-      annotations:
-        description: This Pod hosts components github.com/ServiceWeaver/onlineboutique/shippingservice/ShippingService.
-      creationTimestamp: null
-      labels:
-        serviceweaver/app: ob
-        serviceweaver/name: ob-shippingservice-shippingservice-0997663c-643eb7e5
-        serviceweaver/version: 0997663c
-      namespace: default
-    spec:
-      affinity:
-        podAntiAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-          - podAffinityTerm:
-              labelSelector:
-                matchLabels:
-                  serviceweaver/name: ob-shippingservice-shippingservice-0997663c-643eb7e5
-              topologyKey: kubernetes.io/hostname
-            weight: 100
-      containers:
-      - args:
-        - babysitter
-        - /weaver/weaver.toml
-        - /weaver/config.textpb
-        - github.com/ServiceWeaver/onlineboutique/shippingservice/ShippingService
-        image: docker.io/eberkley/ob:0997663c
-        imagePullPolicy: IfNotPresent
-        name: serviceweaver
-        resources:
-          limits:
-            cpu: "1"
-            memory: 2Gi
-          requests:
-            cpu: "1"
-            memory: 2Gi
-        stdin: true
-        tty: true
-        volumeMounts:
-        - mountPath: /weaver/weaver.toml
-          name: config
-          subPath: weaver.toml
-        - mountPath: /weaver/config.textpb
-          name: config
-          subPath: config.textpb
-      dnsPolicy: ClusterFirst
-      serviceAccountName: default
-      volumes:
-      - configMap:
-          name: config-0997663c
-        name: config
-status: {}
-
----
-
-# Autoscaler for group github.com/ServiceWeaver/onlineboutique/shippingservice/ShippingService
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-metadata:
-  annotations:
-    description: This HorizontalPodAutoscaler scales the "ob-shippingservice-shippingservice-0997663c-643eb7e5"
-      Deployment.
-  creationTimestamp: null
-  labels:
-    serviceweaver/app: ob
-    serviceweaver/version: 0997663c
-  name: ob-shippingservice-shippingservice-0997663c-643eb7e5
-  namespace: default
-spec:
-  maxReplicas: 20
-  metrics:
-  - resource:
-      name: cpu
-      target:
-        averageUtilization: 65
-        type: Utilization
-    type: Resource
-  minReplicas: 1
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: ob-shippingservice-shippingservice-0997663c-643eb7e5
-status:
-  currentMetrics: null
-  desiredReplicas: 0
-
----
-
-# Listener Service for group mainad
+# Listener Service for group all
 apiVersion: v1
 kind: Service
 metadata:
@@ -821,8 +178,8 @@ metadata:
   labels:
     serviceweaver/app: ob
     serviceweaver/listener: boutique
-    serviceweaver/version: 0997663c
-  name: boutique-0997663c
+    serviceweaver/version: a594f88f
+  name: boutique-a594f88f
   namespace: default
 spec:
   ports:
@@ -830,41 +187,51 @@ spec:
     protocol: TCP
     targetPort: 8080
   selector:
-    serviceweaver/name: ob-mainad-0997663c-dcaadd4f
+    serviceweaver/name: ob-all-a594f88f-cb93a6db
   type: LoadBalancer
 status:
   loadBalancer: {}
 
 ---
 
-# Deployment for group mainad
+# Deployment for group all
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   annotations:
-    description: This Deployment hosts components github.com/ServiceWeaver/onlineboutique/adservice/AdService,
-      github.com/ServiceWeaver/weaver/Main.
+    description: This Deployment hosts components github.com/ServiceWeaver/weaver/Main,
+      github.com/ServiceWeaver/onlineboutique/adservice/AdService, github.com/ServiceWeaver/onlineboutique/productcatalogservice/CatalogService,
+      github.com/ServiceWeaver/onlineboutique/checkoutservice/CheckoutService, github.com/ServiceWeaver/onlineboutique/currencyservice/CurrencyService,
+      github.com/ServiceWeaver/onlineboutique/emailservice/EmailService, github.com/ServiceWeaver/onlineboutique/paymentservice/PaymentService,
+      github.com/ServiceWeaver/onlineboutique/recommendationservice/RecService, github.com/ServiceWeaver/onlineboutique/shippingservice/ShippingService,
+      github.com/ServiceWeaver/onlineboutique/cartservice/CartService, github.com/ServiceWeaver/onlineboutique/cartservice/cartCache.
   creationTimestamp: null
   labels:
     serviceweaver/app: ob
-    serviceweaver/version: 0997663c
-  name: ob-mainad-0997663c-dcaadd4f
+    serviceweaver/version: a594f88f
+  name: ob-all-a594f88f-cb93a6db
   namespace: default
 spec:
   selector:
     matchLabels:
-      serviceweaver/name: ob-mainad-0997663c-dcaadd4f
+      serviceweaver/name: ob-all-a594f88f-cb93a6db
   strategy: {}
   template:
     metadata:
       annotations:
-        description: This Pod hosts components github.com/ServiceWeaver/onlineboutique/adservice/AdService,
-          github.com/ServiceWeaver/weaver/Main.
+        description: This Pod hosts components github.com/ServiceWeaver/weaver/Main,
+          github.com/ServiceWeaver/onlineboutique/adservice/AdService, github.com/ServiceWeaver/onlineboutique/productcatalogservice/CatalogService,
+          github.com/ServiceWeaver/onlineboutique/checkoutservice/CheckoutService,
+          github.com/ServiceWeaver/onlineboutique/currencyservice/CurrencyService,
+          github.com/ServiceWeaver/onlineboutique/emailservice/EmailService, github.com/ServiceWeaver/onlineboutique/paymentservice/PaymentService,
+          github.com/ServiceWeaver/onlineboutique/recommendationservice/RecService,
+          github.com/ServiceWeaver/onlineboutique/shippingservice/ShippingService,
+          github.com/ServiceWeaver/onlineboutique/cartservice/CartService, github.com/ServiceWeaver/onlineboutique/cartservice/cartCache.
       creationTimestamp: null
       labels:
         serviceweaver/app: ob
-        serviceweaver/name: ob-mainad-0997663c-dcaadd4f
-        serviceweaver/version: 0997663c
+        serviceweaver/name: ob-all-a594f88f-cb93a6db
+        serviceweaver/version: a594f88f
       namespace: default
     spec:
       affinity:
@@ -873,7 +240,7 @@ spec:
           - podAffinityTerm:
               labelSelector:
                 matchLabels:
-                  serviceweaver/name: ob-mainad-0997663c-dcaadd4f
+                  serviceweaver/name: ob-all-a594f88f-cb93a6db
               topologyKey: kubernetes.io/hostname
             weight: 100
       containers:
@@ -881,9 +248,18 @@ spec:
         - babysitter
         - /weaver/weaver.toml
         - /weaver/config.textpb
-        - github.com/ServiceWeaver/onlineboutique/adservice/AdService
         - github.com/ServiceWeaver/weaver/Main
-        image: docker.io/eberkley/ob:0997663c
+        - github.com/ServiceWeaver/onlineboutique/adservice/AdService
+        - github.com/ServiceWeaver/onlineboutique/productcatalogservice/CatalogService
+        - github.com/ServiceWeaver/onlineboutique/checkoutservice/CheckoutService
+        - github.com/ServiceWeaver/onlineboutique/currencyservice/CurrencyService
+        - github.com/ServiceWeaver/onlineboutique/emailservice/EmailService
+        - github.com/ServiceWeaver/onlineboutique/paymentservice/PaymentService
+        - github.com/ServiceWeaver/onlineboutique/recommendationservice/RecService
+        - github.com/ServiceWeaver/onlineboutique/shippingservice/ShippingService
+        - github.com/ServiceWeaver/onlineboutique/cartservice/CartService
+        - github.com/ServiceWeaver/onlineboutique/cartservice/cartCache
+        image: docker.io/dmquinn/ob:a594f88f
         imagePullPolicy: IfNotPresent
         name: serviceweaver
         ports:
@@ -891,10 +267,10 @@ spec:
           name: boutique
         resources:
           limits:
-            cpu: "1"
+            cpu: "8"
             memory: 2Gi
           requests:
-            cpu: "1"
+            cpu: "8"
             memory: 2Gi
         stdin: true
         tty: true
@@ -909,39 +285,39 @@ spec:
       serviceAccountName: default
       volumes:
       - configMap:
-          name: config-0997663c
+          name: config-a594f88f
         name: config
 status: {}
 
 ---
 
-# Autoscaler for group mainad
+# Autoscaler for group all
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   annotations:
-    description: This HorizontalPodAutoscaler scales the "ob-mainad-0997663c-dcaadd4f"
+    description: This HorizontalPodAutoscaler scales the "ob-all-a594f88f-cb93a6db"
       Deployment.
   creationTimestamp: null
   labels:
     serviceweaver/app: ob
-    serviceweaver/version: 0997663c
-  name: ob-mainad-0997663c-dcaadd4f
+    serviceweaver/version: a594f88f
+  name: ob-all-a594f88f-cb93a6db
   namespace: default
 spec:
-  maxReplicas: 20
+  maxReplicas: 1
   metrics:
   - resource:
       name: cpu
       target:
-        averageUtilization: 65
+        averageUtilization: 5
         type: Utilization
     type: Resource
   minReplicas: 1
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: ob-mainad-0997663c-dcaadd4f
+    name: ob-all-a594f88f-cb93a6db
 status:
   currentMetrics: null
   desiredReplicas: 0

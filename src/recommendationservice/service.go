@@ -17,6 +17,7 @@ package recommendationservice
 import (
 	"context"
 	// "math/rand"
+	_ "go.uber.org/automaxprocs"
 
 	"github.com/ServiceWeaver/onlineboutique/productcatalogservice"
 	"github.com/ServiceWeaver/weaver"
@@ -30,6 +31,8 @@ type impl struct {
 	weaver.Implements[RecService]
 	catalogService weaver.Ref[productcatalogservice.CatalogService]
 }
+
+
 
 func (s *impl) ListRecommendations(ctx context.Context, userID string, userProductIDs []string) ([]string, error) {
 	// Fetch a list of products from the product catalog.

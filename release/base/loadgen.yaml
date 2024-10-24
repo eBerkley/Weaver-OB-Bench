@@ -65,6 +65,12 @@ spec:
         - name: FRONTEND_ADDR
           value: <ADDR>
 
+        - name: LOADGEN_REPLICAS
+          value: <LOADGEN_REPLICAS_ENV>
+
+        - name: LOCUST_SHAPE
+          value: <LOCUST_SHAPE>
+
         resources:
           requests:
             cpu: 1
@@ -94,7 +100,7 @@ metadata:
     role: loadgenerator-worker
   name: loadgenerator-worker
 spec:
-  replicas: 18
+  replicas: <LOADGEN_REPLICAS>
   selector:
     matchLabels:
       app: loadgenerator-worker
