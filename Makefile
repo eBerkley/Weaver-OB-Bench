@@ -95,9 +95,11 @@ deploy: check_docker check_loadgen minikube_start $(WEAVER_GEN_YAML) $(LOAD_GEN_
 	@kubectl apply -f $(WEAVER_GEN_YAML) >> $(LOGS_FILE)
 
 bench: deploy
+	@./make_scripts/pre_bench.sh
 	./scripts/pull_stats.sh 
 	@echo deleting deployment...
 	./scripts/stop.sh >/dev/null
+	@./make_scripts/post_bench.sh
 
 # ./bench_all changes $(WEAVER_GEN_YAML) every time it runs, 
 # 	new images built each time.
