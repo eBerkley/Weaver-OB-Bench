@@ -1,6 +1,6 @@
 .EXPORT_ALL_VARIABLES:
 
-# sets LOADGEN_REPLICAS, DOCKER, OB_CORES, LOCUST_SHAPE
+# sets LOADGEN_REPLICAS, DOCKER, OB_CORES, LOCUST_SHAPE, SCHEME
 include CONFIG.cfg
 
 TOP := .
@@ -34,7 +34,8 @@ COLOCATION_BASE := $(foreach var, $(COLOCATION_FNAMES), $(shell basename $(var) 
 BIN := $(GENERATED)/ob
 
 LOAD_SRC := $(SRC)/loadgenerator
-LOAD_SRC_ALL := $(LOAD_SRC)/entrypoint.sh $(LOAD_SRC)/locustfile.py $(LOAD_SRC)/Dockerfile
+LOAD_SRC_PY := $(LOAD_SRC)/locustfile.py $(LOAD_SRC)/multiload.py $(LOAD_SRC)/rampload.py
+LOAD_SRC_ALL := $(LOAD_SRC_PY) $(LOAD_SRC)/entrypoint.sh  $(LOAD_SRC)/Dockerfile
 
 # All .go files in src/** that aren't generated
 MAIN_SRC := $(SRC)/main.go $(filter-out %weaver_gen.go, $(wildcard $(SRC)/*/*.go))
@@ -60,6 +61,10 @@ all:
 check_docker: 
 	@./make_scripts/check_docker.sh
 
+check_loadgen: $(LOAD_SRC_PY)
+	python3 -m py_compile $(LOAD_SRC_PY)
+
+
 minikube_start:
 	@ lines=$(shell minikube status | wc -l);\
 	if [ $$lines -le 5 ]; then\
@@ -79,7 +84,7 @@ check_smt:
 toggle_smt:
 	./scripts/hyperthreading.sh 2
 
-deploy: check_docker minikube_start $(WEAVER_GEN_YAML) $(LOAD_GEN_YAML)
+deploy: check_docker check_loadgen minikube_start $(WEAVER_GEN_YAML) $(LOAD_GEN_YAML)
 	@# check_docker should prevent gen yaml scripts from firing without `$$DOCKER` being set.
 	@echo deploying onlineboutique, loadgenerator...
 	@-./scripts/stop.sh >/dev/null 2>/dev/null
