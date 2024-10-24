@@ -88,15 +88,15 @@ class RampLoad(LoadTestShape):
     def isViolating(self) -> bool:
         if self.runner == None:
             logging.error("RampLoad.runner == None...")
-            return True # Assume that it will populate soon.
+            return False # Assume that it will populate soon.
 
         self._p50 = self.runner.stats.total.get_response_time_percentile(0.50)
         self._p99 = self.runner.stats.total.get_response_time_percentile(0.99)
 
         if self._p50 * self.violation_factor < self._p99:
-            return False
+            return True
         
-        return True
+        return False
     
     def getNextTargetInfo(self, cur_users: int):
         next_target = int(cur_users * (self.ramp_change + 1))
