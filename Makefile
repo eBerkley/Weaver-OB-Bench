@@ -1,6 +1,8 @@
 .EXPORT_ALL_VARIABLES:
 
-# sets LOADGEN_REPLICAS, DOCKER, OB_CORES, LOCUST_SHAPE, SCHEME
+# sets DOCKER, KUBE_CORES, LOCUST_SHAPE, SCHEME
+include .env 
+
 include CONFIG.cfg
 
 TOP := .
@@ -91,7 +93,6 @@ deploy: check_docker check_loadgen minikube_start $(WEAVER_GEN_YAML) $(LOAD_GEN_
 	
 	@# must be first so first socket is entirely used.
 	@kubectl apply -f $(LOAD_GEN_YAML) >> $(LOGS_FILE)
-	sleep 30
 	@kubectl apply -f $(WEAVER_GEN_YAML) >> $(LOGS_FILE)
 
 bench: deploy
@@ -131,6 +132,8 @@ $(WEAVER_GEN_YAML): $(KUBE_GEN_YAML) $(BIN)
 $(KUBE_GEN_YAML): $(KUBE_BASE_YAML) CONFIG.cfg
 	@cp $(KUBE_BASE_YAML) $(KUBE_GEN_YAML)
 	@sed -i "s#<DOCKER>#$$DOCKER#g" $(KUBE_GEN_YAML)
+
+	@echo "OB_CORES: $(OB_CORES)"
 	@sed -i "s/<OB_CORES>/$$OB_CORES/g" $(KUBE_GEN_YAML)
 
 # if Loadgen code was modified,

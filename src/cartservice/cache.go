@@ -18,6 +18,7 @@ import (
 	"context"
 	"runtime"
 
+	_ "go.uber.org/automaxprocs"
 	"github.com/ServiceWeaver/weaver"
 	lru "github.com/hashicorp/golang-lru/v2"
 )

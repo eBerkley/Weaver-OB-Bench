@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"context"
 	_ "embed"
+	_ "go.uber.org/automaxprocs"
 	"fmt"
 	"html/template"
 

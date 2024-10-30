@@ -71,6 +71,12 @@ spec:
         - name: LOCUST_SHAPE
           value: <LOCUST_SHAPE>
 
+        - name: LOADGEN_REPLICAS
+          value: <LOADGEN_REPLICAS_ENV>
+
+        - name: LOCUST_SHAPE
+          value: <LOCUST_SHAPE>
+
         resources:
           requests:
             cpu: 1

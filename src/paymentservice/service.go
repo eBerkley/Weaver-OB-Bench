@@ -17,6 +17,7 @@ package paymentservice
 import (
 	"context"
 	"time"
+	_ "go.uber.org/automaxprocs"
 
 	"github.com/ServiceWeaver/onlineboutique/types/money"
 	"github.com/ServiceWeaver/weaver"

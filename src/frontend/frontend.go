@@ -18,6 +18,7 @@ import (
 	"context"
 	"embed"
 	"fmt"
+	_ "go.uber.org/automaxprocs"
 	"io/fs"
 	"net"
 	"net/http"
