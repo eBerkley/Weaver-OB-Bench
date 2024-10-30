@@ -1,6 +1,6 @@
 appConfig: weaver.toml
 
-repo: docker.io/dmquinn
+repo: docker.io/eberkley
 
 listeners:
   - name: boutique
@@ -10,15 +10,16 @@ listeners:
 
 resourceSpec:
   requests:
-    cpu: 8
+    cpu: <OB_CORES>
     memory: "2048Mi"
+
   limits:
-    cpu: 8
+    cpu: <OB_CORES>
     memory: "2048Mi"
   
 scalingSpec:
   minReplicas: 1
-  maxReplicas: 1
+  maxReplicas: <OB_REPLICAS>
   metrics:
     - type: Resource
       resource:

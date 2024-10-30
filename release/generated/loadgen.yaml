@@ -56,17 +56,17 @@ spec:
               - ALL
           privileged: false
           readOnlyRootFilesystem: false
-        image: docker.io/dmquinn/loadgen:a594f88f
+        image: docker.io/eberkley/loadgen:6684aaef
         imagePullPolicy: IfNotPresent
         env:
         - name: LOCUST_MODE
           value: MASTER
 
         - name: FRONTEND_ADDR
-          value: boutique-a594f88f:80
-
+          value: boutique-6684aaef:80
+        
         - name: LOADGEN_REPLICAS
-          value: "21"
+          value: "1"
 
         - name: LOCUST_SHAPE
           value: rampload
@@ -100,7 +100,7 @@ metadata:
     role: loadgenerator-worker
   name: loadgenerator-worker
 spec:
-  replicas: 21
+  replicas: 1
   selector:
     matchLabels:
       app: loadgenerator-worker
@@ -128,7 +128,7 @@ spec:
           readOnlyRootFilesystem: true
 
 
-        image: docker.io/dmquinn/loadgen:a594f88f
+        image: docker.io/eberkley/loadgen:6684aaef
         imagePullPolicy: IfNotPresent
         env:
         - name: LOCUST_MODE
@@ -138,7 +138,7 @@ spec:
           value: loadgenerator
         
         - name: FRONTEND_ADDR
-          value: "boutique-a594f88f:80"
+          value: "boutique-6684aaef:80"
 
         resources:
           requests: 

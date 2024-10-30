@@ -43,7 +43,7 @@ for cfg in cfgs/*;
 do
 	echo $cfg
 	cp $cfg CONFIG.cfg
-	fname=$SCHEME_DIR/$FUSION_SCHEME.yaml
+	fname=$SCHEME_DIR/$SCHEME.yaml
 	name=$(basename $fname .yaml)
 
 # =========================
