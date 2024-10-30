@@ -16,3 +16,4 @@ minikube start $flags
 
 minikube addons enable metrics-server
 sleep 30
+

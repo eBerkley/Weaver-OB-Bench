@@ -2,11 +2,8 @@
 
 # cd $(dirname $0)/..
 
-# SCHEME_DIR="release/base/colocation"
-# BASE_KUBE="release/base/kube.yaml"
-# GEN_KUBE="release/generated/kube.yaml"
-
 loop_body () {
+
   local fname=$1
   local name=$2
   local cfg=$3
@@ -36,6 +33,7 @@ loop_body () {
   mkdir -p benchmark/stats
 
   #python3 benchmark/bar.py $name | tee -a logs.txt
+
 }
 
 # =*=*=*=*=*=*=*=*=*=*= PICK ONE =*=*=*=*=*=*=*=*=*=*=
@@ -47,6 +45,7 @@ do
 	cp $cfg CONFIG.cfg
 	fname=$SCHEME_DIR/$FUSION_SCHEME.yaml
 	name=$(basename $fname .yaml)
+
 # =========================
 
 # ======== Run all ========
@@ -54,5 +53,7 @@ do
 #   name=$(basename $fname .yaml)
 # =========================
 
+
   loop_body $fname $name $cfg
 done
+

@@ -33,6 +33,7 @@ import (
 	"github.com/ServiceWeaver/onlineboutique/recommendationservice"
 	"github.com/ServiceWeaver/onlineboutique/shippingservice"
 	"github.com/ServiceWeaver/weaver"
+	_ "go.uber.org/automaxprocs"
 )
 
 const (

@@ -29,6 +29,8 @@ import (
 	"github.com/ServiceWeaver/onlineboutique/types/money"
 	"github.com/ServiceWeaver/weaver"
 	"github.com/google/uuid"
+
+	_ "go.uber.org/automaxprocs"
 )
 
 type PlaceOrderRequest struct {

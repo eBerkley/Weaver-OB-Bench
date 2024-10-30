@@ -22,6 +22,7 @@ import (
 	"github.com/ServiceWeaver/onlineboutique/cartservice"
 	"github.com/ServiceWeaver/onlineboutique/types/money"
 	"github.com/ServiceWeaver/weaver"
+	_ "go.uber.org/automaxprocs"
 )
 
 type Address struct {
@@ -40,6 +41,10 @@ type ShippingService interface {
 
 type impl struct {
 	weaver.Implements[ShippingService]
+}
+
+func (s *impl) Init(_ context.Context) error {
+	return nil
 }
 
 // GetQuote produces a shipping quote (cost) in USD.

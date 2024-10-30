@@ -26,6 +26,7 @@ import (
 	"github.com/ServiceWeaver/onlineboutique/types/money"
 	"github.com/ServiceWeaver/weaver"
 	"github.com/iancoleman/orderedmap"
+	_ "go.uber.org/automaxprocs"
 )
 
 var (

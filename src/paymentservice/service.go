@@ -21,6 +21,7 @@ import (
 
 	"github.com/ServiceWeaver/onlineboutique/types/money"
 	"github.com/ServiceWeaver/weaver"
+	_ "go.uber.org/automaxprocs"
 )
 
 type CreditCardInfo struct {

@@ -25,6 +25,8 @@ import (
 	"github.com/ServiceWeaver/weaver"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
+
+	_ "go.uber.org/automaxprocs"
 )
 
 const (

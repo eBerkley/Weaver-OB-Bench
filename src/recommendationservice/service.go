@@ -21,6 +21,7 @@ import (
 
 	"github.com/ServiceWeaver/onlineboutique/productcatalogservice"
 	"github.com/ServiceWeaver/weaver"
+	_ "go.uber.org/automaxprocs"
 )
 
 type RecService interface {

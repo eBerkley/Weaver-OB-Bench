@@ -24,6 +24,7 @@ import (
 
 	"github.com/ServiceWeaver/onlineboutique/types"
 	"github.com/ServiceWeaver/weaver"
+	_ "go.uber.org/automaxprocs"
 )
 
 var (

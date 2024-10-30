@@ -16,6 +16,7 @@ package cartservice
 
 import (
 	"context"
+	"runtime"
 
 	_ "go.uber.org/automaxprocs"
 	"github.com/ServiceWeaver/weaver"
@@ -46,6 +47,7 @@ type cartCacheImpl struct {
 }
 
 func (c *cartCacheImpl) Init(context.Context) error {
+	runtime.GOMAXPROCS(1)
 	cache, err := lru.New[string, []CartItem](cacheSize)
 	c.cache = cache
 	return err
