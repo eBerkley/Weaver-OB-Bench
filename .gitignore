@@ -4,3 +4,4 @@ test/gRPCOut
 test/inputs.txt
 benchmark/*/*
 logs.txt
+__pycache__

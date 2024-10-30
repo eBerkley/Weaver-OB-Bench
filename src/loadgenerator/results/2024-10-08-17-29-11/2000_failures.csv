@@ -1,2 +1,0 @@
-Method,Name,Error,Occurrences
-POST,/cart/empty,"ConnectionRefusedError(111, 'Connection refused')",1

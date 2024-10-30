@@ -15,8 +15,8 @@ COPY --from=builder /install /usr/local
 # Add application code.
 COPY locustfile.py .
 COPY entrypoint.sh .
-COPY multiload.py .
-COPY rampload.py .
+COPY load_shapes/multiload.py .
+COPY load_shapes/rampload.py .
 
 RUN chmod +x entrypoint.sh
 
@@ -26,4 +26,4 @@ ENV GEVENT_SUPPORT=True
 EXPOSE 5557 5558 8089
 
 ENTRYPOINT [ "./entrypoint.sh" ]
-# ENTRYPOINT locust --host="http://${FRONTEND_ADDR}" --headless -u "${USERS:-10}" 2>&1
+

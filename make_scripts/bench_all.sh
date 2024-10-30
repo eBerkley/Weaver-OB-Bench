@@ -21,7 +21,7 @@ loop_body () {
   cat $fname >> $KUBE_GEN_YAML
   kubectl delete all --all
 
-  # ./benchmark/benchmark.sh
+  
   make bench
   # if there are already results in here
   if [ -d "benchmark/out/$name" ]; then
@@ -45,7 +45,7 @@ for cfg in cfgs/*;
 do
 	echo $cfg
 	cp $cfg CONFIG.cfg
-	fname=$SCHEME_DIR/monolith.yaml
+	fname=$SCHEME_DIR/$FUSION_SCHEME.yaml
 	name=$(basename $fname .yaml)
 # =========================
 

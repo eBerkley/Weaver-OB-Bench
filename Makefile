@@ -1,7 +1,9 @@
 .EXPORT_ALL_VARIABLES:
 
-#DOCKER ?= docker.io/dmquinn
-# sets LOADGEN_REPLICAS, DOCKER, OB_CORES
+# sets DOCKER, KUBE_CORES, LOCUST_SHAPE, SCHEME
+include .env 
+
+
 include CONFIG.cfg
 
 TOP := .
