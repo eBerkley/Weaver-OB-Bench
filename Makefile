@@ -10,9 +10,6 @@ include $(CONFIG_FILE)
 
 TOP := .
 
-WEAVER_KUBE_DIR := $(TOP)/weaver-kube
-KUBE ?= weaver-kube
-
 RELEASE := $(TOP)/release
 SRC := $(TOP)/src
 BENCH := $(TOP)/benchmark
@@ -98,9 +95,6 @@ deploy: check_docker check_loadgen minikube_start $(WEAVER_GEN_YAML) $(LOAD_GEN_
 	
 	kubectl delete all --all
 	@./make_scripts/pre_bench.sh
-
-	@# deploy the definitions first
-	# @kubectl apply -f release/generated/rolebinds.yaml
 	
 	@# must be first so first socket is entirely used.
 	@kubectl apply -f $(LOAD_GEN_YAML) >> $(LOGS_FILE)
