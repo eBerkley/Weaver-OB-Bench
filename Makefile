@@ -1,9 +1,12 @@
 .EXPORT_ALL_VARIABLES:
 
+CONFIG_FILE ?= CONFIG.cfg
+
 # sets DOCKER, KUBE_CORES, LOCUST_SHAPE, SCHEME
 include .env 
 
-include CONFIG.cfg
+# sets LOADGEN_REPLICAS, OB_CORES, OB_REPLICAS
+include $(CONFIG_FILE)
 
 TOP := .
 
@@ -64,7 +67,7 @@ check_docker:
 	@./make_scripts/check_docker.sh
 
 check_loadgen: $(LOAD_SRC_PY)
-	python3 -m py_compile $(LOAD_SRC_PY)
+	@python3 -m py_compile $(LOAD_SRC_PY)
 
 
 minikube_start:
@@ -86,17 +89,19 @@ check_smt:
 toggle_smt:
 	./scripts/hyperthreading.sh 2
 
+# check_docker should prevent gen yaml scripts from firing without `$$DOCKER` being set.
 deploy: check_docker check_loadgen minikube_start $(WEAVER_GEN_YAML) $(LOAD_GEN_YAML)
-	@# check_docker should prevent gen yaml scripts from firing without `$$DOCKER` being set.
 	@echo deploying onlineboutique, loadgenerator...
-	@-./scripts/stop.sh >/dev/null 2>/dev/null
+	
+	kubectl delete all --all
+	@./make_scripts/pre_bench.sh
 	
 	@# must be first so first socket is entirely used.
 	@kubectl apply -f $(LOAD_GEN_YAML) >> $(LOGS_FILE)
 	@kubectl apply -f $(WEAVER_GEN_YAML) >> $(LOGS_FILE)
 
 bench: deploy
-	@./make_scripts/pre_bench.sh
+	
 	./scripts/pull_stats.sh 
 	@echo deleting deployment...
 	./scripts/stop.sh >/dev/null
@@ -133,7 +138,6 @@ $(KUBE_GEN_YAML): $(KUBE_BASE_YAML) CONFIG.cfg
 	@cp $(KUBE_BASE_YAML) $(KUBE_GEN_YAML)
 	@sed -i "s#<DOCKER>#$$DOCKER#g" $(KUBE_GEN_YAML)
 
-	@echo "OB_CORES: $(OB_CORES)"
 	@sed -i "s/<OB_CORES>/$$OB_CORES/g" $(KUBE_GEN_YAML)
 
 # if Loadgen code was modified,
