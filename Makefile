@@ -10,6 +10,9 @@ include $(CONFIG_FILE)
 
 TOP := .
 
+WEAVER_KUBE_DIR := $(TOP)/weaver-kube
+KUBE ?= weaver-kube
+
 RELEASE := $(TOP)/release
 SRC := $(TOP)/src
 BENCH := $(TOP)/benchmark
@@ -67,7 +70,7 @@ check_docker:
 	@./make_scripts/check_docker.sh
 
 check_loadgen: $(LOAD_SRC_PY)
-	python3 -m py_compile $(LOAD_SRC_PY)
+	@python3 -m py_compile $(LOAD_SRC_PY)
 
 
 minikube_start:
@@ -95,6 +98,9 @@ deploy: check_docker check_loadgen minikube_start $(WEAVER_GEN_YAML) $(LOAD_GEN_
 	
 	kubectl delete all --all
 	@./make_scripts/pre_bench.sh
+
+	@# deploy the definitions first
+	# @kubectl apply -f release/generated/rolebinds.yaml
 	
 	@# must be first so first socket is entirely used.
 	@kubectl apply -f $(LOAD_GEN_YAML) >> $(LOGS_FILE)
@@ -138,7 +144,6 @@ $(KUBE_GEN_YAML): $(KUBE_BASE_YAML) CONFIG.cfg
 	@cp $(KUBE_BASE_YAML) $(KUBE_GEN_YAML)
 	@sed -i "s#<DOCKER>#$$DOCKER#g" $(KUBE_GEN_YAML)
 
-	@echo "OB_CORES: $(OB_CORES)"
 	@sed -i "s/<OB_CORES>/$$OB_CORES/g" $(KUBE_GEN_YAML)
 
 # if Loadgen code was modified,
