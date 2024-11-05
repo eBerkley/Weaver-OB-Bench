@@ -1,0 +1,3 @@
+[submodule "weaver-kube"]
+	path = weaver-kube
+	url = https://github.com/eBerkley/weaver-kube.git

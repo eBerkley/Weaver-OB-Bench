@@ -5,3 +5,4 @@ test/inputs.txt
 benchmark/*/*
 logs.txt
 */*/__pycache__
+notes.md

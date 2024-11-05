@@ -10,6 +10,9 @@ include $(CONFIG_FILE)
 
 TOP := .
 
+WEAVER_KUBE_DIR := $(TOP)/weaver-kube
+KUBE ?= weaver-kube
+
 RELEASE := $(TOP)/release
 SRC := $(TOP)/src
 BENCH := $(TOP)/benchmark
