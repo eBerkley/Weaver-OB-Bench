@@ -2,6 +2,7 @@
 sed -i "s#<DOCKER>#$DOCKER#g" $KUBE_GEN_YAML # Just in case...
 sed -i "s#<OB_CORES>#$OB_CORES#g" $KUBE_GEN_YAML
 sed -i "s#<OB_REPLICAS>#$OB_REPLICAS#g" $KUBE_GEN_YAML
+
 if [[ ! $KUBE = "weaver-kube" ]]; then
 	echo "using modified weaver kube deployer..."
 	sed -i "s#<VTUNE_SNIPPET>#VTuneEnabled: $VTUNE_ENABLED#g" $KUBE_GEN_YAML
