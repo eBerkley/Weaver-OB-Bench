@@ -9,6 +9,7 @@ else
 	# Using default weaver kube installation, so no vtune support.
 	sed -i "s#<VTUNE_SNIPPET>##g" $KUBE_GEN_YAML
 fi
+
 yaml=$($KUBE deploy $KUBE_GEN_YAML 2>>$LOGS_FILE) 
 deployment=$(echo $yaml | sed 's/\/tmp\/kube_\([0-9a-z]\+\)\.yaml/\1/g')
 echo version = $deployment | tee -a $LOGS_FILE
