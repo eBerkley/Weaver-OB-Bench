@@ -5,3 +5,7 @@ test/inputs.txt
 benchmark/*/*
 logs.txt
 */*/__pycache__
+*.pyc
+notes.md
+.TMP
+cfgs

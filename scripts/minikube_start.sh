@@ -15,5 +15,3 @@ flags+=" --extra-config=kubelet.reserved-cpus=${KUBE_CORES:-0}"
 minikube start $flags
 
 minikube addons enable metrics-server
-sleep 30
-

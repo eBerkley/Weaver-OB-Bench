@@ -7,7 +7,6 @@ listeners:
     port: 8080
     public: true
 
-
 resourceSpec:
   requests:
     cpu: <OB_CORES>

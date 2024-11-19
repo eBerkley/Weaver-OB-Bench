@@ -5,7 +5,7 @@ CONFIG_FILE ?= CONFIG.cfg
 # sets DOCKER, KUBE_CORES, LOCUST_SHAPE, SCHEME
 include .env 
 
-# sets LOADGEN_REPLICAS, OB_CORES, OB_REPLICAS
+# sets LOADGEN_REPLICAS, OB_CORES, OB_REPLICAS, and optionally SCHEME.
 include $(CONFIG_FILE)
 
 TOP := .
@@ -39,7 +39,7 @@ COLOCATION_BASE := $(foreach var, $(COLOCATION_FNAMES), $(shell basename $(var) 
 BIN := $(GENERATED)/ob
 
 LOAD_SRC := $(SRC)/loadgenerator
-LOAD_SRC_PY := $(LOAD_SRC)/locustfile.py $(LOAD_SRC)/multiload.py $(LOAD_SRC)/rampload.py
+LOAD_SRC_PY := $(LOAD_SRC)/locustfile.py $(wildcard $(LOAD_SRC)/load_shapes/*.py)
 LOAD_SRC_ALL := $(LOAD_SRC_PY) $(LOAD_SRC)/entrypoint.sh  $(LOAD_SRC)/Dockerfile
 
 # All .go files in src/** that aren't generated
@@ -49,7 +49,7 @@ VERSION_FILE := $(GENERATED)/version.txt
 
 LOGS_FILE := $(TOP)/logs.txt
 
-.PHONY: all clean minikube_start minikube_restart check_smt toggle_smt deploy bench bench_all plot plot_quick stop clear_logs check_docker
+.PHONY: all clean minikube_start minikube_restart check_smt toggle_smt deploy bench bench_all stop clear_logs check_docker check_loadgen pre_deploy bench_once
 
 all:
 	@echo valid arguments:
@@ -58,10 +58,11 @@ all:
 	@echo "check_smt            - View if hyperthreading is enabled"
 	@echo "toggle_smt           - Toggle hyperthreading. NOTE: May require root."
 	@echo "deploy               - Starts minikube / builds new version of app if necessary, then deploys."
-	@echo "bench                - Functionally equivilent to benchmark/benchmark.sh"
+	@echo "pre_deploy           - Builds new version of app, but does not deploy anything."
+	@echo "bench                - Deploys app, and runs script to collect metrics and terminate when load test is complete."
 	@echo "bench_all            - Run benchmark using every colocation scheme in release/base/colocation"
-	@echo "plot                 - For when 'bench' has finished running"
 	@echo "stop                 - remove deployments"
+
 
 check_docker: 
 	@./make_scripts/check_docker.sh
@@ -79,8 +80,9 @@ minikube_start:
 		echo Minikube already running. ;\
 	fi 
 
+# Will try to ignore errors i.e. if minikube wasn't running
 minikube_restart:
-	minikube delete
+	- minikube delete
 	./scripts/minikube_start.sh
 
 check_smt:
@@ -89,38 +91,53 @@ check_smt:
 toggle_smt:
 	./scripts/hyperthreading.sh 2
 
+
+# Update the release/generated/*.yaml files based on config env vars.
+# Check to make sure all the prerequisites for deploy execute properly. 
+# Does not actually deploy anything.
 # check_docker should prevent gen yaml scripts from firing without `$$DOCKER` being set.
-deploy: check_docker check_loadgen minikube_start $(WEAVER_GEN_YAML) $(LOAD_GEN_YAML)
-	@echo deploying onlineboutique, loadgenerator...
+pre_deploy: check_docker check_loadgen $(WEAVER_GEN_YAML) $(LOAD_GEN_YAML)
+	@./make_scripts/check_env.sh
+	@echo 																								| tee -a $(LOGS_FILE)
+	@echo "scheme:                    $$SCHEME"						| tee -a $(LOGS_FILE)
+	@echo "loadshape:                 $$LOCUST_SHAPE"			| tee -a $(LOGS_FILE)
+	@echo "loadgenerator workers:     $$LOADGEN_REPLICAS"	| tee -a $(LOGS_FILE)
+	@echo "cores per OB pod:          $$OB_CORES"					| tee -a $(LOGS_FILE)
+	@echo "replicas per fusion group: $$OB_REPLICAS" 			| tee -a $(LOGS_FILE)
+	@echo 																								| tee -a $(LOGS_FILE)
 	
-	kubectl delete all --all
-	@./make_scripts/pre_bench.sh
+	@echo pre deploy check / code gen complete.
+
+# release/generated/gen.yaml and release/generated/loadgen.yaml
+deploy: minikube_start pre_deploy
+	@echo deploying onlineboutique, loadgenerator...| tee -a $(LOGS_FILE)
 	
-	@# must be first so first socket is entirely used.
+	@# Remove any old deployment.
+	@-kubectl delete all --all
+
+	@# should be first so that if running on a NUMA architecture, first socket can be entirely used.
 	@kubectl apply -f $(LOAD_GEN_YAML) >> $(LOGS_FILE)
 	@kubectl apply -f $(WEAVER_GEN_YAML) >> $(LOGS_FILE)
 
-bench: deploy
-	
+
+# Can be run by user 
+# Used to benchmark app under environment specified by env vars
+bench: deploy	
 	./scripts/pull_stats.sh 
 	@echo deleting deployment...
-	./scripts/stop.sh >/dev/null
+	@-kubectl delete all --all
 	@./make_scripts/post_bench.sh
+
+# Shouldn't be ran by user, used by bench_all.
+bench_once: deploy
+	./scripts/pull_stats.sh
 
 # ./bench_all changes $(WEAVER_GEN_YAML) every time it runs, 
 # 	new images built each time.
-bench_all: minikube_start clear_logs 
+bench_all: minikube_start clear_logs
 	@echo Colocation Schemes: $(COLOCATION_BASE)
 	@echo 
 	./make_scripts/bench_all.sh
-
-plot:
-	@for var in $(COLOCATION_BASE); do\
-		echo $$var;\
-		./benchmark/bar.py $$var;\
-		./benchmark/make_csv.py $$var;\
-		./benchmark/plot_compare.py $$var;\
-	done
 
 stop:
 	./scripts/stop.sh
@@ -128,21 +145,14 @@ stop:
 
 # if deployment specifications or src code was modified,
 # 	Update Weaver kubernetes yaml
-# 	modifies version file, will trigger LOAD_GEN_YAML
-$(WEAVER_GEN_YAML): $(KUBE_GEN_YAML) $(BIN)	
+# 	modifies version file, which should trigger LOAD_GEN_YAML
+$(WEAVER_GEN_YAML): $(KUBE_BASE_YAML) $(KUBE_GEN_YAML) $(BIN) $(CONFIG_FILE) .env
 	@echo rebuilding onlineboutique container...
-
 	@./make_scripts/weaver_gen_yaml.sh 
 
-$(KUBE_GEN_YAML): $(KUBE_BASE_YAML) CONFIG.cfg
-	@cp $(KUBE_BASE_YAML) $(KUBE_GEN_YAML)
-	@sed -i "s#<DOCKER>#$$DOCKER#g" $(KUBE_GEN_YAML)
-
-	@sed -i "s/<OB_CORES>/$$OB_CORES/g" $(KUBE_GEN_YAML)
-
-# if Loadgen code was modified,
+# if deployment specifications or loadgen code was modified, 
 #	Update Load Generator
-$(LOAD_GEN_YAML): $(LOAD_SRC_ALL) $(VERSION_FILE) $(LOAD_BASE_YAML) CONFIG.cfg
+$(LOAD_GEN_YAML): $(LOAD_SRC_ALL) $(VERSION_FILE) $(LOAD_BASE_YAML) $(CONFIG_FILE) .env
 	@echo rebuilding loadgenerator container...
 	@./make_scripts/load_gen_yaml.sh
 
@@ -156,7 +166,6 @@ $(BIN): $(MAIN_SRC)
 
 clear_logs: $(LOGS_FILE)
 	@echo clearing logs...
-
 	@printf "" > $(LOGS_FILE)
 
 $(LOGS_FILE):

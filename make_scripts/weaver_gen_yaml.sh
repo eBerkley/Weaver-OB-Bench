@@ -1,11 +1,41 @@
 #!/bin/bash
-sed -i "s#<DOCKER>#$DOCKER#g" $KUBE_GEN_YAML # Just in case...
+
+# This file resets all of the config values in the generated kube.yaml file, 
+# and then sets them based on current env variables.
+# Additionally, adds the current fusion scheme to the generated kube.yaml file.
+
+# ***Note***: if load_gen_yaml.sh is ran *before* this script is ran,
+# the deployment ***WILL NOT*** work.
+
+
+
+# Reset config values
+cp $KUBE_BASE_YAML $KUBE_GEN_YAML
+
+# Copy fusion config
+cat $SCHEME_DIR/$SCHEME.yaml >> $KUBE_GEN_YAML
+
+# Docker repo
+sed -i "s#<DOCKER>#$DOCKER#g" $KUBE_GEN_YAML 
+
+# Cores per pod
 sed -i "s#<OB_CORES>#$OB_CORES#g" $KUBE_GEN_YAML
+
+# Max replicas per fusion group
 sed -i "s#<OB_REPLICAS>#$OB_REPLICAS#g" $KUBE_GEN_YAML
+
+# Generate kubernetes yaml from weaver kube specification yaml
+# `yaml` := the generated file location (something like /tmp/kube_[0-9a-z]{6}.yaml)
 yaml=$(weaver kube deploy $KUBE_GEN_YAML 2>>$LOGS_FILE) 
+
+# The [0-9a-z]{6} part of the filename
 deployment=$(echo $yaml | sed 's/\/tmp\/kube_\([0-9a-z]\+\)\.yaml/\1/g')
+
+# Print the deployment name to stdout and logs file for debugging
 echo version = $deployment | tee -a $LOGS_FILE
+
+# Write version to version file so that load generator can use it
 echo $deployment > $VERSION_FILE
-echo $yaml | tee -a $LOGS_FILE
-echo $WEAVER_GEN_YAML
+
+# Replace release/generated/gen.yaml with updated version.
 cp $yaml $WEAVER_GEN_YAML
