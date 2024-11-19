@@ -1,25 +1,15 @@
 #!/bin/bash
 
-# cd $(dirname $0)/..
+
 
 loop_body () {
 
   local fname=$1
   local name=$2
   local cfg=$3
-
-  echo $fname
-  echo                    | tee -a logs.txt
-  echo ===== $name =====  | tee -a logs.txt
-  echo                    | tee -a logs.txt
-
-  cp $KUBE_BASE_YAML $KUBE_GEN_YAML
-  sed -i "s#<DOCKER>#$DOCKER#g" $KUBE_GEN_YAML
-  cat $fname >> $KUBE_GEN_YAML
-  kubectl delete all --all
-
   
-  make bench
+  make bench_once
+  
   # if there are already results in here
   if [ -d "benchmark/out/$name" ]; then
     rm -rf benchmark/out_old/$name
@@ -31,8 +21,6 @@ loop_body () {
   mv benchmark/stats benchmark/out/$name-$cfg/stats
   cat benchmark/out/$name-$cfg/stats/lat_stats_history.csv | grep -o "Aggregated[^\n]*" > benchmark/out/$name-$cfg/stats/aggregated.csv
   mkdir -p benchmark/stats
-
-  #python3 benchmark/bar.py $name | tee -a logs.txt
 
 }
 

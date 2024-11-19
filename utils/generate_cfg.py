@@ -1,3 +1,4 @@
+#!/bin/python3
 """
 Requires environmental variable KUBE_CORES from .env to be set.
 This can be done either by running a bash script that sources .env and then calls this python script, or by doing so manually in the command line.
