@@ -26,7 +26,7 @@ to see some basic usage, run `make` in the root of the directory.
 - Then, should be as simple as doing the following:
 
 ```bash
-./utils/generate_cfg.py
+./utils/vtune_cfgs.py
 sudo ./utils/vtune.sh $USER
 ```
 Note: Currently, sudo is required because the kubernetes pods being profiled run as root.  
