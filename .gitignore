@@ -6,3 +6,5 @@ benchmark/*/*
 logs.txt
 */*/__pycache__
 notes.md
+.TMP
+cfgs

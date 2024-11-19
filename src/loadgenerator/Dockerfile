@@ -24,6 +24,7 @@ COPY entrypoint.sh .
 COPY load_shapes/multiload.py .
 COPY load_shapes/rampload.py .
 COPY load_shapes/dummyload.py .
+COPY load_shapes/constload.py .
 
 RUN chmod +x entrypoint.sh
 

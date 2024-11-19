@@ -93,11 +93,13 @@ toggle_smt:
 	./scripts/hyperthreading.sh 2
 
 # check_docker should prevent gen yaml scripts from firing without `$$DOCKER` being set.
-deploy: check_docker check_loadgen minikube_start $(WEAVER_GEN_YAML) $(LOAD_GEN_YAML)
+deploy: check_docker check_loadgen minikube_start #$(WEAVER_GEN_YAML) $(LOAD_GEN_YAML)
 	@echo deploying onlineboutique, loadgenerator...
 	
 	kubectl delete all --all
 	@./make_scripts/pre_bench.sh
+	@./make_scripts/weaver_gen_yaml.sh
+	@./make_scripts/load_gen_yaml.sh
 	
 	@# must be first so first socket is entirely used.
 	@kubectl apply -f $(LOAD_GEN_YAML) >> $(LOGS_FILE)
@@ -116,14 +118,6 @@ bench_all: minikube_start clear_logs
 	@echo Colocation Schemes: $(COLOCATION_BASE)
 	@echo 
 	./make_scripts/bench_all.sh
-
-plot:
-	@for var in $(COLOCATION_BASE); do\
-		echo $$var;\
-		./benchmark/bar.py $$var;\
-		./benchmark/make_csv.py $$var;\
-		./benchmark/plot_compare.py $$var;\
-	done
 
 stop:
 	./scripts/stop.sh

@@ -8,7 +8,7 @@ fi
 fname=$SCHEME_DIR/$SCHEME.yaml
 echo $fname
 echo                    | tee -a logs.txt
-echo ===== $name =====  | tee -a logs.txt
+echo ===== $SCHEME =====| tee -a logs.txt
 echo                    | tee -a logs.txt
 
 cp $KUBE_BASE_YAML $KUBE_GEN_YAML

@@ -7,9 +7,6 @@ listeners:
     port: 8080
     public: true
 
-<VTUNE_SNIPPET>
-VpaEnabled: false
-
 resourceSpec:
   requests:
     cpu: <OB_CORES>
