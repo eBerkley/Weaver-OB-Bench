@@ -31,12 +31,12 @@ MIN_LOADGEN_CORES = 1 + MIN_LOADGEN_WORKERS
 kube_cores = multiprocessing.cpu_count() - get_cores_alloced()
 
 POD_COUNT={"monolith": 1, "microservices": 12, "mixed": 8}
-
+print(kube_cores)
 
 for cores_per in [1,2,3,6]:
     for scheme, pods in POD_COUNT.items():
         needed_cores = cores_per * pods
-        loadgen_cores = kube_cores - needed_cores
+        loadgen_cores = kube_cores - needed_cores - 1
 
         if loadgen_cores < MIN_LOADGEN_CORES:
             continue
