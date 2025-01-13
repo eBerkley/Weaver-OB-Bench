@@ -21,7 +21,29 @@ MIN_LOADGEN_CORES = 1 + MIN_LOADGEN_WORKERS
 
 _SCHEME_NAMES = [k for k, _ in POD_COUNT.items()]
 
+from typing import TypeAlias
 
+Params: TypeAlias = tuple[tuple[int, int, int, int], tuple[int, int, int, int]]
+
+# Of the form (SCALE_UTIL params, MIN_REPLICAS params)
+# param 4-tup are of the form (CRITICAL, NONCRITICAL, TRIVIAL, FALLBACK)
+
+BASIC_PARAMS: Params = ((60, 70, 80, 75), (3, 2, 1, 1))
+DEFAULT_PARAMS: Params = ((75, 75, 75, 75), (1, 1, 1, 1))
+AGGRO_PARAMS: Params = ((45, 60, 80, 75), (4, 2, 1, 1))
+PARAMETERS: dict[str, Params] = {"basic": BASIC_PARAMS, "default": DEFAULT_PARAMS, "aggro": AGGRO_PARAMS}
+
+def param_to_cfg(p : Params, delim: str ="\n") -> str:
+    out =  f"CRITICAL_SCALE_UTIL={p[0][0]}{delim}"
+    out += f"NONCRITICAL_SCALE_UTIL={p[0][1]}{delim}"
+    out += f"TRIVIAL_SCALE_UTIL={p[0][2]}{delim}"
+    out += f"FALLBACK_SCALE_UTIL={p[0][3]}{delim}"
+
+    out += f"CRITICAL_MIN_REPLICAS={p[1][0]}{delim}"
+    out += f"NONCRITICAL_MIN_REPLICAS={p[1][1]}{delim}"
+    out += f"TRIVIAL_MIN_REPLICAS={p[1][2]}{delim}"
+    out += f"FALLBACK_MIN_REPLICAS={p[1][3]}"
+    return out
 
 
 import os
@@ -43,6 +65,7 @@ parser.add_argument('-l', dest='loadgen', metavar='WORKERS', type=int,
     default=MIN_LOADGEN_CORES, 
     help='Cores allocated to load generator workers. All other cores are allocated to OB')
 
+parser.add_argument('-t', dest='type', default="default", choices=[k for k, _ in PARAMETERS.items()], help="some bonus scaling specific parameters that can be set. View source code of this file for more info.")
 
 misc_group.add_argument('-p', dest='prune', action='store_true', help='Create cfgs/ dir if it does not already exist, and delete files within it if it does.')
 
@@ -81,6 +104,7 @@ if args.display_args or args.dry:
     # print(f"max replicas: {args.max}")
     print(f"loadgen cores: {args.loadgen}")
     print(f"schemes: {schemes}")
+    print(f"type: {args.type}")
     if args.display_args:
         exit(0)
 
@@ -113,9 +137,10 @@ for scheme, pods in POD_COUNT.items():
     for cores_per in set(cores):                          # Cores per fusion group
         
         
-        out=f"SCHEME={scheme}\nLOADGEN_REPLICAS={loadgen_cores}\nOB_CORES={cores_per}\nOB_REPLICAS={replicas}"
+        out = f"SCHEME={scheme}\nLOADGEN_REPLICAS={loadgen_cores}\nOB_CORES={cores_per}\nOB_REPLICAS={replicas}\n"
         fname = f"cfgs/{scheme}_{cores_per:02d}_{replicas:02d}.cfg"
-
+        out += param_to_cfg(PARAMETERS[args.type])
+        
         if args.dry:
             print(f"{fname}: \t{out.replace("\n", ":")}")
         else:

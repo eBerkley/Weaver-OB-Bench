@@ -139,7 +139,7 @@ class RampLoad(LoadTestShape):
                             Affects users spawned per second, but not overall users spawned per ramp.
     """
 
-    init_users: Final = 300 # users
+    init_users: Final = 1000 # users
     """What is the first target to hit?"""
 
     init_time: Final = 30 # seconds
@@ -151,7 +151,7 @@ class RampLoad(LoadTestShape):
     ramp_pause: Final = 5 # seconds
     """When we reach a user count we were ramping to, how long do we wait before resuming?"""
 
-    ramp_duration: Final = 5.0 # seconds
+    ramp_duration: Final = float(getenv("LOCUST_RAMP_DURATION", "5.0")) # seconds
     """How much time do we spend reaching the new user count?
     Affects users spawned per second, but not overall users spawned per ramp."""
 
@@ -196,10 +196,10 @@ class RampLoad(LoadTestShape):
         elif self._slo_timer < 0:
             return None
 
-        log_string += f"SLO Timer: {self._slo_timer} \t P99: {self._p99}\t self._transition: {self._transition}"
+        log_string += f"SLO Timer: {self._slo_timer} \t P99: {self._p99}\t self._transition: {self._transition} \t "
 
         if self._transition <= 0: #transition now
-            log_string += "RampLoad: Checking.\n"
+            log_string += "RampLoad: Checking.\t"
 
             # Violating SLO while paused for 30 seconds
             if self._pausing and self._slo_timer < 0: # WAIT_TIME/2:
@@ -208,7 +208,7 @@ class RampLoad(LoadTestShape):
             self._pausing = self._slo_timer != WAIT_TIME
 
             if self._pausing:
-                log_string += "RampLoad: Pausing.\n"
+                log_string += "RampLoad: Pausing.\t"
                 self._ever_paused = True
                 self._slo_timer = WAIT_TIME
                 self._transition = WAIT_TIME
@@ -227,7 +227,7 @@ class RampLoad(LoadTestShape):
                 else:
                     rate = 1.01
 
-                log_string += f"RampLoad: P99: {self._p99}, Rate: {rate}\n"
+                log_string += f"Rate: {rate}\t"
                 self._transition = self.ramp_pause
                 self._target = int(cur_users * rate)
                 self._ramp_speed = (self._target - cur_users) / self.ramp_duration
@@ -237,6 +237,3 @@ class RampLoad(LoadTestShape):
         self._slo_timer -= 1
         logging.info(log_string)
         return self._target, self._ramp_speed
-
-
-

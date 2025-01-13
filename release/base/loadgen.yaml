@@ -74,6 +74,9 @@ spec:
         - name: LOCUST_WAIT_TIME
           value: <LOCUST_WAIT_TIME>
 
+        - name: LOCUST_RAMP_DURATION
+          value: <LOCUST_RAMP_DURATION>
+
         resources:
           requests:
             cpu: 1
@@ -145,6 +148,9 @@ spec:
 
         - name: LOCUST_WAIT_TIME
           value: <LOCUST_WAIT_TIME>
+
+        - name: LOCUST_RAMP_DURATION
+          value: <LOCUST_RAMP_DURATION>
 
         resources:
           requests: 

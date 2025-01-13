@@ -36,6 +36,11 @@ sed -i "s/<LOCUST_SHAPE>/$LOCUST_SHAPE/g" $LOAD_GEN_YAML
 # Set the wait time for the rampload shape
 sed -i "s#<LOCUST_WAIT_TIME>#\"$LOCUST_WAIT_TIME\"#g" $LOAD_GEN_YAML
 
+# Set the ramp duration for the rampload shape
+sed -i "s#<LOCUST_RAMP_DURATION>#\"$LOCUST_RAMP_DURATION\"#g" $LOAD_GEN_YAML
+
+
+
 # Build the image and push it to docker
 docker build $LOAD_SRC -t $DOCKER/loadgen:$version >>$DEBUG_OUTPUT 2>&1
 docker push $DOCKER/loadgen:$version >>$DEBUG_OUTPUT

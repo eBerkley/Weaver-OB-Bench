@@ -5,7 +5,9 @@ sleep 15
 logfile="../logs.txt"
 
 # podname=$(kubectl get pod | grep 'loadgenerator-[a-z0-9]\+-[a-z0-9]\+ ' | awk '{print $1}')
-podname=$(kubectl get pod -o name --selector app=loadgenerator )
+full_podname=$(kubectl get pod -o name --selector app=loadgenerator )
+podname="${full_podname#*/}"
+echo load generator podname = $podname
 
 mainpod=$(kubectl get deploy | grep '[mM]ain' | head -1 | awk '{print $1}')
 if [[ -z "$mainpod" ]]; then
@@ -26,9 +28,9 @@ echo                                                          | tee -a $logfile
 
 SECONDS=0
 
-
-get_line () {
-  kubectl logs --tail 1 $podname
+# usage: get_lines [num lines = 1]
+get_lines () {
+  kubectl logs --tail ${1:-1} $podname
 }
 
 echo Seconds,CPU Cores > ../benchmark/stats/cpu.csv
@@ -59,22 +61,34 @@ reprint="\e[1A\e[K"
 
 iterations=0
 
-str=$(get_line)
+str=$(get_lines)
 size=${#str}
 echo $str
 last_str=""
-while [ $size -ge 20 ]; do
+while [ $size -le 5 ] || [ $size -ge 20 ]; do
   write_cpu_util
   
   sleep 10
-  str=$(get_line)
+  strs=$(get_lines 2)
+  str=$(echo "$strs" | tail -1)
+  strPrev=$(echo "$strs" | head -1)
   size=${#str}
-  
-  if [[ $str != $last_str ]]; then
-    echo -e $reprint$str
+
+  if [[ $strPrev != $last_str ]]; then
+    echo -e $reprint$strPrev
+    echo $strPrev >> $logfile   
+
+    if [[ $str != $last_str ]]; then
+      echo $str
+      echo $str >> $logfile
+    fi
+
+  elif [[ $str != $last_str ]]; then
+    echo -e  $reprint$str
     echo $str >> $logfile
   fi
-  
+
+
   last_str=$str
   
   (( iterations+=1 ))

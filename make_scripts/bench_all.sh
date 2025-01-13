@@ -23,25 +23,25 @@ loop_body () {
   kubectl delete all --all
 
   # if there are already results in here
-  if [ -d "benchmark/out/$name-$cfg" ]; then
-    rm -rf benchmark/out_old/$name-$cfg
+  if [ -d "benchmark/out/$cfg" ]; then
+    rm -rf benchmark/out_old/$cfg
 	  mkdir -p benchmark/out_old
-    mv benchmark/out/$name-$cfg benchmark/out_old/$name-$cfg
+    mv benchmark/out/$cfg benchmark/out_old/$cfg
   fi
 
   # Create the dir results will be stored in
-  mkdir -p benchmark/out/$name-$cfg
+  mkdir -p benchmark/out/$cfg
   
   # Move the stats dir into the dir created above
-  mv benchmark/stats benchmark/out/$name-$cfg/stats
+  mv benchmark/stats benchmark/out/$cfg/stats
 
   # Create aggregated.csv that only has the aggregate latency stats
-  cat benchmark/out/$name-$cfg/stats/lat_stats_history.csv | grep -o "Aggregated[^\n]*" > benchmark/out/$name-$cfg/stats/aggregated.csv
+  cat benchmark/out/$cfg/stats/lat_stats_history.csv | grep -o "Aggregated[^\n]*" > benchmark/out/$cfg/stats/aggregated.csv
 
   # Append logs from this run into tmp
   cat $LOGS_FILE >> $TMP_LOGS
   # Save logs from this run into out dir
-  cp $LOGS_FILE benchmark/out/$name-$cfg/logs.txt
+  cp $LOGS_FILE benchmark/out/$cfg/logs.txt
   # Clear logs for use with next run
   printf "" > $LOGS_FILE
 
@@ -69,7 +69,7 @@ for cfg in cfgs/*; do
 # ============================================
 
 
-  loop_body $fname $name $cfg
+  loop_body $fname $name $(basename $cfg .cfg)
 done
 
 # Update logs file as aggregate
