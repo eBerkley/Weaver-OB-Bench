@@ -34,5 +34,5 @@ sed -i "s/<LOADGEN_REPLICAS_ENV>/\"$LOADGEN_REPLICAS\"/g" $LOAD_GEN_YAML
 sed -i "s/<LOCUST_SHAPE>/$LOCUST_SHAPE/g" $LOAD_GEN_YAML
 
 # Build the image and push it to docker
-docker build $LOAD_SRC -t $DOCKER/loadgen:$version >>$LOGS_FILE 2>>$LOGS_FILE
-docker push $DOCKER/loadgen:$version >>$LOGS_FILE
+docker build $LOAD_SRC -t $DOCKER/loadgen:$version >>$DEBUG_OUTPUT 2>&1
+docker push $DOCKER/loadgen:$version >>$DEBUG_OUTPUT

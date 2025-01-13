@@ -4,7 +4,8 @@ sleep 15
 
 logfile="../logs.txt"
 
-podname=$(kubectl get pod | grep 'loadgenerator-[a-z0-9]\+-[a-z0-9]\+ ' | awk '{print $1}')
+# podname=$(kubectl get pod | grep 'loadgenerator-[a-z0-9]\+-[a-z0-9]\+ ' | awk '{print $1}')
+podname=$(kubectl get pod -o name --selector app=loadgenerator )
 
 mainpod=$(kubectl get deploy | grep '[mM]ain' | head -1 | awk '{print $1}')
 if [[ -z "$mainpod" ]]; then
@@ -42,13 +43,14 @@ log_debug_info() {
 
   if [ $(( val % $debug_frequency )) -eq 0 ]; then
 
-    echo "=*=*=*=*=*=*=*=*= DEBUG INFO =*=*=*=*=*=*=*=*="
+    # echo "=*=*=*=*=*=*=*=*= DEBUG INFO =*=*=*=*=*=*=*=*="
   
-    kubectl logs -l="serviceweaver/name=$mainpod"
-    echo
+    # kubectl logs -l="serviceweaver/name=$mainpod"
+    # echo
+    date -d@$SECONDS -u +%H:%M:%S
     kubectl top pod
 
-    echo "=*=*=*=*=*=*=*=*= END DEBUG. =*=*=*=*=*=*=*=*="
+    # echo "=*=*=*=*=*=*=*=*= END DEBUG. =*=*=*=*=*=*=*=*="
 
   fi
 }
@@ -60,16 +62,21 @@ iterations=0
 str=$(get_line)
 size=${#str}
 echo $str
+last_str=""
 while [ $size -ge 20 ]; do
   write_cpu_util
   
   sleep 10
   str=$(get_line)
   size=${#str}
-
-  echo -e $reprint$str
-  echo $str >> $logfile
-
+  
+  if [[ $str != $last_str ]]; then
+    echo -e $reprint$str
+    echo $str >> $logfile
+  fi
+  
+  last_str=$str
+  
   (( iterations+=1 ))
   log_debug_info $iterations >> $logfile
   

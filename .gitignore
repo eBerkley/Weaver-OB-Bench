@@ -4,8 +4,10 @@ test/gRPCOut
 test/inputs.txt
 benchmark/*/*
 logs.txt
+tmp_logs.txt
 */*/__pycache__
 *.pyc
 notes.md
 .TMP
 cfgs
+*.pyc

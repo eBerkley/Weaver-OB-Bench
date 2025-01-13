@@ -3,7 +3,7 @@ module github.com/ServiceWeaver/onlineboutique
 go 1.21
 
 require (
-	github.com/ServiceWeaver/weaver v0.24.2
+	github.com/ServiceWeaver/weaver v0.24.6
 	github.com/google/uuid v1.3.1
 	github.com/hashicorp/golang-lru/v2 v2.0.1
 	github.com/iancoleman/orderedmap v0.3.0
@@ -34,7 +34,6 @@ require (
 	go.opentelemetry.io/otel/exporters/stdout/stdouttrace v1.16.0 // indirect
 	go.opentelemetry.io/otel/metric v1.19.0 // indirect
 	go.opentelemetry.io/otel/sdk v1.19.0 // indirect
-	go.uber.org/automaxprocs v1.6.0 // indirect
 	golang.org/x/mod v0.13.0 // indirect
 	golang.org/x/sync v0.4.0 // indirect
 	golang.org/x/sys v0.18.0 // indirect

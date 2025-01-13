@@ -26,7 +26,7 @@ sed -i "s#<OB_REPLICAS>#$OB_REPLICAS#g" $KUBE_GEN_YAML
 
 # Generate kubernetes yaml from weaver kube specification yaml
 # `yaml` := the generated file location (something like /tmp/kube_[0-9a-z]{6}.yaml)
-yaml=$(weaver kube deploy $KUBE_GEN_YAML 2>>$LOGS_FILE) 
+yaml=$(weaver kube deploy $KUBE_GEN_YAML 2>>$DEBUG_OUTPUT)
 
 # The [0-9a-z]{6} part of the filename
 deployment=$(echo $yaml | sed 's/\/tmp\/kube_\([0-9a-z]\+\)\.yaml/\1/g')

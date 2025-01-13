@@ -1,14 +1,19 @@
 from locust import LoadTestShape
-from typing import Tuple, Optional, List
-import locust.stats
+from typing import Tuple, Optional, List, Final
 
 import logging
 
-WAIT_TIME = 30
+from os import getenv
 
-class RampLoad(LoadTestShape):
-    """
+WAIT_TIME = int(getenv("LOCUST_WAIT_TIME", "30"))
+
+class RampLoad_Factor(LoadTestShape):
     
+    """
+    -----
+    # Unused. Just a placeholder.
+    -----
+
     A load generator shape that will ramp up user generation speed to lower test duration, as well as respond to high latency by ending the test early.
 
     Keyword arguments:
@@ -36,27 +41,29 @@ class RampLoad(LoadTestShape):
 
         violation_factor        --  If p50 latency * violation_factor > p99 latency, 
                                     trigger a violation.
-
     """
-    init_target_users = 300 # users
+
+    abstract= True
+
+    init_users: Final = 300 # users
     """What is the first target to hit?"""
 
-    init_target_time = 30 # seconds
+    init_target_time: Final = 30 # seconds
     """How long should it take to hit init_target_users? """
     
-    ramp_hold = 30 # seconds
+    ramp_hold: Final = 30 # seconds
     """How long do we wait and collect metrics after hitting a target?"""
 
-    ramp_time = 10 # seconds
+    ramp_time: Final = 10 # seconds
     """Over what timespan do we hit target?"""
 
-    ramp_check_frequency = 10 # seconds
+    ramp_check_frequency: Final = 10 # seconds
     """While ramping, how often do we check if we are violating?"""
 
-    ramp_change = 0.05 # percent
+    ramp_change: Final = 0.05 # percent
     """What % do we increase by?"""
 
-    violation_factor = 5 # 
+    violation_factor: Final = 5 # 
     """when p99 latency / p50 latency hits this val, break."""    
 
     def __init__(self, *args, **kwargs):
@@ -89,7 +96,11 @@ class RampLoad(LoadTestShape):
         super().__init__(*args, **kwargs)
         self._transition = 0
         self._pausing = False
+        "Are we waiting for "
         self._ever_paused = False
+    
+
+
     
 
     def isViolating(self) -> bool:
@@ -104,65 +115,106 @@ class RampLoad(LoadTestShape):
             return True
         
         return False
+
+class RampLoad(LoadTestShape):
+    """
     
-    """
-    def getNextTargetInfo(self, cur_users: int):
-        next_target = int(cur_users * (self.ramp_change + 1))
-        users_to_add = next_target - cur_users
-        
-        # in users/sec
-        ramp_rate = users_to_add // self.ramp_time 
-        ramp_rate = min(ramp_rate, 100) # max ramp, enforced by locust
-        
-        # if time_change > self.ramp_time, ramp_rate > 100.
-        time_change = users_to_add // ramp_rate
+    A load generator shape that will ramp up user generation speed to lower test duration, as well as respond to high latency by ending the test early.
 
-        # start setting variables for ramping
+    Keyword arguments:
 
-        self._cur_target_users = next_target
-        self._ramp_speed = ramp_rate
-        self._num_ramp_phases = time_change // self.ramp_check_frequency
-        increase_per_phase = users_to_add // self._num_ramp_phases
-        self._phases = [x for x in range( # range: [start, stop) --> (start, stop]
-            cur_users + increase_per_phase, 
-            next_target + increase_per_phase,
-            increase_per_phase)
-        ]
-        self._cur_phase = 0
-        return 
+        init_users      --  What is the first target to hit? Required since otherwise 
+                            ramp_change will always initialize to 0.
+
+        init_time       --  How long should it take to hit init_users? 
+                            Note, will not be honored if it would require more than 100
+                            users to be generated per second.
+
+        max_tail        --  When p99 latency >= this value, consider it violating.
+
+        ramp_pause      --  When we reach a user count we were ramping to, 
+                            how long do we wait before resuming?
+
+        ramp_duration   --  How much time do we spend reaching the new user count?
+                            Affects users spawned per second, but not overall users spawned per ramp.
     """
+
+    init_users: Final = 300 # users
+    """What is the first target to hit?"""
+
+    init_time: Final = 30 # seconds
+    """How long should it take to hit init_users? """
+
+    max_tail: Final = 100 # ms
+    """When p99 latency >= this value, consider it violating."""
+
+    ramp_pause: Final = 5 # seconds
+    """When we reach a user count we were ramping to, how long do we wait before resuming?"""
+
+    ramp_duration: Final = 5.0 # seconds
+    """How much time do we spend reaching the new user count?
+    Affects users spawned per second, but not overall users spawned per ramp."""
+
+    def __init__(self, *args, **kwargs):
+
+        self._ramp_speed: int = 0
+        """Users per second."""
+
+        self._slo_timer: int = WAIT_TIME
+        """Timer that decreases during violation period. 
+        If it hits 0, terminate test."""
         
+        self._transition: int = 0
+        """Timer that decreases during both violation period and between phases. When it hits 0, we start the next phase."""
+
+        self._pausing: bool = False
+        "Are we waiting for p99 latency to dip back below 100?"
+        
+        self._ever_paused: bool = False
+        """Has self._pausing ever been True?"""
+
+        self._p99: int = 0
+        """tail latency"""
+
+        super().__init__(*args, **kwargs)
+    
+    
     def tick(self) -> Optional[Tuple[int, float]]:
+        log_string = ""
         cur_users = self.get_current_user_count()
         self._p99 = self.runner.stats.total.get_current_response_time_percentile(0.99)
+
+        if cur_users < self.init_users:
+            return self.init_users, self.init_time
+
         if self._p99 == None:
             self._p99 = 0
-        if self._p99 < 100:
+        
+        if self._p99 < self.max_tail:
             self._slo_timer = WAIT_TIME
 
-        logging.info(f"SLO Timer: {self._slo_timer}")
-        logging.info(f"P99: {self._p99}")
-        if self._slo_timer < 0:
+        elif self._slo_timer < 0:
             return None
 
-        if cur_users < 1000:
-            return 1000, 20.0
+        log_string += f"SLO Timer: {self._slo_timer} \t P99: {self._p99}\t self._transition: {self._transition}"
 
         if self._transition <= 0: #transition now
-            logging.info("RampLoad: Checking.")
+            log_string += "RampLoad: Checking.\n"
+
             # Violating SLO while paused for 30 seconds
-            if self._pausing and self._slo_timer < WAIT_TIME/2:
+            if self._pausing and self._slo_timer < 0: # WAIT_TIME/2:
                 return None
 
             self._pausing = self._slo_timer != WAIT_TIME
 
             if self._pausing:
+                log_string += "RampLoad: Pausing.\n"
+                self._ever_paused = True
                 self._slo_timer = WAIT_TIME
-                logging.error("RampLoad: Pausing.")
                 self._transition = WAIT_TIME
                 self._target = cur_users
                 self._ramp_speed = 10.0 #must be greater than 0
-                self._ever_paused = True
+
             else:
                 if self._p99 < 25 and not self._ever_paused:
                     rate = 1.2
@@ -174,14 +226,16 @@ class RampLoad(LoadTestShape):
                     rate = 1.02
                 else:
                     rate = 1.01
-                logging.info(f"RampLoad: P99: {self._p99}, Rate: {rate}")
-                self._transition = 5
+
+                log_string += f"RampLoad: P99: {self._p99}, Rate: {rate}\n"
+                self._transition = self.ramp_pause
                 self._target = int(cur_users * rate)
-                self._ramp_speed = (self._target - cur_users) / 5.0
+                self._ramp_speed = (self._target - cur_users) / self.ramp_duration
 
 
         self._transition -= 1
         self._slo_timer -= 1
+        logging.info(log_string)
         return self._target, self._ramp_speed
 
 
