@@ -70,6 +70,9 @@ spec:
 
         - name: LOCUST_SHAPE
           value: <LOCUST_SHAPE>
+        
+        - name: LOCUST_WAIT_TIME
+          value: <LOCUST_WAIT_TIME>
 
         resources:
           requests:
@@ -139,6 +142,9 @@ spec:
         
         - name: FRONTEND_ADDR
           value: "<ADDR>"
+
+        - name: LOCUST_WAIT_TIME
+          value: <LOCUST_WAIT_TIME>
 
         resources:
           requests: 
