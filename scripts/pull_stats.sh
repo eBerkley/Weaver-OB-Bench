@@ -57,6 +57,7 @@ log_debug_info() {
   fi
 }
 
+timestamp="[$(date +'%a %h %d %T %Y')] "
 reprint="\e[1A\e[K"
 
 iterations=0
@@ -75,7 +76,7 @@ while [ $size -le 5 ] || [ $size -ge 20 ]; do
   size=${#str}
 
   if [[ $strPrev != $last_str ]]; then
-    echo -e $reprint$strPrev
+    echo -e $timestamp$strPrev
     echo $strPrev >> $logfile   
 
     if [[ $str != $last_str ]]; then
@@ -84,7 +85,7 @@ while [ $size -le 5 ] || [ $size -ge 20 ]; do
     fi
 
   elif [[ $str != $last_str ]]; then
-    echo -e  $reprint$str
+    echo -e  $timestamp$str
     echo $str >> $logfile
   fi
 

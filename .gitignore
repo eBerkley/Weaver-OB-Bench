@@ -6,6 +6,7 @@ benchmark/*/*
 logs.txt
 tmp_logs.txt
 */*/__pycache__
+*.*.pyc
 *.pyc
 notes.md
 .TMP

@@ -56,14 +56,14 @@ spec:
               - ALL
           privileged: false
           readOnlyRootFilesystem: false
-        image: docker.io/eberkley/loadgen:d31963e5
+        image: docker.io/eberkley/loadgen:9ec56080
         imagePullPolicy: IfNotPresent
         env:
         - name: LOCUST_MODE
           value: MASTER
 
         - name: FRONTEND_ADDR
-          value: boutique-d31963e5:80
+          value: boutique-9ec56080:80
         
         - name: LOADGEN_REPLICAS
           value: "30"
@@ -75,7 +75,7 @@ spec:
           value: "30"
 
         - name: LOCUST_RAMP_DURATION
-          value: "10"
+          value: "5"
 
         resources:
           requests:
@@ -134,7 +134,7 @@ spec:
           readOnlyRootFilesystem: true
 
 
-        image: docker.io/eberkley/loadgen:d31963e5
+        image: docker.io/eberkley/loadgen:9ec56080
         imagePullPolicy: IfNotPresent
         env:
         - name: LOCUST_MODE
@@ -144,13 +144,13 @@ spec:
           value: loadgenerator
         
         - name: FRONTEND_ADDR
-          value: "boutique-d31963e5:80"
+          value: "boutique-9ec56080:80"
 
         - name: LOCUST_WAIT_TIME
           value: "30"
 
         - name: LOCUST_RAMP_DURATION
-          value: "10"
+          value: "5"
 
         resources:
           requests: 
