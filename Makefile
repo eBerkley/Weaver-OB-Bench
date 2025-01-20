@@ -124,6 +124,7 @@ deploy: minikube_start pre_deploy
 
 	@# should be first so that if running on a NUMA architecture, first socket can be entirely used.
 	@kubectl apply -f $(LOAD_GEN_YAML) >> $(DEBUG_OUTPUT) 2>&1
+	@sleep 10 # when separating between sockets
 	@kubectl apply -f $(WEAVER_GEN_YAML) >> $(DEBUG_OUTPUT) 2>&1
 
 

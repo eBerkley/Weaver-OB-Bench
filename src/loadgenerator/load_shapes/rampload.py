@@ -182,6 +182,7 @@ class RampLoad(LoadTestShape):
     def tick(self) -> Optional[Tuple[int, float]]:
         log_string = ""
         cur_users = self.get_current_user_count()
+        self._p50 = self.runner.stats.total.get_current_response_time_percentile(0.50)
         self._p99 = self.runner.stats.total.get_current_response_time_percentile(0.99)
 
         if cur_users < self.init_users:
@@ -196,13 +197,13 @@ class RampLoad(LoadTestShape):
         elif self._slo_timer < 0:
             return None
 
-        log_string += f"SLO Timer: {self._slo_timer} \t P99: {self._p99}\t self._transition: {self._transition} \t "
+        log_string += f"SLO Timer: {self._slo_timer} \t P50: {self._p50} \t P99: {self._p99}\t self._transition: {self._transition} \t users: {cur_users} \t "
 
         if self._transition <= 0: #transition now
             log_string += "RampLoad: Checking.\t"
 
             # Violating SLO while paused for 30 seconds
-            if self._pausing and self._slo_timer < 0: # WAIT_TIME/2:
+            if self._pausing and self._slo_timer <= 0: # WAIT_TIME/2:
                 return None
 
             self._pausing = self._slo_timer != WAIT_TIME

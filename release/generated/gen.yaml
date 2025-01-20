@@ -2,20 +2,20 @@
 # application:
 #
 #     app: ob
-#     version: 9ec56080
+#     version: 7bcd56e2
 #     components groups:
 #     - 
+#       - github.com/ServiceWeaver/onlineboutique/shippingservice/ShippingService
 #       - github.com/ServiceWeaver/onlineboutique/adservice/AdService
 #       - github.com/ServiceWeaver/onlineboutique/cartservice/CartService
-#       - github.com/ServiceWeaver/onlineboutique/checkoutservice/CheckoutService
-#       - github.com/ServiceWeaver/onlineboutique/productcatalogservice/CatalogService
-#       - github.com/ServiceWeaver/onlineboutique/shippingservice/ShippingService
-#       - github.com/ServiceWeaver/weaver/Main
-#       - github.com/ServiceWeaver/onlineboutique/cartservice/cartCache
 #       - github.com/ServiceWeaver/onlineboutique/currencyservice/CurrencyService
 #       - github.com/ServiceWeaver/onlineboutique/emailservice/EmailService
-#       - github.com/ServiceWeaver/onlineboutique/paymentservice/PaymentService
+#       - github.com/ServiceWeaver/onlineboutique/productcatalogservice/CatalogService
 #       - github.com/ServiceWeaver/onlineboutique/recommendationservice/RecService
+#       - github.com/ServiceWeaver/onlineboutique/cartservice/cartCache
+#       - github.com/ServiceWeaver/onlineboutique/checkoutservice/CheckoutService
+#       - github.com/ServiceWeaver/onlineboutique/paymentservice/PaymentService
+#       - github.com/ServiceWeaver/weaver/Main
 #     listeners:
 #     - boutique
 #
@@ -28,19 +28,19 @@
 #
 # To deploy these resources, run:
 #
-#     kubectl apply -f /tmp/kube_9ec56080.yaml
+#     kubectl apply -f /tmp/kube_7bcd56e2.yaml
 #
 # To view the deployed resources, run:
 #
-#     kubectl get all,configmaps --selector=serviceweaver/version=9ec56080
+#     kubectl get all,configmaps --selector=serviceweaver/version=7bcd56e2
 #
 # To view a description of every resource, run:
 #
-#     kubectl get all,configmaps --selector=serviceweaver/version=9ec56080 -o custom-columns=KIND:.kind,NAME:.metadata.name,APP:.metadata.labels.serviceweaver/app,VERSION:.metadata.labels.serviceweaver/version,DESCRIPTION:.metadata.annotations.description
+#     kubectl get all,configmaps --selector=serviceweaver/version=7bcd56e2 -o custom-columns=KIND:.kind,NAME:.metadata.name,APP:.metadata.labels.serviceweaver/app,VERSION:.metadata.labels.serviceweaver/version,DESCRIPTION:.metadata.annotations.description
 #
 # To delete the resources, run:
 #
-#     kubectl delete all,configmaps --selector=serviceweaver/version=9ec56080
+#     kubectl delete all,configmaps --selector=serviceweaver/version=7bcd56e2
 
 
 # Roles.
@@ -85,7 +85,7 @@ apiVersion: v1
 data:
   config.textpb: |
     namespace: "default"
-    deployment_id: "9ec56080-b39c-4b61-85df-7b7a773a2db1"
+    deployment_id: "7bcd56e2-6984-4a5a-84d7-807c20d3cc4c"
     listeners: {
       key: "boutique"
       value: 8080
@@ -158,12 +158,12 @@ data:
 kind: ConfigMap
 metadata:
   annotations:
-    description: This ConfigMap contains config files for app "ob" version "9ec56080".
+    description: This ConfigMap contains config files for app "ob" version "7bcd56e2".
   creationTimestamp: null
   labels:
     serviceweaver/app: ob
-    serviceweaver/version: 9ec56080
-  name: config-9ec56080
+    serviceweaver/version: 7bcd56e2
+  name: config-7bcd56e2
   namespace: default
 
 ---
@@ -178,8 +178,8 @@ metadata:
   labels:
     serviceweaver/app: ob
     serviceweaver/listener: boutique
-    serviceweaver/version: 9ec56080
-  name: boutique-9ec56080
+    serviceweaver/version: 7bcd56e2
+  name: boutique-7bcd56e2
   namespace: default
 spec:
   ports:
@@ -187,7 +187,7 @@ spec:
     protocol: TCP
     targetPort: 8080
   selector:
-    serviceweaver/name: ob-all-9ec56080-41d5e2fe
+    serviceweaver/name: ob-all-7bcd56e2-37d52403
   type: LoadBalancer
 status:
   loadBalancer: {}
@@ -199,40 +199,39 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   annotations:
-    description: This Deployment hosts components github.com/ServiceWeaver/onlineboutique/adservice/AdService,
-      github.com/ServiceWeaver/onlineboutique/cartservice/CartService, github.com/ServiceWeaver/onlineboutique/checkoutservice/CheckoutService,
+    description: This Deployment hosts components github.com/ServiceWeaver/onlineboutique/shippingservice/ShippingService,
+      github.com/ServiceWeaver/onlineboutique/adservice/AdService, github.com/ServiceWeaver/onlineboutique/cartservice/CartService,
+      github.com/ServiceWeaver/onlineboutique/currencyservice/CurrencyService, github.com/ServiceWeaver/onlineboutique/emailservice/EmailService,
       github.com/ServiceWeaver/onlineboutique/productcatalogservice/CatalogService,
-      github.com/ServiceWeaver/onlineboutique/shippingservice/ShippingService, github.com/ServiceWeaver/weaver/Main,
-      github.com/ServiceWeaver/onlineboutique/cartservice/cartCache, github.com/ServiceWeaver/onlineboutique/currencyservice/CurrencyService,
-      github.com/ServiceWeaver/onlineboutique/emailservice/EmailService, github.com/ServiceWeaver/onlineboutique/paymentservice/PaymentService,
-      github.com/ServiceWeaver/onlineboutique/recommendationservice/RecService.
+      github.com/ServiceWeaver/onlineboutique/recommendationservice/RecService, github.com/ServiceWeaver/onlineboutique/cartservice/cartCache,
+      github.com/ServiceWeaver/onlineboutique/checkoutservice/CheckoutService, github.com/ServiceWeaver/onlineboutique/paymentservice/PaymentService,
+      github.com/ServiceWeaver/weaver/Main.
   creationTimestamp: null
   labels:
     serviceweaver/app: ob
-    serviceweaver/version: 9ec56080
-  name: ob-all-9ec56080-41d5e2fe
+    serviceweaver/version: 7bcd56e2
+  name: ob-all-7bcd56e2-37d52403
   namespace: default
 spec:
   selector:
     matchLabels:
-      serviceweaver/name: ob-all-9ec56080-41d5e2fe
+      serviceweaver/name: ob-all-7bcd56e2-37d52403
   strategy: {}
   template:
     metadata:
       annotations:
-        description: This Pod hosts components github.com/ServiceWeaver/onlineboutique/adservice/AdService,
-          github.com/ServiceWeaver/onlineboutique/cartservice/CartService, github.com/ServiceWeaver/onlineboutique/checkoutservice/CheckoutService,
-          github.com/ServiceWeaver/onlineboutique/productcatalogservice/CatalogService,
-          github.com/ServiceWeaver/onlineboutique/shippingservice/ShippingService,
-          github.com/ServiceWeaver/weaver/Main, github.com/ServiceWeaver/onlineboutique/cartservice/cartCache,
+        description: This Pod hosts components github.com/ServiceWeaver/onlineboutique/shippingservice/ShippingService,
+          github.com/ServiceWeaver/onlineboutique/adservice/AdService, github.com/ServiceWeaver/onlineboutique/cartservice/CartService,
           github.com/ServiceWeaver/onlineboutique/currencyservice/CurrencyService,
-          github.com/ServiceWeaver/onlineboutique/emailservice/EmailService, github.com/ServiceWeaver/onlineboutique/paymentservice/PaymentService,
-          github.com/ServiceWeaver/onlineboutique/recommendationservice/RecService.
+          github.com/ServiceWeaver/onlineboutique/emailservice/EmailService, github.com/ServiceWeaver/onlineboutique/productcatalogservice/CatalogService,
+          github.com/ServiceWeaver/onlineboutique/recommendationservice/RecService,
+          github.com/ServiceWeaver/onlineboutique/cartservice/cartCache, github.com/ServiceWeaver/onlineboutique/checkoutservice/CheckoutService,
+          github.com/ServiceWeaver/onlineboutique/paymentservice/PaymentService, github.com/ServiceWeaver/weaver/Main.
       creationTimestamp: null
       labels:
         serviceweaver/app: ob
-        serviceweaver/name: ob-all-9ec56080-41d5e2fe
-        serviceweaver/version: 9ec56080
+        serviceweaver/name: ob-all-7bcd56e2-37d52403
+        serviceweaver/version: 7bcd56e2
       namespace: default
     spec:
       affinity:
@@ -241,7 +240,7 @@ spec:
           - podAffinityTerm:
               labelSelector:
                 matchLabels:
-                  serviceweaver/name: ob-all-9ec56080-41d5e2fe
+                  serviceweaver/name: ob-all-7bcd56e2-37d52403
               topologyKey: kubernetes.io/hostname
             weight: 100
       containers:
@@ -249,18 +248,18 @@ spec:
         - babysitter
         - /weaver/weaver.toml
         - /weaver/config.textpb
+        - github.com/ServiceWeaver/onlineboutique/shippingservice/ShippingService
         - github.com/ServiceWeaver/onlineboutique/adservice/AdService
         - github.com/ServiceWeaver/onlineboutique/cartservice/CartService
-        - github.com/ServiceWeaver/onlineboutique/checkoutservice/CheckoutService
-        - github.com/ServiceWeaver/onlineboutique/productcatalogservice/CatalogService
-        - github.com/ServiceWeaver/onlineboutique/shippingservice/ShippingService
-        - github.com/ServiceWeaver/weaver/Main
-        - github.com/ServiceWeaver/onlineboutique/cartservice/cartCache
         - github.com/ServiceWeaver/onlineboutique/currencyservice/CurrencyService
         - github.com/ServiceWeaver/onlineboutique/emailservice/EmailService
-        - github.com/ServiceWeaver/onlineboutique/paymentservice/PaymentService
+        - github.com/ServiceWeaver/onlineboutique/productcatalogservice/CatalogService
         - github.com/ServiceWeaver/onlineboutique/recommendationservice/RecService
-        image: docker.io/eberkley/ob:9ec56080
+        - github.com/ServiceWeaver/onlineboutique/cartservice/cartCache
+        - github.com/ServiceWeaver/onlineboutique/checkoutservice/CheckoutService
+        - github.com/ServiceWeaver/onlineboutique/paymentservice/PaymentService
+        - github.com/ServiceWeaver/weaver/Main
+        image: docker.io/eberkley/ob:7bcd56e2
         imagePullPolicy: IfNotPresent
         name: serviceweaver
         ports:
@@ -268,10 +267,10 @@ spec:
           name: boutique
         resources:
           limits:
-            cpu: "1"
+            cpu: "2"
             memory: 2Gi
           requests:
-            cpu: "1"
+            cpu: "2"
             memory: 2Gi
         stdin: true
         tty: true
@@ -286,7 +285,7 @@ spec:
       serviceAccountName: default
       volumes:
       - configMap:
-          name: config-9ec56080
+          name: config-7bcd56e2
         name: config
 status: {}
 
@@ -297,13 +296,13 @@ apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   annotations:
-    description: This HorizontalPodAutoscaler scales the "ob-all-9ec56080-41d5e2fe"
+    description: This HorizontalPodAutoscaler scales the "ob-all-7bcd56e2-37d52403"
       Deployment.
   creationTimestamp: null
   labels:
     serviceweaver/app: ob
-    serviceweaver/version: 9ec56080
-  name: ob-all-9ec56080-41d5e2fe
+    serviceweaver/version: 7bcd56e2
+  name: ob-all-7bcd56e2-37d52403
   namespace: default
 spec:
   maxReplicas: 50
@@ -311,14 +310,14 @@ spec:
   - resource:
       name: cpu
       target:
-        averageUtilization: 45
+        averageUtilization: 60
         type: Utilization
     type: Resource
-  minReplicas: 4
+  minReplicas: 3
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: ob-all-9ec56080-41d5e2fe
+    name: ob-all-7bcd56e2-37d52403
 status:
   currentMetrics: null
   desiredReplicas: 0

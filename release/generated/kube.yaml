@@ -9,11 +9,11 @@ listeners:
 
 resourceSpec:
   requests:
-    cpu: 1
+    cpu: 2
     memory: "2048Mi"
 
   limits:
-    cpu: 1
+    cpu: 2
     memory: "2048Mi"
   
 scalingSpec:
@@ -42,7 +42,7 @@ groups:
     - "github.com/ServiceWeaver/onlineboutique/recommendationservice/RecService"
     - "github.com/ServiceWeaver/onlineboutique/shippingservice/ShippingService"
     scalingSpec:
-      minReplicas: 4
+      minReplicas: 3
       maxReplicas: 50
       metrics:
         - type: Resource
@@ -50,4 +50,4 @@ groups:
             name: cpu
             target:
               type: Utilization
-              averageUtilization: 45
+              averageUtilization: 60
