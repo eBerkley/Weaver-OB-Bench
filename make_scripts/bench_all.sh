@@ -36,7 +36,9 @@ loop_body () {
   mv benchmark/stats benchmark/out/$cfg/stats
 
   # Create aggregated.csv that only has the aggregate latency stats
-  cat benchmark/out/$cfg/stats/lat_stats_history.csv | grep -o "Aggregated[^\n]*" > benchmark/out/$cfg/stats/aggregated.csv
+  echo "Name,Requests/s,Failures/s,50%,66%,75%,80%,90%,95%,98%,99%,99.9%,99.99%,100%,Total Request Count,Total Failure Count,Total Median Response Time,Total Average Response Time,Total Min Response Time,Total Max Response Time,Total Average Content Size" > benchmark/out/$cfg/stats/aggregated.csv
+  
+  cat benchmark/out/$cfg/stats/lat_stats_history.csv | grep -o "Aggregated[^\n]*" >> benchmark/out/$cfg/stats/aggregated.csv
 
   # Append logs from this run into tmp
   cat $LOGS_FILE >> $TMP_LOGS

@@ -18,7 +18,7 @@ if [[ -z "$mainpod" ]]; then
 fi
 
 SECONDS=0
-debug_frequency=4 # 25% of time
+DEBUG_FREQUENCY=5 # 20% of time
 
 echo waiting for loadgenerator to be ready...                 | tee -a $logfile
 kubectl wait --timeout=1h --for=condition=Ready pod/$podname
@@ -43,7 +43,7 @@ write_cpu_util () {
 log_debug_info() {  
   local val=$1
 
-  if [ $(( val % $debug_frequency )) -eq 0 ]; then
+  if [ $(( val % $DEBUG_FREQUENCY )) -eq 0 ]; then
 
     # echo "=*=*=*=*=*=*=*=*= DEBUG INFO =*=*=*=*=*=*=*=*="
   
@@ -51,7 +51,11 @@ log_debug_info() {
     # echo
     date -d@$SECONDS -u +%H:%M:%S
     kubectl top pod
-
+    echo
+    ./get_replicas.sh
+    ./get_replicas.sh 1 >pod_stats.csv
+    echo
+    
     # echo "=*=*=*=*=*=*=*=*= END DEBUG. =*=*=*=*=*=*=*=*="
 
   fi
@@ -98,5 +102,7 @@ while [ $size -le 5 ] || [ $size -ge 20 ]; do
 done
 
 kubectl cp $podname:/stats ../benchmark/stats
+
+mv pod_stats.csv ../benchmark/stats/pod_stats.csv
 
 echo done.
