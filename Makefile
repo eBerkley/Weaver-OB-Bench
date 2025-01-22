@@ -48,6 +48,13 @@ MAIN_SRC := $(SRC)/main.go $(filter-out %weaver_gen.go, $(wildcard $(SRC)/*/*.go
 VERSION_FILE := $(GENERATED)/version.txt
 
 LOGS_FILE := $(TOP)/logs.txt
+TMP_LOGS := $(TOP)/tmp_logs.txt
+
+ifeq ($(VERBOSE), 1)
+	DEBUG_OUTPUT := $(LOGS_FILE)
+else
+	DEBUG_OUTPUT := /dev/null
+endif
 
 .PHONY: all clean minikube_start minikube_restart check_smt toggle_smt deploy bench bench_all stop clear_logs check_docker check_loadgen pre_deploy bench_once
 
@@ -113,11 +120,12 @@ deploy: minikube_start pre_deploy
 	@echo deploying onlineboutique, loadgenerator...| tee -a $(LOGS_FILE)
 	
 	@# Remove any old deployment.
-	@-kubectl delete all --all
+	@-kubectl delete all --all >>$(DEBUG_OUTPUT) 2>&1
 
 	@# should be first so that if running on a NUMA architecture, first socket can be entirely used.
-	@kubectl apply -f $(LOAD_GEN_YAML) >> $(LOGS_FILE)
-	@kubectl apply -f $(WEAVER_GEN_YAML) >> $(LOGS_FILE)
+	@kubectl apply -f $(LOAD_GEN_YAML) >> $(DEBUG_OUTPUT) 2>&1
+	@sleep 10 # when separating between sockets
+	@kubectl apply -f $(WEAVER_GEN_YAML) >> $(DEBUG_OUTPUT) 2>&1
 
 
 # Can be run by user 
@@ -125,7 +133,7 @@ deploy: minikube_start pre_deploy
 bench: deploy	
 	./scripts/pull_stats.sh 
 	@echo deleting deployment...
-	@-kubectl delete all --all
+	@-kubectl delete all --all >> $(DEBUG_OUTPUT) 2>&1
 	@./make_scripts/post_bench.sh
 
 # Shouldn't be ran by user, used by bench_all.

@@ -70,6 +70,12 @@ spec:
 
         - name: LOCUST_SHAPE
           value: <LOCUST_SHAPE>
+        
+        - name: LOCUST_WAIT_TIME
+          value: <LOCUST_WAIT_TIME>
+
+        - name: LOCUST_RAMP_DURATION
+          value: <LOCUST_RAMP_DURATION>
 
         resources:
           requests:
@@ -139,6 +145,12 @@ spec:
         
         - name: FRONTEND_ADDR
           value: "<ADDR>"
+
+        - name: LOCUST_WAIT_TIME
+          value: <LOCUST_WAIT_TIME>
+
+        - name: LOCUST_RAMP_DURATION
+          value: <LOCUST_RAMP_DURATION>
 
         resources:
           requests: 

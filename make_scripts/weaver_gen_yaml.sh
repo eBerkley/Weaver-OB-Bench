@@ -24,9 +24,21 @@ sed -i "s#<OB_CORES>#$OB_CORES#g" $KUBE_GEN_YAML
 # Max replicas per fusion group
 sed -i "s#<OB_REPLICAS>#$OB_REPLICAS#g" $KUBE_GEN_YAML
 
+
+sed -i "s#<CRITICAL_SCALE_UTIL>#${CRITICAL_SCALE_UTIL:-$FALLBACK_SCALE_UTIL}#g" $KUBE_GEN_YAML
+sed -i "s#<NONCRITICAL_SCALE_UTIL>#${NONCRITICAL_SCALE_UTIL:-$FALLBACK_SCALE_UTIL}#g" $KUBE_GEN_YAML
+sed -i "s#<TRIVIAL_SCALE_UTIL>#${TRIVIAL_SCALE_UTIL:-$FALLBACK_SCALE_UTIL}#g" $KUBE_GEN_YAML
+sed -i "s#<FALLBACK_SCALE_UTIL>#$FALLBACK_SCALE_UTIL#g" $KUBE_GEN_YAML
+
+sed -i "s#<CRITICAL_MIN_REPLICAS>#${CRITICAL_MIN_REPLICAS:-$FALLBACK_MIN_REPLICAS}#g" $KUBE_GEN_YAML
+sed -i "s#<NONCRITICAL_MIN_REPLICAS>#${NONCRITICAL_MIN_REPLICAS:-$FALLBACK_MIN_REPLICAS}#g" $KUBE_GEN_YAML
+sed -i "s#<TRIVIAL_MIN_REPLICAS>#${TRIVIAL_MIN_REPLICAS:-$FALLBACK_MIN_REPLICAS}#g" $KUBE_GEN_YAML
+sed -i "s#<FALLBACK_MIN_REPLICAS>#$FALLBACK_MIN_REPLICAS#g" $KUBE_GEN_YAML
+
+
 # Generate kubernetes yaml from weaver kube specification yaml
 # `yaml` := the generated file location (something like /tmp/kube_[0-9a-z]{6}.yaml)
-yaml=$(weaver kube deploy $KUBE_GEN_YAML 2>>$LOGS_FILE) 
+yaml=$(weaver kube deploy $KUBE_GEN_YAML 2>>$DEBUG_OUTPUT)
 
 # The [0-9a-z]{6} part of the filename
 deployment=$(echo $yaml | sed 's/\/tmp\/kube_\([0-9a-z]\+\)\.yaml/\1/g')

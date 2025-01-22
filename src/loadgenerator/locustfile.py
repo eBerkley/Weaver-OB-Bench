@@ -37,6 +37,8 @@ products = [
     'LS4PSXUNUM',
     'OLJCESPC7Z']
 
+currencies = ['EUR', 'USD', 'JPY', 'CAD', 'GBP', 'TRY']
+
 class WebsiteUser(FastHttpUser):
     def __init__(self, environment):
         super().__init__(environment)
@@ -57,7 +59,6 @@ class WebsiteUser(FastHttpUser):
     # 1 req
     @task(20)
     def setCurrency(self):
-        currencies = ['EUR', 'USD', 'JPY', 'CAD', 'GBP', 'TRY']
         self.client.post("/setCurrency",
             {'currency_code': random.choice(currencies)})
 

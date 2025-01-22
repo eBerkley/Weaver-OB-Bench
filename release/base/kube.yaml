@@ -17,7 +17,7 @@ resourceSpec:
     memory: "2048Mi"
   
 scalingSpec:
-  minReplicas: 1
+  minReplicas: <FALLBACK_MIN_REPLICAS>
   maxReplicas: <OB_REPLICAS>
   metrics:
     - type: Resource
@@ -25,5 +25,5 @@ scalingSpec:
         name: cpu
         target:
           type: Utilization
-          averageUtilization: 5
+          averageUtilization: <FALLBACK_SCALE_UTIL>
 

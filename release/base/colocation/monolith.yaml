@@ -12,3 +12,13 @@ groups:
     - "github.com/ServiceWeaver/onlineboutique/productcatalogservice/CatalogService"
     - "github.com/ServiceWeaver/onlineboutique/recommendationservice/RecService"
     - "github.com/ServiceWeaver/onlineboutique/shippingservice/ShippingService"
+    scalingSpec:
+      minReplicas: <CRITICAL_MIN_REPLICAS>
+      maxReplicas: <OB_REPLICAS>
+      metrics:
+        - type: Resource
+          resource:
+            name: cpu
+            target:
+              type: Utilization
+              averageUtilization: <CRITICAL_SCALE_UTIL>
