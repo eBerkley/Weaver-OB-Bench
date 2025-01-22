@@ -35,7 +35,7 @@ Params: TypeAlias = tuple[tuple[int, int, int, int], tuple[int, int, int, int]]
 # param 4-tup are of the form (CRITICAL, NONCRITICAL, TRIVIAL, FALLBACK)
 
 BASIC_PARAMS: Params = ((60, 70, 80, 75), (3, 2, 1, 1))
-DEFAULT_PARAMS: Params = ((75, 75, 75, 75), (1, 1, 1, 1))
+DEFAULT_PARAMS: Params = ((65, 70, 75, 75), (1, 1, 1, 1))
 AGGRO_PARAMS: Params = ((45, 60, 80, 75), (4, 2, 1, 1))
 PARAMETERS: dict[str, Params] = {"basic": BASIC_PARAMS, "default": DEFAULT_PARAMS, "aggro": AGGRO_PARAMS}
 
