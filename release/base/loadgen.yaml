@@ -76,6 +76,9 @@ spec:
 
         - name: LOCUST_RAMP_DURATION
           value: <LOCUST_RAMP_DURATION>
+        
+        - name: LOCUST_CSV_INTERVAL
+          value: <LOCUST_CSV_INTERVAL>
 
         resources:
           requests:
@@ -151,6 +154,9 @@ spec:
 
         - name: LOCUST_RAMP_DURATION
           value: <LOCUST_RAMP_DURATION>
+
+        - name: LOCUST_CSV_INTERVAL
+          value: <LOCUST_CSV_INTERVAL>
 
         resources:
           requests: 

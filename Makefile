@@ -13,11 +13,9 @@ TOP := .
 RELEASE := $(TOP)/release
 SRC := $(TOP)/src
 BENCH := $(TOP)/benchmark
-
 BASE := $(RELEASE)/base
 GENERATED := $(RELEASE)/generated
 
-IMGS := $(BENCH)/imgs
 STATS := $(BENCH)/stats
 
 KUBE_BASE_YAML := $(BASE)/kube.yaml
@@ -35,6 +33,9 @@ SCHEME_DIR := $(BASE)/colocation
 COLOCATION_FNAMES := $(wildcard $(SCHEME_DIR)/*.yaml)
 COLOCATION_BASE := $(foreach var, $(COLOCATION_FNAMES), $(shell basename $(var) .yaml))
 
+SCALING_SPEC_FILE := $(BASE)/scalingSpec.yaml
+SCALING_DEFS_FILE := $(SCHEME_DIR)/scalingdefs.cfg
+GROUPS_FILE := $(GENERATED)/groups.yaml
 
 BIN := $(GENERATED)/ob
 
@@ -115,6 +116,13 @@ pre_deploy: check_docker check_loadgen $(WEAVER_GEN_YAML) $(LOAD_GEN_YAML)
 	
 	@echo pre deploy check / code gen complete.
 
+test_recipe:
+	@if [ -z $$ALLOC_FILE ]; then \
+		./make_scripts/set_pod_scaling.sh; \
+	else \
+		./make_scripts/set_pod_replicas.sh; \
+	fi
+
 # release/generated/gen.yaml and release/generated/loadgen.yaml
 deploy: minikube_start pre_deploy
 	@echo deploying onlineboutique, loadgenerator...| tee -a $(LOGS_FILE)
@@ -135,6 +143,9 @@ bench: deploy
 	@echo deleting deployment...
 	@-kubectl delete all --all >> $(DEBUG_OUTPUT) 2>&1
 	@./make_scripts/post_bench.sh
+
+export_allocations:
+	@./scripts/export_allocations.sh
 
 # Shouldn't be ran by user, used by bench_all.
 bench_once: deploy

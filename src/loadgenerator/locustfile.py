@@ -20,9 +20,9 @@ from typing import Tuple, Optional, List
 from faker import Faker
 import logging
 import datetime
-
+import os
 import locust.stats
-locust.stats.CSV_STATS_INTERVAL_SEC = 10
+locust.stats.CSV_STATS_INTERVAL_SEC = int(os.getenv("LOCUST_CSV_INTERVAL", 1))
 
 fake = Faker()
 
