@@ -6,6 +6,7 @@ import logging
 from os import getenv
 
 WAIT_TIME = int(getenv("LOCUST_WAIT_TIME", "30"))
+RAMP_DURATION = float(getenv("LOCUST_RAMP_DURATION", "5.0")) # seconds
 
 class RampLoad_Factor(LoadTestShape):
     
@@ -151,7 +152,7 @@ class RampLoad(LoadTestShape):
     ramp_pause: Final = 5 # seconds
     """When we reach a user count we were ramping to, how long do we wait before resuming?"""
 
-    ramp_duration: Final = float(getenv("LOCUST_RAMP_DURATION", "5.0")) # seconds
+    ramp_duration: Final = RAMP_DURATION # seconds
     """How much time do we spend reaching the new user count?
     Affects users spawned per second, but not overall users spawned per ramp."""
 

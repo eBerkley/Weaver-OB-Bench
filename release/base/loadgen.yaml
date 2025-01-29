@@ -80,6 +80,12 @@ spec:
         - name: LOCUST_CSV_INTERVAL
           value: <LOCUST_CSV_INTERVAL>
 
+        - name: LOCUST_VARIANCE_WINDOW
+          value: <LOCUST_VARIANCE_WINDOW>
+
+        - name: LOCUST_MAX_VARIANCE
+          value: <LOCUST_MAX_VARIANCE>
+
         resources:
           requests:
             cpu: 1
@@ -157,6 +163,12 @@ spec:
 
         - name: LOCUST_CSV_INTERVAL
           value: <LOCUST_CSV_INTERVAL>
+        
+        - name: LOCUST_VARIANCE_WINDOW
+          value: <LOCUST_VARIANCE_WINDOW>
+
+        - name: LOCUST_MAX_VARIANCE
+          value: <LOCUST_MAX_VARIANCE>
 
         resources:
           requests: 

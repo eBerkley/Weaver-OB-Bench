@@ -42,6 +42,11 @@ sed -i "s#<LOCUST_RAMP_DURATION>#\"$LOCUST_RAMP_DURATION\"#g" $LOAD_GEN_YAML
 # Set the latency stat export frequency
 sed -i "s#<LOCUST_CSV_INTERVAL>#\"$LOCUST_CSV_INTERVAL\"#g" $LOAD_GEN_YAML
 
+# Set how many values to use when calculating variance for stable_rampload shape
+sed -i "s#<LOCUST_VARIANCE_WINDOW>#\"$LOCUST_VARIANCE_WINDOW\"#g" $LOAD_GEN_YAML
+
+# Set max variance before ramping up for stable_rampload shape
+sed -i "s#<LOCUST_MAX_VARIANCE>#\"$LOCUST_MAX_VARIANCE\"#g" $LOAD_GEN_YAML          
 
 # Build the image and push it to docker
 docker build $LOAD_SRC -t $DOCKER/loadgen:$version >>$DEBUG_OUTPUT 2>&1
