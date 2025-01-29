@@ -94,7 +94,7 @@ parser.add_argument('-m', '--max', metavar='REPLICAS', type=int, default=50,
 
 parser.add_argument('-t', dest='type', default="default", choices=[k for k, _ in PARAMETERS.items()], help="some bonus scaling specific parameters that can be set. View source code of this file for more info.")
 
-parser.add_argument('-S' '--static', dest='static', action='store_true', help="""Uses an exported allocation file in `alloc/` to keep the number of replicas per pod static during the loadtest.
+parser.add_argument('-S', '--static', dest='static', action='store_true', help="""Uses an exported allocation file in `alloc/` to keep the number of replicas per pod static during the loadtest.
 This type of test is meant to be used for collecting usable results.""")
 
 # ==================================================
@@ -186,7 +186,7 @@ for scheme, pods in POD_COUNT.items():
                 if not os.access(alloc_file, os.R_OK):
                     print(f"warning: -S flag was used, but {alloc_file} does not exist. continuing...")
                 
-            out = f"SCHEME={scheme}\nLOADGEN_REPLICAS={num_workers}\nOB_CORES={cores_per}\nOB_REPLICAS={replicas}\nalloc_file={alloc_file}"
+            out = f"SCHEME={scheme}\nLOADGEN_REPLICAS={num_workers}\nOB_CORES={cores_per}\nOB_REPLICAS={replicas}\nALLOC_FILE={alloc_file}\n"
             
             fname = f"cfgs/{scheme}_{cores_per:02d}_{free_cores - num_workers:02d}.cfg"
             out += param_to_cfg(PARAMETERS[args.type])

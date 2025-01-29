@@ -47,14 +47,15 @@ for name in $(get_group_names); do
 done
 
 # This just fixes the indentation of all the scalingSpec lines.
-sed -i  -e "s/scalingSpec/\t\tscalingSpec/g" \
-        -e "s/minReplicas/\t\tminReplicas/g" \
-        -e "s/maxReplicas/\t\tmaxReplicas/g" \
-        -e "s/metrics/\t\tmetrics/g" \
-        -e "s/- type/\t\t- type/g" \
-        -e "s/resource/\t\tresource/g" \
-        -e "s/name: cpu/\t\tname: cpu/g" \
-        -e "s/target/\t\t\ttarget/g" \
-        -e "s/type: Utilization/\t\t\ttype: Utilization/g" \
-        -e "s/averageUtilization/\t\t\taverageUtilization/g" \
+
+sed -i  -e "s/scalingSpec/    scalingSpec/g" \
+        -e "s/minReplicas/    minReplicas/g" \
+        -e "s/maxReplicas/    maxReplicas/g" \
+        -e "s/metrics/    metrics/g" \
+        -e "s/- type/    - type/g" \
+        -e "s/resource/    resource/g" \
+        -e "s/name: cpu/    name: cpu/g" \
+        -e "s/target/    target/g" \
+        -e "s/type: Utilization/    type: Utilization/g" \
+        -e "s/averageUtilization/    averageUtilization/g" \
         $GROUPS_FILE

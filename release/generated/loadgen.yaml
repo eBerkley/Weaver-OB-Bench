@@ -56,26 +56,35 @@ spec:
               - ALL
           privileged: false
           readOnlyRootFilesystem: false
-        image: docker.io/eberkley/loadgen:3738c5a2
+        image: docker.io/eberkley/loadgen:6c6364c4
         imagePullPolicy: IfNotPresent
         env:
         - name: LOCUST_MODE
           value: MASTER
 
         - name: FRONTEND_ADDR
-          value: boutique-3738c5a2:80
+          value: boutique-6c6364c4:80
         
         - name: LOADGEN_REPLICAS
-          value: "54"
+          value: "51"
 
         - name: LOCUST_SHAPE
-          value: rampload
+          value: stable_rampload
         
         - name: LOCUST_WAIT_TIME
           value: "30"
 
         - name: LOCUST_RAMP_DURATION
           value: "5"
+        
+        - name: LOCUST_CSV_INTERVAL
+          value: "1"
+
+        - name: LOCUST_VARIANCE_WINDOW
+          value: "30"
+
+        - name: LOCUST_MAX_VARIANCE
+          value: "0.3"
 
         resources:
           requests:
@@ -106,7 +115,7 @@ metadata:
     role: loadgenerator-worker
   name: loadgenerator-worker
 spec:
-  replicas: 54
+  replicas: 51
   selector:
     matchLabels:
       app: loadgenerator-worker
@@ -134,7 +143,7 @@ spec:
           readOnlyRootFilesystem: true
 
 
-        image: docker.io/eberkley/loadgen:3738c5a2
+        image: docker.io/eberkley/loadgen:6c6364c4
         imagePullPolicy: IfNotPresent
         env:
         - name: LOCUST_MODE
@@ -144,13 +153,22 @@ spec:
           value: loadgenerator
         
         - name: FRONTEND_ADDR
-          value: "boutique-3738c5a2:80"
+          value: "boutique-6c6364c4:80"
 
         - name: LOCUST_WAIT_TIME
           value: "30"
 
         - name: LOCUST_RAMP_DURATION
           value: "5"
+
+        - name: LOCUST_CSV_INTERVAL
+          value: "1"
+        
+        - name: LOCUST_VARIANCE_WINDOW
+          value: "30"
+
+        - name: LOCUST_MAX_VARIANCE
+          value: "0.3"
 
         resources:
           requests: 

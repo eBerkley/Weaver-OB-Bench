@@ -57,7 +57,7 @@ else
 	DEBUG_OUTPUT := /dev/null
 endif
 
-.PHONY: all clean minikube_start minikube_restart check_smt toggle_smt deploy bench bench_all stop clear_logs check_docker check_loadgen pre_deploy bench_once
+.PHONY: all clean minikube_start minikube_restart check_smt toggle_smt deploy bench bench_all stop clear_logs check_docker check_loadgen pre_deploy bench_once set_groups
 
 all:
 	@echo valid arguments:
@@ -106,6 +106,10 @@ toggle_smt:
 # check_docker should prevent gen yaml scripts from firing without `$$DOCKER` being set.
 pre_deploy: check_docker check_loadgen $(WEAVER_GEN_YAML) $(LOAD_GEN_YAML)
 	@./make_scripts/check_env.sh
+	@./scripts/checks/check_freq_scaling.sh
+	@./scripts/checks/check_hyperthreading.sh
+	@./scripts/checks/check_numa_balance.sh
+
 	@echo 																								| tee -a $(LOGS_FILE)
 	@echo "scheme:                    $$SCHEME"						| tee -a $(LOGS_FILE)
 	@echo "loadshape:                 $$LOCUST_SHAPE"			| tee -a $(LOGS_FILE)
@@ -116,12 +120,7 @@ pre_deploy: check_docker check_loadgen $(WEAVER_GEN_YAML) $(LOAD_GEN_YAML)
 	
 	@echo pre deploy check / code gen complete.
 
-test_recipe:
-	@if [ -z $$ALLOC_FILE ]; then \
-		./make_scripts/set_pod_scaling.sh; \
-	else \
-		./make_scripts/set_pod_replicas.sh; \
-	fi
+
 
 # release/generated/gen.yaml and release/generated/loadgen.yaml
 deploy: minikube_start pre_deploy
@@ -165,8 +164,16 @@ stop:
 # if deployment specifications or src code was modified,
 # 	Update Weaver kubernetes yaml
 # 	modifies version file, which should trigger LOAD_GEN_YAML
-$(WEAVER_GEN_YAML): $(KUBE_BASE_YAML) $(KUBE_GEN_YAML) $(BIN) $(CONFIG_FILE) .env
+$(WEAVER_GEN_YAML): $(KUBE_BASE_YAML) $(KUBE_GEN_YAML) set_groups $(BIN) $(CONFIG_FILE) .env
 	@echo rebuilding onlineboutique container...
+	@if [ -z $$ALLOC_FILE ]; then \
+		echo "pods=dynamic"; \
+		./make_scripts/set_pod_scaling.sh; \
+	else \
+		echo "pods=static"; \
+		./make_scripts/set_pod_replicas.sh; \
+	fi
+
 	@./make_scripts/weaver_gen_yaml.sh 
 
 # if deployment specifications or loadgen code was modified, 
