@@ -16,6 +16,7 @@ BENCH := $(TOP)/benchmark
 
 BASE := $(RELEASE)/base
 GENERATED := $(RELEASE)/generated
+TRACE := $(RELEASE)/trace
 
 IMGS := $(BENCH)/imgs
 STATS := $(BENCH)/stats
@@ -30,11 +31,11 @@ KUBE_GEN_YAML := $(GENERATED)/kube.yaml
 WEAVER_GEN_YAML := $(GENERATED)/gen.yaml
 # also passed to `kubectl apply -f`
 LOAD_GEN_YAML := $(GENERATED)/loadgen.yaml
+JAEGER_TRACE_YAML := $(TRACE)/jaeger.yaml
 
 SCHEME_DIR := $(BASE)/colocation
 COLOCATION_FNAMES := $(wildcard $(SCHEME_DIR)/*.yaml)
 COLOCATION_BASE := $(foreach var, $(COLOCATION_FNAMES), $(shell basename $(var) .yaml))
-
 
 BIN := $(GENERATED)/ob
 
@@ -50,13 +51,25 @@ VERSION_FILE := $(GENERATED)/version.txt
 LOGS_FILE := $(TOP)/logs.txt
 TMP_LOGS := $(TOP)/tmp_logs.txt
 
+CHECK_METRICS_SERVER = $(shell kubectl get deployment -n kube-system metrics-server 2>/dev/null | grep -c metrics-server)
+
 ifeq ($(VERBOSE), 1)
 	DEBUG_OUTPUT := $(LOGS_FILE)
 else
 	DEBUG_OUTPUT := /dev/null
 endif
 
-.PHONY: all clean minikube_start minikube_restart check_smt toggle_smt deploy bench bench_all stop clear_logs check_docker check_loadgen pre_deploy bench_once
+.PHONY: all clean minikube_start minikube_restart check_smt toggle_smt deploy bench bench_all stop clear_logs check_docker check_loadgen pre_deploy bench_once collect_traces check-metrics-server
+
+
+check-metrics-server:
+ifeq ($(CHECK_METRICS_SERVER), 1)
+	@echo "Metrics Server is already installed."
+else
+	@echo "Metrics Server is not installed. Installing..."
+	kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml || \
+	(echo "Failed to install Metrics Server. Check your network connection or permissions." && exit 1)
+endif
 
 all:
 	@echo valid arguments:
@@ -69,14 +82,13 @@ all:
 	@echo "bench                - Deploys app, and runs script to collect metrics and terminate when load test is complete."
 	@echo "bench_all            - Run benchmark using every colocation scheme in release/base/colocation"
 	@echo "stop                 - remove deployments"
-
+	@echo "collect_traces       - Runs the Jaeger trace collection script."
 
 check_docker: 
 	@./make_scripts/check_docker.sh
 
 check_loadgen: $(LOAD_SRC_PY)
 	@python3 -m py_compile $(LOAD_SRC_PY)
-
 
 minikube_start:
 	@ lines=$(shell minikube status | wc -l);\
@@ -103,15 +115,15 @@ toggle_smt:
 # Check to make sure all the prerequisites for deploy execute properly. 
 # Does not actually deploy anything.
 # check_docker should prevent gen yaml scripts from firing without `$$DOCKER` being set.
-pre_deploy: check_docker check_loadgen $(WEAVER_GEN_YAML) $(LOAD_GEN_YAML)
+pre_deploy: check_docker check_loadgen check-metrics-server $(WEAVER_GEN_YAML) $(LOAD_GEN_YAML)
 	@./make_scripts/check_env.sh
-	@echo 																								| tee -a $(LOGS_FILE)
-	@echo "scheme:                    $$SCHEME"						| tee -a $(LOGS_FILE)
-	@echo "loadshape:                 $$LOCUST_SHAPE"			| tee -a $(LOGS_FILE)
-	@echo "loadgenerator workers:     $$LOADGEN_REPLICAS"	| tee -a $(LOGS_FILE)
-	@echo "cores per OB pod:          $$OB_CORES"					| tee -a $(LOGS_FILE)
-	@echo "replicas per fusion group: $$OB_REPLICAS" 			| tee -a $(LOGS_FILE)
-	@echo 																								| tee -a $(LOGS_FILE)
+	@echo 															| tee -a $(LOGS_FILE)
+	@echo "scheme:                    $$SCHEME"                        | tee -a $(LOGS_FILE)
+	@echo "loadshape:                 $$LOCUST_SHAPE"            | tee -a $(LOGS_FILE)
+	@echo "loadgenerator workers:     $$LOADGEN_REPLICAS"    | tee -a $(LOGS_FILE)
+	@echo "cores per OB pod:          $$OB_CORES"                    | tee -a $(LOGS_FILE)
+	@echo "replicas per fusion group: $$OB_REPLICAS"             | tee -a $(LOGS_FILE)
+	@echo 															| tee -a $(LOGS_FILE)
 	
 	@echo pre deploy check / code gen complete.
 
@@ -123,9 +135,9 @@ deploy: minikube_start pre_deploy
 	@-kubectl delete all --all >>$(DEBUG_OUTPUT) 2>&1
 
 	@# should be first so that if running on a NUMA architecture, first socket can be entirely used.
+	@kubectl apply -f $(JAEGER_TRACE_YAML) >> $(DEBUG_OUTPUT) 2>&1
 	@kubectl apply -f $(LOAD_GEN_YAML) >> $(DEBUG_OUTPUT) 2>&1
 	@kubectl apply -f $(WEAVER_GEN_YAML) >> $(DEBUG_OUTPUT) 2>&1
-
 
 # Can be run by user 
 # Used to benchmark app under environment specified by env vars
@@ -139,12 +151,23 @@ bench: deploy
 bench_once: deploy
 	./scripts/pull_stats.sh
 
+bench_trace: deploy
+	./scripts/pull_stats_trace.sh
+	@echo deleting deployment...
+	@-kubectl delete all --all >> $(DEBUG_OUTPUT) 2>&1
+	@./make_scripts/post_bench.sh
+
 # ./bench_all changes $(WEAVER_GEN_YAML) every time it runs, 
 # 	new images built each time.
 bench_all: minikube_start clear_logs
 	@echo Colocation Schemes: $(COLOCATION_BASE)
 	@echo 
 	./make_scripts/bench_all.sh
+
+bench_trace_all: minikube_start clear_logs
+	@echo Colocation Schemes: $(COLOCATION_BASE)
+	@echo 
+	./make_scripts/bench_trace_all.sh
 
 stop:
 	./scripts/stop.sh
@@ -178,3 +201,8 @@ clear_logs: $(LOGS_FILE)
 $(LOGS_FILE):
 	@echo creating $(LOGS_FILE)...
 	@touch $(LOGS_FILE)
+
+# Collect Jaeger traces using the Jaeger trace script
+collect_traces:
+	@echo Collecting Jaeger traces...
+	@./make_scripts/jaeger_trace_script.sh
