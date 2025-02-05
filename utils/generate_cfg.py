@@ -17,7 +17,7 @@ import shutil
 
 # Settable hyperparameters of sorts
 # ===========================================================================
-KUBE_CORES="0" 
+KUBE_CORES="0-2" 
 DEFAULT_LOADGEN_WORKERS = 20
 POD_COUNT = {"monolith": 1, "microservices": 12, "mixed": 8}
 DEFAULT_SCHEMES = ["monolith"] 

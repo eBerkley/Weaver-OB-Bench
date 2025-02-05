@@ -30,10 +30,8 @@ type RecService interface {
 
 type impl struct {
 	weaver.Implements[RecService]
-	catalogService weaver.Ref[productcatalogservice.CatalogService]
+	catalogService weaver.Ref[productcatalogservice.ProductCatalogService]
 }
-
-
 
 func (s *impl) ListRecommendations(ctx context.Context, userID string, userProductIDs []string) ([]string, error) {
 	// Fetch a list of products from the product catalog.

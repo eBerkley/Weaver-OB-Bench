@@ -1,5 +1,6 @@
 .EXPORT_ALL_VARIABLES:
 
+SHELL := /bin/bash
 CONFIG_FILE ?= CONFIG.cfg
 
 # sets DOCKER, KUBE_CORES, LOCUST_SHAPE, SCHEME
@@ -131,8 +132,11 @@ deploy: minikube_start pre_deploy
 
 	@# should be first so that if running on a NUMA architecture, first socket can be entirely used.
 	@kubectl apply -f $(LOAD_GEN_YAML) >> $(DEBUG_OUTPUT) 2>&1
-	@sleep 10 # when separating between sockets
+	
 	@kubectl apply -f $(WEAVER_GEN_YAML) >> $(DEBUG_OUTPUT) 2>&1
+	
+	@# If we need to pin, we wait a while because it takes a min to start up.
+	@if [[ -n $$ALLOC_FILE ]]; then sleep 25; ./scripts/pinning.sh | tee -a $(LOGS_FILE); fi
 
 
 # Can be run by user 
@@ -152,7 +156,7 @@ bench_once: deploy
 
 # ./bench_all changes $(WEAVER_GEN_YAML) every time it runs, 
 # 	new images built each time.
-bench_all: minikube_start clear_logs
+bench_all: clear_logs
 	@echo Colocation Schemes: $(COLOCATION_BASE)
 	@echo 
 	./make_scripts/bench_all.sh

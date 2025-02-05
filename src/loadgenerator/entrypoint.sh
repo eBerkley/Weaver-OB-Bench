@@ -35,4 +35,4 @@ esac
 
 locust ${LOCUST_OPTS}
 echo all done!
-sleep 30
+sleep 3000 # don't terminate, let us view logs easily.

@@ -32,10 +32,10 @@ groups:
     - "github.com/ServiceWeaver/onlineboutique/paymentservice/PaymentService"
 <paymentservice_SCALING_SPEC>
 
-  - name: catalogservice
+  - name: productcatalogservice
     components:
-    - "github.com/ServiceWeaver/onlineboutique/catalogservice/CatalogService"
-<catalogservice_SCALING_SPEC>
+    - "github.com/ServiceWeaver/onlineboutique/productcatalogservice/ProductCatalogService"
+<productcatalogservice_SCALING_SPEC>
 
   - name: shippingservice
     components:

@@ -30,7 +30,7 @@ func init() {
 		ReflectStubFn: func(caller func(string, context.Context, []any, []any) error) any {
 			return recService_reflect_stub{caller: caller}
 		},
-		RefData: "⟦01c71214:wEaVeReDgE:github.com/ServiceWeaver/onlineboutique/recommendationservice/RecService→github.com/ServiceWeaver/onlineboutique/productcatalogservice/CatalogService⟧\n",
+		RefData: "⟦b2bc5a05:wEaVeReDgE:github.com/ServiceWeaver/onlineboutique/recommendationservice/RecService→github.com/ServiceWeaver/onlineboutique/productcatalogservice/ProductCatalogService⟧\n",
 	})
 }
 

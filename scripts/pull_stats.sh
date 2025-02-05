@@ -101,6 +101,16 @@ while [ $size -le 5 ] || [ $size -ge 20 ]; do
   
 done
 
+if [[ $SECONDS -lt 150 ]]; then
+  # We assume if we terminated within a minute, something wrong happened.
+  # We wait a while to let user debug before killing everything off.
+  # Should never affect regular load tests.
+  echo Terminated after only "$SECONDS"s. assuming something wrong happened. >&2
+  echo Sleeping for 1k seconds. Use this time to debug the problem, and then manually terminate the test. >&2
+  
+  sleep 1000
+fi
+
 kubectl cp $podname:/stats ../benchmark/stats
 
 mv pod_stats.csv ../benchmark/stats/pod_stats.csv
