@@ -145,4 +145,6 @@ done
 
 kubectl cp "$podname:/stats" "$STATS_DIR"
 
+kill ${PORT_FORWARD_PID}
+
 echo "Done."
