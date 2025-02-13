@@ -15,7 +15,7 @@
 # limitations under the License.
 
 import random
-from locust import FastHttpUser, between, LoadTestShape, task, tag
+from locust import FastHttpUser, constant_pacing, LoadTestShape, task, tag
 from typing import Tuple, Optional, List
 from faker import Faker
 import logging
@@ -23,6 +23,18 @@ import datetime
 import os
 import locust.stats
 locust.stats.CSV_STATS_INTERVAL_SEC = int(os.getenv("LOCUST_CSV_INTERVAL", 1))
+
+RESET_CONN = int(os.getenv("LOCUST_RESET_CONN", "0")) # 1 = True, 0 = False
+
+RESET_FREQ      = 3 * RESET_CONN
+INDEX_FREQ      = 20
+CURRENCY_FREQ   = 10
+BROWSE_FREQ     = 20
+VIEW_CART_FREQ  = 20
+ADD_CART_FREQ   = 30
+EMPTY_CART_FREQ = 10
+CHECKOUT_FREQ   = 10
+
 
 fake = Faker()
 
@@ -40,6 +52,8 @@ products = [
 currencies = ['EUR', 'USD', 'JPY', 'CAD', 'GBP', 'TRY']
 
 class WebsiteUser(FastHttpUser):
+    wait_time = constant_pacing(2.5)
+
     def __init__(self, environment):
         super().__init__(environment)
 
@@ -47,49 +61,49 @@ class WebsiteUser(FastHttpUser):
         self.index()
 
     @tag('refresh')
-    @task(3)
+    @task(RESET_FREQ)
     def reset_index(self):
         self.client.get("/", headers={"Connection": "close"})
 
     # 1 req
-    @task(10)
+    @task(INDEX_FREQ)
     def index(self):
         self.client.get("/")
 
     # 1 req
-    @task(20)
+    @task(CURRENCY_FREQ)
     def setCurrency(self):
         self.client.post("/setCurrency",
             {'currency_code': random.choice(currencies)})
 
     # 1 req
-    @task(100)
+    @task(BROWSE_FREQ)
     def browseProduct(self):
         self.client.get("/product/" + random.choice(products))
 
     # 1 req
-    @task(30)
+    @task(VIEW_CART_FREQ)
     def viewCart(self):
         self.client.get("/cart")
 
-    # 2 reqs
-    @task(30)
+    # 1 reqs
+    @task(ADD_CART_FREQ)
     def addToCart(self):
         product = random.choice(products)
-        self.client.get("/product/" + product)
+        # self.client.get("/product/" + product)
         self.client.post("/cart", {
             'product_id': product,
             'quantity': random.randint(1,10)})
 
     # 1 req
-    @task(10)
+    @task(EMPTY_CART_FREQ)
     def empty_cart(self):
         self.client.post('/cart/empty')
 
-    # 3 reqs
-    @task(20)
+    # 1 reqs
+    @task(CHECKOUT_FREQ)
     def checkout(self):
-        self.addToCart()
+        # self.addToCart()
         current_year = datetime.datetime.now().year+1
         self.client.post("/cart/checkout", {
             'email': fake.email(),
@@ -108,5 +122,4 @@ class WebsiteUser(FastHttpUser):
     def logout(self):
         self.client.get('/logout')  
 
-    wait_time = between(1, 5)
 

@@ -10,3 +10,21 @@ if [[ -z $LOADGEN_REPLICAS ]]; then
 else
   echo env vars appear to be properly set.
 fi
+
+if [[ $BENCH_STATIC = 1 ]]; then
+  if [[ -z $ALLOC_FILE ]]; then
+    echo Error: BENCH_STATIC=1, but ALLOC_FILE is not defined. >&2
+    exit 1
+  else
+    echo Running a static benchmark.
+  fi
+else
+  if [[ -z $ALLOC_FILE ]]; then
+    echo Running a non-static scheme.
+  else 
+    echo Error: BENCH_STATIC=0, but ALLOC_FILE is set to $ALLOC_FILE >&2
+    exit 1
+  fi
+fi
+
+

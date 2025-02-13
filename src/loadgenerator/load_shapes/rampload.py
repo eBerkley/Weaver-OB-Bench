@@ -146,10 +146,10 @@ class RampLoad(LoadTestShape):
     init_time: Final = 30 # seconds
     """How long should it take to hit init_users? """
 
-    max_tail: Final = 100 # ms
+    max_tail: Final = 150 # ms
     """When p99 latency >= this value, consider it violating."""
 
-    ramp_pause: Final = 5 # seconds
+    ramp_pause: Final = 10 # seconds
     """When we reach a user count we were ramping to, how long do we wait before resuming?"""
 
     ramp_duration: Final = RAMP_DURATION # seconds

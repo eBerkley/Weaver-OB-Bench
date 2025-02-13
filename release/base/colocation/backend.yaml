@@ -1,7 +1,7 @@
 groups:
   - name: main
     components:
-    - "github.com/ServiceWeaver/onlineboutique/Main"
+    - "github.com/ServiceWeaver/weaver/Main"
 <main_SCALING_SPEC>
 
   - name: adservice
@@ -15,9 +15,9 @@ groups:
     - "github.com/ServiceWeaver/onlineboutique/checkoutservice/CheckoutService"
 <checkoutservice_SCALING_SPEC>
 
-  - name: recommendationservice
+  - name: recservice
     components:
-    - "github.com/ServiceWeaver/onlineboutique/recommendationservice/RecommendationService"
+    - "github.com/ServiceWeaver/onlineboutique/recommendationservice/RecService"
 <recommendationservice_SCALING_SPEC>
 
   - name: back

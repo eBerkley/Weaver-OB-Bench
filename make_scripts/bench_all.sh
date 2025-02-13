@@ -3,15 +3,21 @@
 # Use tmp logs file as aggregate of logs
 cat $LOGS_FILE > $TMP_LOGS
 
-# We delete in between configs, just in case we are doing static <-> non static
+# We delete at start, just in case.
 minikube delete
+
+if [[ $BENCH_STAIC = 1 ]]; then
+  echo We will be pinning kube-system processes to their own cores before running any benchmark.
+  echo This requires sudo.
+  sudo echo
+fi
+
 
 loop_body () {
 
   local fname=$1
   local name=$2
   local cfg=$3
-
 
   
   # Create the dir that the next batch of stats will use
@@ -22,7 +28,9 @@ loop_body () {
   make bench_once
 
   # Terminate the benchmark
-  minikube delete
+  kubectl delete po -A
+  
+  sleep 30
 
   # if there are already results in here
   if [ -d "benchmark/out/$cfg" ]; then
@@ -80,3 +88,6 @@ done
 cat $TMP_LOGS > $LOGS_FILE
 # Remove temp logs
 rm $TMP_LOGS
+
+# Finished.
+minikube delete

@@ -4,7 +4,7 @@ groups:
     - "github.com/ServiceWeaver/weaver/Main"
 <main_SCALING_SPEC>
 
-  - name: all_but_main
+  - name: all-but-main
     components:
     - "github.com/ServiceWeaver/onlineboutique/adservice/AdService"
     - "github.com/ServiceWeaver/onlineboutique/cartservice/CartService"
@@ -16,4 +16,4 @@ groups:
     - "github.com/ServiceWeaver/onlineboutique/productcatalogservice/ProductCatalogService"
     - "github.com/ServiceWeaver/onlineboutique/recommendationservice/RecService"
     - "github.com/ServiceWeaver/onlineboutique/shippingservice/ShippingService"
-<all_but_main_SCALING_SPEC>
+<all-but-main_SCALING_SPEC>

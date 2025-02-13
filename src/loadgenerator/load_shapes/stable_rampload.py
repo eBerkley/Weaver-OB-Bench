@@ -9,7 +9,7 @@ from statistics import variance
 
 WAIT_TIME = int(getenv("LOCUST_WAIT_TIME", "30")) # seconds
 RAMP_DURATION = float(getenv("LOCUST_RAMP_DURATION", "5.0")) # seconds
-STABLE_TAIL = int(getenv("LOCUST_STABLE_P99", "100")) # ms
+STABLE_TAIL = int(getenv("LOCUST_STABLE_P99", "25")) # ms
 VARIANCE_WINDOW = int(getenv("LOCUST_VARIANCE_WINDOW", "30"))
 MAX_VARIANCE = float(getenv("LOCUST_MAX_VARIANCE", "0.3"))
 
@@ -42,7 +42,7 @@ class StableRampLoad(LoadTestShape):
     init_time: Final = 30 # seconds
     """How long should it take to hit init_users? """
 
-    max_tail: Final = 250 # ms
+    max_tail: Final = 175 # ms
     """When p99 latency >= this value, consider it violating."""
 
     ramp_duration: Final = RAMP_DURATION
@@ -59,7 +59,7 @@ class StableRampLoad(LoadTestShape):
     max_variance: Final = MAX_VARIANCE
     """What is the 30-second window's max variance to be considered stabilized?"""
 
-    stable_alt: Final = 240
+    stable_alt: Final = 120
     """If we have been at this user count for this long, say we are stabilized anyways."""
 
     sustainable_granularity: Final = 1000
@@ -129,10 +129,10 @@ class StableRampLoad(LoadTestShape):
 
         super().__init__(*args, **kwargs)
     
+    # placeholder
     def is_sustainable(self) -> bool:
         if len(self._history) > self.variance_window / 2:
             return True
-            pass
         return True
 
         
@@ -148,26 +148,27 @@ class StableRampLoad(LoadTestShape):
         
         self._history[self._history_insertion_idx] = val
         
-        self._history_insertion_idx = (self._history_insertion_idx + 1) % 30
+        self._history_insertion_idx = (self._history_insertion_idx + 1) % self.variance_window
         self._cur_variance = variance(self._history)
 
         return self._cur_variance <= self.max_variance
 
     def set_ramp(self, cur_users: int) -> None:
-        rate = 1.2
+        rate = 1.125
         if self._stabilizing:
-          if   self._p99 < 5:   rate = 1.150
-          elif self._p99 < 10:  rate = 1.125
-          elif self._p99 < 20:  rate = 1.100
+          if   self._p99 < 5:   rate = 1.115
+          elif self._p99 < 10:  rate = 1.100
+          elif self._p99 < 20:  rate = 1.085
           elif self._p99 < 30:  rate = 1.075
-          elif self._p99 < 40:  rate = 1.050
-          elif self._p99 < 50:  rate = 1.030
-          elif self._p99 < 60:  rate = 1.010
-          elif self._p99 < 75:  rate = 1.008
-          elif self._p99 < 90:  rate = 1.006
-          elif self._p99 < 100: rate = 1.004
-          elif self._p99 < 125: rate = 1.002
-          else:                 rate = 1.001
+          elif self._p99 < 40:  rate = 1.060
+          elif self._p99 < 50:  rate = 1.050
+          elif self._p99 < 60:  rate = 1.040
+          elif self._p99 < 70:  rate = 1.030
+          elif self._p99 < 80:  rate = 1.020
+          elif self._p99 < 90:  rate = 1.015
+          elif self._p99 < 100: rate = 1.010
+          elif self._p99 < 125: rate = 1.006
+          else:                 rate = 1.005
         
         self._target = int(cur_users * rate)
         self._ramp_speed = (self._target - cur_users) / self.ramp_duration

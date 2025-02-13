@@ -104,7 +104,7 @@ spec:
       volumes:
       - name: load-logs
         emptyDir:
-          sizeLimit: 300Mi
+          sizeLimit: 750Mi
 
 
 ---

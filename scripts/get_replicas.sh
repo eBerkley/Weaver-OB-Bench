@@ -1,6 +1,21 @@
 #!/bin/bash
 
+#################################################################################
+# Use `kubectl top po` to get #replicas, cumulative cpu utilization, 
+# and average cpu utilization for each of the loadgen workers and OB pods.
+# if running this command with a parameter (e.g. `./scripts/get_replicas.sh 1`), 
+# output will be formatted in csv form.
+# Otherwise, it will be formatted as equally spaced tabs.
+#################################################################################
+
+
+
 # if docker isn't running, nothing gets written to stdout or stderr
+# If metrics-server isn't available yet, it'll say in stderr
+error_file=$(mktemp)
+out=$(some_command 2>$error_file)
+err=$(< $error_file)
+rm $error_file
 pod_list=$(kubectl top po 2>/dev/null)
 # pod_list=$(cat scripts/sample.txt) # Used for testing when developing this script.
 
@@ -39,16 +54,16 @@ ob_replicas=0
 ob_util=0
 
 
-for s in loadgenerator all all_but_main carts front back mainad checkoutemailpay adservice cartservice cartcache checkoutservice currencyservice emailservice main paymentservice catalogservice shippingservice recservice; do
+for s in loadgenerator all all-but-main carts front back mainad checkoutemailpay adservice cartservice cartcache checkoutservice currencyservice emailservice main paymentservice productcatalogservice shippingservice recservice; do
   if [[ $s = "loadgenerator" ]]; then
     pod_str="loadgenerator-worker"
   else
-    pod_str="ob-$s-"
+    pod_str="ob-$s-[a-z0-9]{8}"
   fi
 
-  replicas=$(echo "$pod_list" | grep $pod_str) 
+  replicas=$(echo "$pod_list" | grep -P $pod_str) 
   
-  num_replicas=$(echo "$pod_list" | grep $pod_str | wc -l)
+  num_replicas=$(echo "$pod_list" | grep -P $pod_str | wc -l)
 
   if [[ $num_replicas = 0 ]]; then continue; fi
 

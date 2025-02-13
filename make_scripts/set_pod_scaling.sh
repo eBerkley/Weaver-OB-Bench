@@ -5,12 +5,16 @@
 # GROUPS_FILE=release/generated/groups.yaml
 
 SCHEME_FILE=$SCHEME_DIR/$SCHEME.yaml
+# SCHEME_FILE=release/base/colocation/backend.yaml
+# GROUPS_FILE=release/generated/groups.yaml
+# SCALING_DEFS_FILE=release/base/colocation/scalingdefs.cfg
+# SCALING_SPEC_FILE=release/base/scalingSpec.yaml
 
 cp $SCHEME_FILE $GROUPS_FILE
 
 
 get_group_names () {
-  local pattern="- name: ([a-z_]+)"
+  local pattern="- name: ([a-z_\-]+)"
   IFS=$'\n'
 
   for line in $(grep -e '- name:' $SCHEME_FILE); do
@@ -19,12 +23,15 @@ get_group_names () {
 }
 
 for name in $(get_group_names); do
-  pattern="$name=([A-Z]+)"
-  if [[ $(grep -e $name $SCALING_DEFS_FILE ) =~ $pattern ]]; then
-    type=${BASH_REMATCH[1]}
-  else
-    type=FALLBACK
-  fi  
+  pattern="^$name=([A-Z]+)"
+  type=FALLBACK
+
+  for scale_def in $(cat $SCALING_DEFS_FILE); do
+    if [[ $scale_def =~ $pattern ]]; then
+      type=${BASH_REMATCH[1]}
+      break
+    fi
+  done
 
   # -e expressions, in order:
   # 1: define MIN_REPLICAS to be that of the scaling type
