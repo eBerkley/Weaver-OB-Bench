@@ -18,12 +18,13 @@ import (
 	"context"
 	"embed"
 	"fmt"
-	_ "go.uber.org/automaxprocs"
 	"io/fs"
 	"net"
 	"net/http"
 	"os"
 	"slices"
+
+	_ "go.uber.org/automaxprocs"
 
 	"github.com/ServiceWeaver/onlineboutique/adservice"
 	"github.com/ServiceWeaver/onlineboutique/cartservice"
@@ -64,7 +65,7 @@ type Server struct {
 	platform platformDetails
 	hostname string
 
-	catalogService        weaver.Ref[productcatalogservice.CatalogService]
+	catalogService        weaver.Ref[productcatalogservice.ProductCatalogService]
 	currencyService       weaver.Ref[currencyservice.CurrencyService]
 	cartService           weaver.Ref[cartservice.CartService]
 	recommendationService weaver.Ref[recommendationservice.RecService]

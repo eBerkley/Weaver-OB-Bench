@@ -1,17 +1,17 @@
 #!/bin/bash
-found=0
-for cpu in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do
-  out=$(cat $cpu)
-  if [ ! "$out" = "performance" ]; then
-    echo $cpu = $out
-    found=1
-  fi
-done
+governer=${1:-'performance'}
+echo attempting to set all cores to $governer:
 
-if [ $found -eq 0 ]; then
-  echo Frequency scaling configured correctly.
-else
-  echo Frequency scaling not configured correctly.
+if [[ $UID -ne 0 ]]; then
+  >&2 echo Error: must run as root.
   exit 1
 fi
+
+for cpu in /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor; do  
+  echo $governer > $cpu 2> /dev/null
+done
+
+echo Success!
+
+
 

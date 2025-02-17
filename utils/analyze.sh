@@ -3,7 +3,7 @@
 cd $(dirname $0)
 
 print_usage() {
-  echo sudo ./utils/vtune.sh username [flags]
+  echo sudo ./utils/analyze.sh username [flags]
   echo "-h, --help              print this help message."
   #echo "-n=, --name=[r]         base name for each analysis result."
   echo "-s=, --scheme=          only output this scheme."

@@ -17,6 +17,7 @@ package checkoutservice
 import (
 	"context"
 	"fmt"
+
 	_ "go.uber.org/automaxprocs"
 
 	"github.com/ServiceWeaver/onlineboutique/cartservice"
@@ -49,14 +50,13 @@ type CheckoutService interface {
 type impl struct {
 	weaver.Implements[CheckoutService]
 
-	catalogService  weaver.Ref[productcatalogservice.CatalogService]
+	catalogService  weaver.Ref[productcatalogservice.ProductCatalogService]
 	cartService     weaver.Ref[cartservice.CartService]
 	currencyService weaver.Ref[currencyservice.CurrencyService]
 	shippingService weaver.Ref[shippingservice.ShippingService]
 	emailService    weaver.Ref[emailservice.EmailService]
 	paymentService  weaver.Ref[paymentservice.PaymentService]
 }
-
 
 func (s *impl) PlaceOrder(ctx context.Context, req PlaceOrderRequest) (types.Order, error) {
 	s.Logger(ctx).Info("[PlaceOrder]", "user_id", req.UserID, "user_currency", req.UserCurrency)

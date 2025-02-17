@@ -1,5 +1,6 @@
-FROM python:3.12.4-slim@sha256:2fba8e70a87bcc9f6edd20dda0a1d4adb32046d2acbca7361bc61da5a106a914 as base
-FROM base as builder
+FROM python:3.12.4-slim@sha256:2fba8e70a87bcc9f6edd20dda0a1d4adb32046d2acbca7361bc61da5a106a914 AS base
+FROM base AS builder
+
 RUN apt-get update -y && \
   apt-get install --no-install-recommends -y -q \
   git libpq-dev python-dev-is-python3 build-essential libsnappy-dev && \
@@ -13,6 +14,10 @@ RUN pip install --prefix="/install" -r requirements.txt
 
 FROM base
 
+RUN apt-get update && \ 
+  apt-get install -y procps && \
+  rm -rf /var/lib/apt/lists/*
+
 WORKDIR /loadgen
 
 COPY --from=builder /install /usr/local
@@ -25,6 +30,8 @@ COPY load_shapes/multiload.py .
 COPY load_shapes/rampload.py .
 COPY load_shapes/dummyload.py .
 COPY load_shapes/constload.py .
+COPY load_shapes/slowload.py .
+COPY load_shapes/stable_rampload.py .
 
 RUN chmod +x entrypoint.sh
 
