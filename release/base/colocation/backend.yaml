@@ -18,7 +18,7 @@ groups:
   - name: recservice
     components:
     - "github.com/ServiceWeaver/onlineboutique/recommendationservice/RecService"
-<recommendationservice_SCALING_SPEC>
+<recservice_SCALING_SPEC>
 
   - name: back
     components:

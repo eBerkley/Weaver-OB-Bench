@@ -26,7 +26,7 @@ locust.stats.CSV_STATS_INTERVAL_SEC = int(os.getenv("LOCUST_CSV_INTERVAL", 1))
 
 RESET_CONN = int(os.getenv("LOCUST_RESET_CONN", "0")) # 1 = True, 0 = False
 
-RESET_FREQ      = 3 * RESET_CONN
+RESET_FREQ      = 5 * RESET_CONN
 INDEX_FREQ      = 20
 CURRENCY_FREQ   = 10
 BROWSE_FREQ     = 20

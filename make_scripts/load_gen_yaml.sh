@@ -48,6 +48,15 @@ sed -i "s#<LOCUST_VARIANCE_WINDOW>#\"$LOCUST_VARIANCE_WINDOW\"#g" $LOAD_GEN_YAML
 # Set max variance before ramping up for stable_rampload shape
 sed -i "s#<LOCUST_MAX_VARIANCE>#\"$LOCUST_MAX_VARIANCE\"#g" $LOAD_GEN_YAML          
 
+# If we are going to be adding replicas, 
+# ensure connections are periodically reset to route traffic to new main components.
+if [[ $BENCH_STATIC = "1" ]]; then
+  sed -i "s#<LOCUST_RESET_CONN>#\"0\"#g" $LOAD_GEN_YAML
+else # $BENCH_STATIC = "0"
+  sed -i "s#<LOCUST_RESET_CONN>#\"1\"#g" $LOAD_GEN_YAML
+fi
+
+
 # Build the image and push it to docker
 docker build $LOAD_SRC -t $DOCKER/loadgen:$version >>$DEBUG_OUTPUT 2>&1
 docker push $DOCKER/loadgen:$version >>$DEBUG_OUTPUT

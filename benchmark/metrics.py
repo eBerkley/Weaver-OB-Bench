@@ -3,7 +3,7 @@
 import pandas as pd
 import numpy as np
 import statistics
-from typing import NamedTuple
+from typing import NamedTuple, TypeAlias
 from collections import defaultdict
 import matplotlib.pyplot as plt
 import os
@@ -11,6 +11,8 @@ import os
 VARIANCE_WINDOW = 30
 LOW_LOAD_USERS  = 10000
 VIOLATION_RATIO = 10.0
+
+users_t: TypeAlias = int
 
 class TestName(NamedTuple):
     scheme: str
@@ -30,6 +32,17 @@ class Data(NamedTuple):
         return self.p99 / self.p50
 
 class BenchData:
+
+    class Ratio_Violation_Data(NamedTuple):
+        low_load: users_t
+        high_load: users_t
+        data: Data
+    
+    class Max_Violation_Data(NamedTuple):
+        users: users_t
+        data: Data
+
+
     def __init__(self):
         self._agg_data = defaultdict(list[Data])
         self._mean_data: dict[int, Data] = {}
@@ -49,7 +62,7 @@ class BenchData:
 
             self._mean_data[i[0]] = Data(p99=np.mean(p99s), p50=np.mean(p50s), qps=np.mean(qps))
 
-    def get_violation_p50_rat(self, low_load: int, qos_ratio: float)-> tuple[int, int, Data]:
+    def get_violation_p50_rat(self, low_load: int, qos_ratio: float)-> Ratio_Violation_Data:
         """For now, `low_load` is a user count.
         We use the largest user count that is <= `low_load`.
 
@@ -80,9 +93,9 @@ class BenchData:
         #     for k, v in self._mean_data.items():
         assert best_high_load != -1
 
-        return (best_low_load, best_high_load, self._mean_data[best_high_load])
+        return BenchData.Ratio_Violation_Data(best_low_load, best_high_load, self._mean_data[best_high_load])
 
-    def get_violation_max_p99(self, max_p99: float):
+    def get_violation_max_p99(self, max_p99: float) -> Max_Violation_Data:
         """returns `(user_count, Data)` tuple corresponding to the highest p99 latency <= `max_p99`"""
 
         best_k = -1
@@ -91,7 +104,7 @@ class BenchData:
                 continue
             best_k = k
 
-        return (best_k, self._mean_data[best_k])
+        return BenchData.Max_Violation_Data(best_k, self._mean_data[best_k])
 
 def get_data(testname: TestName) -> BenchData:
     fname = os.path.join("benchmark", "out", testname.get_name(), 
@@ -121,7 +134,7 @@ if __name__ == '__main__':
 
     tests_arr: list[TestName] = []
     tests_dict: dict[TestName, BenchData] = {}
-    violation_dict: dict[TestName, tuple[int, int, Data]] = {}
+    
     for s in SCHEMES:
         for c in CORES:
             for a in ALLOC:

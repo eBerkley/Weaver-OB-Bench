@@ -86,6 +86,9 @@ spec:
         - name: LOCUST_MAX_VARIANCE
           value: <LOCUST_MAX_VARIANCE>
 
+        - name: LOCUST_RESET_CONN
+          value: <LOCUST_RESET_CONN>
+
         resources:
           requests:
             cpu: 1
@@ -169,6 +172,9 @@ spec:
 
         - name: LOCUST_MAX_VARIANCE
           value: <LOCUST_MAX_VARIANCE>
+        
+        - name: LOCUST_RESET_CONN
+          value: <LOCUST_RESET_CONN>
 
         resources:
           requests: 
