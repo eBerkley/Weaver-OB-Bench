@@ -13,7 +13,7 @@ include .env
 include $(CONFIG_FILE)
 
 
-.PHONY: all clean minikube_start minikube_restart check_smt toggle_smt deploy bench bench_all stop clear_logs check_docker check_loadgen pre_deploy bench_once set_groups
+.PHONY: all clean minikube_start minikube_restart check_smt toggle_smt deploy bench bench_all stop clear_logs check_docker check_loadgen pre_deploy bench_once 
 
 all:
 	@echo valid arguments:
@@ -85,7 +85,6 @@ bench_once: deploy
 # ./bench_all changes $(WEAVER_GEN_YAML) every time it runs, 
 # 	new images built each time.
 bench_all: clear_logs
-	@echo Colocation Schemes: $(COLOCATION_BASE)
 	@echo 
 	./make_scripts/bench_all.sh
 
@@ -93,7 +92,7 @@ bench_all: clear_logs
 # if deployment specifications or src code was modified,
 # 	Update Weaver kubernetes yaml
 # 	modifies version file, which should trigger LOAD_GEN_YAML
-$(WEAVER_GEN_YAML): $(KUBE_BASE_YAML) $(KUBE_GEN_YAML) set_groups $(BIN) $(CONFIG_FILE) .env
+$(WEAVER_GEN_YAML): $(KUBE_BASE_YAML) $(KUBE_GEN_YAML) $(BIN) $(CONFIG_FILE) .env
 	@echo rebuilding onlineboutique container...
 	@if [ -z $$ALLOC_FILE ]; then \
 		echo "pods=dynamic"; \
@@ -102,7 +101,7 @@ $(WEAVER_GEN_YAML): $(KUBE_BASE_YAML) $(KUBE_GEN_YAML) set_groups $(BIN) $(CONFI
 		echo "pods=static"; \
 		./make_scripts/set_pod_replicas.sh; \
 	fi
-
+	@./make_scripts/set_pod_resources.sh
 	@./make_scripts/weaver_gen_yaml.sh 
 
 # if deployment specifications or loadgen code was modified, 

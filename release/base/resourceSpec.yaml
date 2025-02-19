@@ -1,0 +1,8 @@
+resourceSpec:
+  requests:
+    cpu: <CORES>
+    memory: "2048Mi"
+
+  limits:
+    cpu: <CORES>
+    memory: "2048Mi"

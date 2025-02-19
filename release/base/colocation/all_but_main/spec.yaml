@@ -2,6 +2,7 @@ groups:
   - name: main
     components:
     - "github.com/ServiceWeaver/weaver/Main"
+<main_RESOURCE_SPEC>
 <main_SCALING_SPEC>
 
   - name: all-but-main
@@ -16,4 +17,5 @@ groups:
     - "github.com/ServiceWeaver/onlineboutique/productcatalogservice/ProductCatalogService"
     - "github.com/ServiceWeaver/onlineboutique/recommendationservice/RecService"
     - "github.com/ServiceWeaver/onlineboutique/shippingservice/ShippingService"
+<all-but-main_RESOURCE_SPEC>
 <all-but-main_SCALING_SPEC>

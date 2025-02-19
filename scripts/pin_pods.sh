@@ -1,6 +1,8 @@
 #!/bin/bash
 
 CORES_PER_SOCKET=36 # Change!!
+
+
 # What is allocated to kubernetes runtime?
 KUBE_CORES=${KUBE_CORES:-"0-2"} # Should start with 0.
 
@@ -10,6 +12,8 @@ locust_inc=$KUBE_RESERVED
 OB_inc=$CORES_PER_SOCKET
 
 OB_CORES=${OB_CORES:-"1"}
+
+C_SCHEME=${C_SCHEME:-"1core"}
 
 all_pods="$(kubectl get po -o name)"
 
@@ -32,8 +36,9 @@ EOF
 # if we are allocing 3 cores, and OB_inc is 37, return "37,38,39"
 # also sets OB_inc to 39. Needs to be set to 40 by code below.
 core_string() {
+  local cores=$1
   local out_str=OB_inc
-  for i in $(seq 2 $OB_CORES); do 
+  for i in $(seq 2 $cores); do 
     (( OB_inc += 1 ))
     out_str+=",$OB_inc"
   done
@@ -41,19 +46,29 @@ core_string() {
 }
 
 IFS=$'\n'
-for pod in $all_pods; do
-  echo $pod
-  # continue
 
-  if [[ $(echo $pod | grep loadgenerator) ]] ; then
-    bind_pod $pod $locust_inc locust
-    (( locust_inc += 1 ))
+for pod in $(echo "$all_pods" | grep loadgenerator); do
+  bind_pod $pod $locust_inc locust
+  (( locust_inc += 1 ))
+done
 
-  else
+#################
+# OB BINDINGS!! #
+#################
+OB_inc=$(( locust_inc > OB_inc ? locust_inc : OB_inc ))
 
-    OB_inc=$(( locust_inc > OB_inc ? locust_inc : OB_inc ))
+CSCHEME_PATH="release/base/colocation/$SCHEME/$C_SCHEME.cfg"
+pattern="([a-z_\-]+)=([0-9]+)"
+for alloc in $(cat $CSCHEME_PATH); do
+  if [[ $alloc =~ $pattern ]]; then
+    pod_name=${BASH_REMATCH[1]}
+    cores=${BASH_REMATCH[2]}
+    for pod in $(echo "$all_pods" | grep $pod_name); do
+
+      bind_pod $pod $(core_string $cores) "/weaver/ob"
+      (( OB_inc += 1 ))
     
-    bind_pod $pod $(core_string) "/weaver/ob"
-    (( OB_inc += 1 ))
+    done
   fi
 done
+

@@ -1,14 +1,13 @@
 #!/bin/bash
 
-# SCALING_SPEC_FILE="release/base/scalingSpec.yaml"
-# SCALING_DEFS_FILE="release/base/colocation/scalingdefs.cfg"
-# GROUPS_FILE=release/generated/groups.yaml
 
-SCHEME_FILE=$SCHEME_DIR/$SCHEME.yaml
-# SCHEME_FILE=release/base/colocation/backend.yaml
-# GROUPS_FILE=release/generated/groups.yaml
-# SCALING_DEFS_FILE=release/base/colocation/scalingdefs.cfg
-# SCALING_SPEC_FILE=release/base/scalingSpec.yaml
+SCALING_SPEC_FILE=${SCALING_SPEC_FILE:-'release/base/scalingSpec.yaml'}
+
+SCALING_DEFS_FILE=${SCALING_DEFS_FILE:-"release/base/colocation/scalingdefs.cfg"}
+
+GROUPS_FILE=${GROUPS_FILE:-'release/generated/groups.yaml'}
+
+SCHEME_FILE=$SCHEME_DIR/${SCHEME:-$1}/spec.yaml
 
 cp $SCHEME_FILE $GROUPS_FILE
 

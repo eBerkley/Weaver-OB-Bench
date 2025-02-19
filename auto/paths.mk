@@ -20,9 +20,8 @@ WEAVER_GEN_YAML := $(GENERATED)/gen.yaml
 LOAD_GEN_YAML := $(GENERATED)/loadgen.yaml
 
 SCHEME_DIR := $(BASE)/colocation
-COLOCATION_FNAMES := $(wildcard $(SCHEME_DIR)/*.yaml)
-COLOCATION_BASE := $(foreach var, $(COLOCATION_FNAMES), $(shell basename $(var) .yaml))
 
+RESOURCE_SPEC_FILE := $(BASE)/resourceSpec.yaml
 SCALING_SPEC_FILE := $(BASE)/scalingSpec.yaml
 SCALING_DEFS_FILE := $(SCHEME_DIR)/scalingdefs.cfg
 GROUPS_FILE := $(GENERATED)/groups.yaml

@@ -1,15 +1,37 @@
 groups:
-  - name: all
+  - name: main
     components:
     - "github.com/ServiceWeaver/weaver/Main"
+<main_RESOURCE_SPEC>
+<main_SCALING_SPEC>
+
+  - name: adservice
+    components:
     - "github.com/ServiceWeaver/onlineboutique/adservice/AdService"
+<adservice_RESOURCE_SPEC>
+<adservice_SCALING_SPEC>
+
+
+  - name: checkoutservice
+    components:
+    - "github.com/ServiceWeaver/onlineboutique/checkoutservice/CheckoutService"
+<checkoutservice_RESOURCE_SPEC>
+<checkoutservice_SCALING_SPEC>
+
+  - name: recservice
+    components:
+    - "github.com/ServiceWeaver/onlineboutique/recommendationservice/RecService"
+<recservice_RESOURCE_SPEC>
+<recservice_SCALING_SPEC>
+
+  - name: back
+    components:
     - "github.com/ServiceWeaver/onlineboutique/cartservice/CartService"
     - "github.com/ServiceWeaver/onlineboutique/cartservice/cartCache"
-    - "github.com/ServiceWeaver/onlineboutique/checkoutservice/CheckoutService"
     - "github.com/ServiceWeaver/onlineboutique/currencyservice/CurrencyService"
     - "github.com/ServiceWeaver/onlineboutique/emailservice/EmailService"
     - "github.com/ServiceWeaver/onlineboutique/paymentservice/PaymentService"
     - "github.com/ServiceWeaver/onlineboutique/productcatalogservice/ProductCatalogService"
-    - "github.com/ServiceWeaver/onlineboutique/recommendationservice/RecService"
     - "github.com/ServiceWeaver/onlineboutique/shippingservice/ShippingService"
-<all_SCALING_SPEC>
+<back_RESOURCE_SPEC>
+<back_SCALING_SPEC>

@@ -3,6 +3,7 @@ groups:
     components:
     - "github.com/ServiceWeaver/weaver/Main"
     - "github.com/ServiceWeaver/onlineboutique/adservice/AdService"
+<mainad_RESOURCE_SPEC>
 <mainad_SCALING_SPEC>
 
   - name: checkoutemailpay
@@ -10,30 +11,36 @@ groups:
     - "github.com/ServiceWeaver/onlineboutique/checkoutservice/CheckoutService"
     - "github.com/ServiceWeaver/onlineboutique/emailservice/EmailService"
     - "github.com/ServiceWeaver/onlineboutique/paymentservice/PaymentService"
+<checkoutemailpay_RESOURCE_SPEC>
 <checkoutemailpay_SCALING_SPEC>
     
   - name: carts
     components:
     - "github.com/ServiceWeaver/onlineboutique/cartservice/CartService"
     - "github.com/ServiceWeaver/onlineboutique/cartservice/cartCache"
+<carts_RESOURCE_SPEC>
 <carts_SCALING_SPEC>
 
   - name: currencyservice
     components:
     - "github.com/ServiceWeaver/onlineboutique/currencyservice/CurrencyService"
+<currencyservice_RESOURCE_SPEC>
 <currencyservice_SCALING_SPEC>
 
   - name: productcatalogservice
     components:
     - "github.com/ServiceWeaver/onlineboutique/productcatalogservice/ProductCatalogService"
+<productcatalogservice_RESOURCE_SPEC>
 <productcatalogservice_SCALING_SPEC>
 
   - name: recservice
     components:
     - "github.com/ServiceWeaver/onlineboutique/recommendationservice/RecService"
+<recservice_RESOURCE_SPEC>
 <recservice_SCALING_SPEC>
 
   - name: shippingservice
     components:
     - "github.com/ServiceWeaver/onlineboutique/shippingservice/ShippingService"
+<shippingservice_RESOURCE_SPEC>
 <shippingservice_SCALING_SPEC>

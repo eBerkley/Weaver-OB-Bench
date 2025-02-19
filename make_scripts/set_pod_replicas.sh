@@ -1,9 +1,9 @@
 #!/bin/bash
 
-SCALING_SPEC_FILE='release/base/scalingSpec.yaml'
-GROUPS_FILE=release/generated/groups.yaml
+SCALING_SPEC_FILE=${SCALING_SPEC_FILE:-'release/base/scalingSpec.yaml'}
+GROUPS_FILE=${GROUPS_FILE:-'release/generated/groups.yaml'}
 
-SCHEME_FILE=$SCHEME_DIR/${SCHEME:-$1}.yaml
+SCHEME_FILE=$SCHEME_DIR/${SCHEME:-$1}/spec.yaml
 
 # One of the files in alloc/
 alloc_lines=$(cat ${ALLOC_FILE:-$2})

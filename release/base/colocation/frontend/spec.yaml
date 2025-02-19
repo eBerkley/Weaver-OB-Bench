@@ -5,39 +5,47 @@ groups:
     - "github.com/ServiceWeaver/onlineboutique/adservice/AdService"
     - "github.com/ServiceWeaver/onlineboutique/checkoutservice/CheckoutService"
     - "github.com/ServiceWeaver/onlineboutique/recommendationservice/RecService"
+<front_RESOURCE_SPEC>
 <front_SCALING_SPEC>
 
   - name: cartservice
     components:
     - "github.com/ServiceWeaver/onlineboutique/cartservice/CartService"
+<cartservice_RESOURCE_SPEC>
 <cartservice_SCALING_SPEC>
 
   - name: cartcache
     components:
     - "github.com/ServiceWeaver/onlineboutique/cartservice/cartCache"
+<cartcache_RESOURCE_SPEC>
 <cartcache_SCALING_SPEC>
 
   - name: currencyservice
     components:
     - "github.com/ServiceWeaver/onlineboutique/currencyservice/CurrencyService"
+<currencyservice_RESOURCE_SPEC>
 <currencyservice_SCALING_SPEC>
 
   - name: emailservice
     components:
     - "github.com/ServiceWeaver/onlineboutique/emailservice/EmailService"
+<emailservice_RESOURCE_SPEC>
 <emailservice_SCALING_SPEC>
 
   - name: paymentservice
     components:
     - "github.com/ServiceWeaver/onlineboutique/paymentservice/PaymentService"
+<paymentservice_RESOURCE_SPEC>
 <paymentservice_SCALING_SPEC>
 
   - name: productcatalogservice
     components:
     - "github.com/ServiceWeaver/onlineboutique/productcatalogservice/ProductCatalogService"
+<productcatalogservice_RESOURCE_SPEC>
 <productcatalogservice_SCALING_SPEC>
 
   - name: shippingservice
     components:
     - "github.com/ServiceWeaver/onlineboutique/shippingservice/ShippingService"
+<shippingservice_RESOURCE_SPEC>
 <shippingservice_SCALING_SPEC>
