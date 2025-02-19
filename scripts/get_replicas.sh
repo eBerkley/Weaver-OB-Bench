@@ -12,10 +12,6 @@
 
 # if docker isn't running, nothing gets written to stdout or stderr
 # If metrics-server isn't available yet, it'll say in stderr
-error_file=$(mktemp)
-out=$(some_command 2>$error_file)
-err=$(< $error_file)
-rm $error_file
 pod_list=$(kubectl top po 2>/dev/null)
 # pod_list=$(cat scripts/sample.txt) # Used for testing when developing this script.
 

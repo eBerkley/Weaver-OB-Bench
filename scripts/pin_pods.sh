@@ -11,7 +11,6 @@ KUBE_RESERVED=$(( $(echo $KUBE_CORES | sed -E "s/[0-9]+-//g") + 1 )) # 0-2 => 3
 locust_inc=$KUBE_RESERVED
 OB_inc=$CORES_PER_SOCKET
 
-OB_CORES=${OB_CORES:-"1"}
 
 C_SCHEME=${C_SCHEME:-"1core"}
 
