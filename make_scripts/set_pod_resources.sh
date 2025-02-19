@@ -6,7 +6,7 @@
 SCHEME=${SCHEME:-$1}
 C_SCHEME=${C_SCHEME:-$2}
 GROUPS_FILE=${GROUPS_FILE:-"release/generated/groups.yaml"}
-SCHEME_DIR=${SCHEME_DIR:-'release/base/colocation_new'}
+SCHEME_DIR=${SCHEME_DIR:-'release/base/colocation'}
 RESOURCE_SPEC_FILE=${RESOURCE_SPEC_FILE:-'release/base/resourceSpec.yaml'}
 
 SCHEME_PATH=$SCHEME_DIR/$SCHEME
