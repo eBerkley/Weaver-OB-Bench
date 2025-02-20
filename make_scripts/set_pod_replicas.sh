@@ -40,8 +40,16 @@ done
 sed -i  -e "s/scalingSpec/    scalingSpec/g" \
         -e "s/minReplicas/    minReplicas/g" \
         -e "s/maxReplicas/    maxReplicas/g" \
+        -e "s/behavior/    behavior/g"\
+        -e "s/scaleDown/    scaleDown/g"\
+        -e "s/selectPolicy/    selectPolicy/g"\
+        -e "s/scaleUp/    scaleUp/g"\
+        -e "s/policies/    policies/g"\
+        -e "s/- type: Pods/    - type: Pods/g"\
+        -e "s/value: 5/    value: 5/g"\
+        -e "s/periodSeconds/    periodSeconds/g"\
         -e "s/metrics/    metrics/g" \
-        -e "s/- type/    - type/g" \
+        -e "s/- type: Resource/    - type: Resource/g" \
         -e "s/resource/    resource/g" \
         -e "s/name: cpu/    name: cpu/g" \
         -e "s/target/    target/g" \

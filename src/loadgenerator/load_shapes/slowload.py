@@ -22,7 +22,7 @@ class SlowLoad(LoadTestShape):
     init_time: Final = 30 # seconds
     """How long should it take to hit init_users? """
 
-    max_tail: Final = 275 # ms
+    max_tail: Final = 200 # ms
     """When p99 latency >= this value, consider it violating."""
 
     ramp_duration: Final = RAMP_DURATION
@@ -35,7 +35,7 @@ class SlowLoad(LoadTestShape):
     max_variance: Final = MAX_VARIANCE
     """What is the 30-second window's max variance to be considered stabilized?"""
 
-    stable_alt: Final = 120
+    stable_alt: Final = 60
     """If we have been at this user count for this long, say we are stabilized anyways."""
 
     def __init__(self, *args, **kwargs):

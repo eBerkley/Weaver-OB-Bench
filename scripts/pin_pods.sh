@@ -33,10 +33,10 @@ EOF
 
 # Used with OB pods.
 # if we are allocing 3 cores, and OB_inc is 37, return "37,38,39"
-# also sets OB_inc to 39. Needs to be set to 40 by code below.
+# OB_inc needs to be set to 40 by caller.
 core_string() {
   local cores=$1
-  local out_str=OB_inc
+  local out_str=$OB_inc
   for i in $(seq 2 $cores); do 
     (( OB_inc += 1 ))
     out_str+=",$OB_inc"
@@ -65,7 +65,7 @@ for alloc in $(cat $CSCHEME_PATH); do
     for pod in $(echo "$all_pods" | grep $pod_name); do
 
       bind_pod $pod $(core_string $cores) "/weaver/ob"
-      (( OB_inc += 1 ))
+      (( OB_inc += $cores ))
     
     done
   fi

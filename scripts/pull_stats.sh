@@ -9,6 +9,16 @@ full_podname=$(kubectl get pod -o name --selector app=loadgenerator )
 podname="${full_podname#*/}"
 echo load generator podname = $podname
 
+
+
+finish () {
+  kubectl cp $podname:/stats ../benchmark/stats
+  mv pod_stats.csv ../benchmark/stats/pod_stats.csv
+}
+
+trap finish EXIT
+
+
 mainpod=$(kubectl get deploy | grep '[mM]ain' | head -1 | awk '{print $1}')
 if [[ -z "$mainpod" ]]; then
   mainpod=$(kubectl get deploy | grep 'all' | head -1 | awk '{print $1}')
@@ -70,7 +80,20 @@ str=$(get_lines)
 size=${#str}
 echo $str
 last_str=""
-while [ $size -le 5 ] || [ $size -ge 20 ]; do
+
+if [[ $LOCUST_SHAPE = 'scaleload' ]]; then
+  loop_continue () {
+    local size=$1
+    [[ $(./check_capacity.sh) = 0 ]] && { [[ $size -le 5 ]] || [[ $size -ge 20 ]]; }
+  }
+else
+  loop_continue () {
+    local size=$1
+    [[ $size -le 5 ]] || [[ $size -ge 20 ]]
+  }
+fi
+
+while loop_continue; do
   write_cpu_util
   
   sleep 10
@@ -111,8 +134,8 @@ if [[ $SECONDS -lt 150 ]]; then
   sleep 1000
 fi
 
-kubectl cp $podname:/stats ../benchmark/stats
 
-mv pod_stats.csv ../benchmark/stats/pod_stats.csv
 
 echo done.
+
+# Calls `finish` on exit.
