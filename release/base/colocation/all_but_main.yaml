@@ -2,18 +2,9 @@ groups:
   - name: main
     components:
     - "github.com/ServiceWeaver/weaver/Main"
-    scalingSpec:
-      minReplicas: <CRITICAL_MIN_REPLICAS>
-      maxReplicas: <OB_REPLICAS>
-      metrics:
-        - type: Resource
-          resource:
-            name: cpu
-            target:
-              type: Utilization
-              averageUtilization: <CRITICAL_SCALE_UTIL>
+<main_SCALING_SPEC>
 
-  - name: all
+  - name: all-but-main
     components:
     - "github.com/ServiceWeaver/onlineboutique/adservice/AdService"
     - "github.com/ServiceWeaver/onlineboutique/cartservice/CartService"
@@ -22,16 +13,7 @@ groups:
     - "github.com/ServiceWeaver/onlineboutique/currencyservice/CurrencyService"
     - "github.com/ServiceWeaver/onlineboutique/emailservice/EmailService"
     - "github.com/ServiceWeaver/onlineboutique/paymentservice/PaymentService"
-    - "github.com/ServiceWeaver/onlineboutique/productcatalogservice/CatalogService"
+    - "github.com/ServiceWeaver/onlineboutique/productcatalogservice/ProductCatalogService"
     - "github.com/ServiceWeaver/onlineboutique/recommendationservice/RecService"
     - "github.com/ServiceWeaver/onlineboutique/shippingservice/ShippingService"
-    scalingSpec:
-      minReplicas: <NONCRITICAL_MIN_REPLICAS>
-      maxReplicas: <OB_REPLICAS>
-      metrics:
-        - type: Resource
-          resource:
-            name: cpu
-            target:
-              type: Utilization
-              averageUtilization: <NONCRITICAL_SCALE_UTIL>
+<all-but-main_SCALING_SPEC>

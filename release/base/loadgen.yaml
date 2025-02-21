@@ -76,6 +76,18 @@ spec:
 
         - name: LOCUST_RAMP_DURATION
           value: <LOCUST_RAMP_DURATION>
+        
+        - name: LOCUST_CSV_INTERVAL
+          value: <LOCUST_CSV_INTERVAL>
+
+        - name: LOCUST_VARIANCE_WINDOW
+          value: <LOCUST_VARIANCE_WINDOW>
+
+        - name: LOCUST_MAX_VARIANCE
+          value: <LOCUST_MAX_VARIANCE>
+
+        - name: LOCUST_RESET_CONN
+          value: <LOCUST_RESET_CONN>
 
         resources:
           requests:
@@ -95,7 +107,7 @@ spec:
       volumes:
       - name: load-logs
         emptyDir:
-          sizeLimit: 300Mi
+          sizeLimit: 750Mi
 
 
 ---
@@ -151,6 +163,18 @@ spec:
 
         - name: LOCUST_RAMP_DURATION
           value: <LOCUST_RAMP_DURATION>
+
+        - name: LOCUST_CSV_INTERVAL
+          value: <LOCUST_CSV_INTERVAL>
+        
+        - name: LOCUST_VARIANCE_WINDOW
+          value: <LOCUST_VARIANCE_WINDOW>
+
+        - name: LOCUST_MAX_VARIANCE
+          value: <LOCUST_MAX_VARIANCE>
+        
+        - name: LOCUST_RESET_CONN
+          value: <LOCUST_RESET_CONN>
 
         resources:
           requests: 

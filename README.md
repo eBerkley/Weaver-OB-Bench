@@ -33,7 +33,7 @@ Note: Currently, sudo is required because the kubernetes pods being profiled run
 I am not sure how to fix this, but for now it is a temporary fix.
 
 ### Benchmarking
-- It is recommended to set `LOCUST_SHAPE` to `rampload` in `.env`
+- It is recommended to set `LOCUST_SHAPE` to `stable_rampload` in `.env`
 - If you only wish to benchmark one environment, simply set the values in `DEFAULT.cfg` that fit your need, and then run `./make.sh bench`.
 - If you want to run multiple benchmarks at once: 
   - either define multiple `*.cfg` files in the `cfgs/` dir, or generate them using `utils/generate_cfg.py`.

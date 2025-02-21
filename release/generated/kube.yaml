@@ -9,11 +9,11 @@ listeners:
 
 resourceSpec:
   requests:
-    cpu: 2
+    cpu: 1
     memory: "2048Mi"
 
   limits:
-    cpu: 2
+    cpu: 1
     memory: "2048Mi"
   
 scalingSpec:
@@ -28,26 +28,110 @@ scalingSpec:
           averageUtilization: 75
 
 groups:
-  - name: all
+  - name: mainad
     components:
     - "github.com/ServiceWeaver/weaver/Main"
     - "github.com/ServiceWeaver/onlineboutique/adservice/AdService"
-    - "github.com/ServiceWeaver/onlineboutique/cartservice/CartService"
-    - "github.com/ServiceWeaver/onlineboutique/cartservice/cartCache"
-    - "github.com/ServiceWeaver/onlineboutique/checkoutservice/CheckoutService"
-    - "github.com/ServiceWeaver/onlineboutique/currencyservice/CurrencyService"
-    - "github.com/ServiceWeaver/onlineboutique/emailservice/EmailService"
-    - "github.com/ServiceWeaver/onlineboutique/paymentservice/PaymentService"
-    - "github.com/ServiceWeaver/onlineboutique/productcatalogservice/CatalogService"
-    - "github.com/ServiceWeaver/onlineboutique/recommendationservice/RecService"
-    - "github.com/ServiceWeaver/onlineboutique/shippingservice/ShippingService"
     scalingSpec:
-      minReplicas: 3
-      maxReplicas: 50
+      minReplicas: 21
+      maxReplicas: 21
       metrics:
         - type: Resource
           resource:
             name: cpu
             target:
               type: Utilization
-              averageUtilization: 60
+              averageUtilization: 100
+
+
+  - name: checkoutemailpay
+    components:
+    - "github.com/ServiceWeaver/onlineboutique/checkoutservice/CheckoutService"
+    - "github.com/ServiceWeaver/onlineboutique/emailservice/EmailService"
+    - "github.com/ServiceWeaver/onlineboutique/paymentservice/PaymentService"
+    scalingSpec:
+      minReplicas: 1
+      maxReplicas: 1
+      metrics:
+        - type: Resource
+          resource:
+            name: cpu
+            target:
+              type: Utilization
+              averageUtilization: 100
+
+    
+  - name: carts
+    components:
+    - "github.com/ServiceWeaver/onlineboutique/cartservice/CartService"
+    - "github.com/ServiceWeaver/onlineboutique/cartservice/cartCache"
+    scalingSpec:
+      minReplicas: 5
+      maxReplicas: 5
+      metrics:
+        - type: Resource
+          resource:
+            name: cpu
+            target:
+              type: Utilization
+              averageUtilization: 100
+
+
+  - name: currencyservice
+    components:
+    - "github.com/ServiceWeaver/onlineboutique/currencyservice/CurrencyService"
+    scalingSpec:
+      minReplicas: 4
+      maxReplicas: 4
+      metrics:
+        - type: Resource
+          resource:
+            name: cpu
+            target:
+              type: Utilization
+              averageUtilization: 100
+
+
+  - name: productcatalogservice
+    components:
+    - "github.com/ServiceWeaver/onlineboutique/productcatalogservice/ProductCatalogService"
+    scalingSpec:
+      minReplicas: 3
+      maxReplicas: 3
+      metrics:
+        - type: Resource
+          resource:
+            name: cpu
+            target:
+              type: Utilization
+              averageUtilization: 100
+
+
+  - name: recservice
+    components:
+    - "github.com/ServiceWeaver/onlineboutique/recommendationservice/RecService"
+    scalingSpec:
+      minReplicas: 1
+      maxReplicas: 1
+      metrics:
+        - type: Resource
+          resource:
+            name: cpu
+            target:
+              type: Utilization
+              averageUtilization: 100
+
+
+  - name: shippingservice
+    components:
+    - "github.com/ServiceWeaver/onlineboutique/shippingservice/ShippingService"
+    scalingSpec:
+      minReplicas: 1
+      maxReplicas: 1
+      metrics:
+        - type: Resource
+          resource:
+            name: cpu
+            target:
+              type: Utilization
+              averageUtilization: 100

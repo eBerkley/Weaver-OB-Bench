@@ -3,6 +3,14 @@
 # Use tmp logs file as aggregate of logs
 cat $LOGS_FILE > $TMP_LOGS
 
+# We delete at start, just in case.
+minikube delete
+
+if [[ $BENCH_STAIC = 1 ]]; then
+  echo We will be pinning kube-system processes to their own cores before running any benchmark.
+  echo This requires sudo.
+  sudo echo
+fi
 
 
 loop_body () {
@@ -11,16 +19,18 @@ loop_body () {
   local name=$2
   local cfg=$3
 
-
   
   # Create the dir that the next batch of stats will use
   mkdir -p benchmark/stats
+
 
   # run the benchmark
   make bench_once
 
   # Terminate the benchmark
-  kubectl delete all --all
+  kubectl delete po -A
+  
+  sleep 30
 
   # if there are already results in here
   if [ -d "benchmark/out/$cfg" ]; then
@@ -36,9 +46,9 @@ loop_body () {
   mv benchmark/stats benchmark/out/$cfg/stats
 
   # Create aggregated.csv that only has the aggregate latency stats
-  echo "Name,Requests/s,Failures/s,50%,66%,75%,80%,90%,95%,98%,99%,99.9%,99.99%,100%,Total Request Count,Total Failure Count,Total Median Response Time,Total Average Response Time,Total Min Response Time,Total Max Response Time,Total Average Content Size" > benchmark/out/$cfg/stats/aggregated.csv
+  echo "Timestamp,User Count,Type,Name,Requests/s,Failures/s,50%,66%,75%,80%,90%,95%,98%,99%,99.9%,99.99%,100%,Total Request Count,Total Failure Count,Total Median Response Time,Total Average Response Time,Total Min Response Time,Total Max Response Time,Total Average Content Size" > benchmark/out/$cfg/stats/aggregated.csv
   
-  cat benchmark/out/$cfg/stats/lat_stats_history.csv | grep -o "Aggregated[^\n]*" >> benchmark/out/$cfg/stats/aggregated.csv
+  cat benchmark/out/$cfg/stats/lat_stats_history.csv | grep "Aggregated" >> benchmark/out/$cfg/stats/aggregated.csv
 
   # Append logs from this run into tmp
   cat $LOGS_FILE >> $TMP_LOGS
@@ -78,3 +88,6 @@ done
 cat $TMP_LOGS > $LOGS_FILE
 # Remove temp logs
 rm $TMP_LOGS
+
+# Finished.
+minikube delete

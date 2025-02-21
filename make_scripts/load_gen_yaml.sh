@@ -39,6 +39,22 @@ sed -i "s#<LOCUST_WAIT_TIME>#\"$LOCUST_WAIT_TIME\"#g" $LOAD_GEN_YAML
 # Set the ramp duration for the rampload shape
 sed -i "s#<LOCUST_RAMP_DURATION>#\"$LOCUST_RAMP_DURATION\"#g" $LOAD_GEN_YAML
 
+# Set the latency stat export frequency
+sed -i "s#<LOCUST_CSV_INTERVAL>#\"$LOCUST_CSV_INTERVAL\"#g" $LOAD_GEN_YAML
+
+# Set how many values to use when calculating variance for stable_rampload shape
+sed -i "s#<LOCUST_VARIANCE_WINDOW>#\"$LOCUST_VARIANCE_WINDOW\"#g" $LOAD_GEN_YAML
+
+# Set max variance before ramping up for stable_rampload shape
+sed -i "s#<LOCUST_MAX_VARIANCE>#\"$LOCUST_MAX_VARIANCE\"#g" $LOAD_GEN_YAML          
+
+# If we are going to be adding replicas, 
+# ensure connections are periodically reset to route traffic to new main components.
+if [[ $BENCH_STATIC = "1" ]]; then
+  sed -i "s#<LOCUST_RESET_CONN>#\"0\"#g" $LOAD_GEN_YAML
+else # $BENCH_STATIC = "0"
+  sed -i "s#<LOCUST_RESET_CONN>#\"1\"#g" $LOAD_GEN_YAML
+fi
 
 
 # Build the image and push it to docker

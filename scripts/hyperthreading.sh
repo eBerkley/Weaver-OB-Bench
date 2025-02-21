@@ -6,7 +6,7 @@ help () {
 }
 
 if [[ $# -ne 1 ]]; then
-  help
+  help 
   exit 0
 fi
 

@@ -8,12 +8,12 @@
 # the deployment ***WILL NOT*** work.
 
 
-
 # Reset config values
 cp $KUBE_BASE_YAML $KUBE_GEN_YAML
 
 # Copy fusion config
-cat $SCHEME_DIR/$SCHEME.yaml >> $KUBE_GEN_YAML
+# cat $SCHEME_DIR/$SCHEME.yaml >> $KUBE_GEN_YAML
+cat $GROUPS_FILE >> $KUBE_GEN_YAML
 
 # Docker repo
 sed -i "s#<DOCKER>#$DOCKER#g" $KUBE_GEN_YAML 
@@ -39,6 +39,7 @@ sed -i "s#<FALLBACK_MIN_REPLICAS>#$FALLBACK_MIN_REPLICAS#g" $KUBE_GEN_YAML
 # Generate kubernetes yaml from weaver kube specification yaml
 # `yaml` := the generated file location (something like /tmp/kube_[0-9a-z]{6}.yaml)
 yaml=$(weaver kube deploy $KUBE_GEN_YAML 2>>$DEBUG_OUTPUT)
+weaver kube deploy $KUBE_GEN_YAML
 
 # The [0-9a-z]{6} part of the filename
 deployment=$(echo $yaml | sed 's/\/tmp\/kube_\([0-9a-z]\+\)\.yaml/\1/g')

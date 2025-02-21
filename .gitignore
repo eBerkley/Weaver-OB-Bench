@@ -14,3 +14,4 @@ cfgs
 *.pyc
 DELETE.txt
 alloc
+env/*

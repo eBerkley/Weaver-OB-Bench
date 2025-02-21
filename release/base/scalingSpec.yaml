@@ -1,0 +1,10 @@
+scalingSpec:
+  minReplicas: <MIN_REPLICAS>
+  maxReplicas: <MAX_REPLICAS>
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: <AVERAGE_UTILIZATION>

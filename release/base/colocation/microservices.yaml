@@ -2,153 +2,54 @@ groups:
   - name: main
     components:
     - "github.com/ServiceWeaver/weaver/Main"
-    scalingSpec:
-      minReplicas: <CRITICAL_MIN_REPLICAS>
-      maxReplicas: <OB_REPLICAS>
-      metrics:
-        - type: Resource
-          resource:
-            name: cpu
-            target:
-              type: Utilization
-              averageUtilization: <CRITICAL_SCALE_UTIL>
+<main_SCALING_SPEC>
 
   - name: adservice
     components:
     - "github.com/ServiceWeaver/onlineboutique/adservice/AdService"
-    scalingSpec:
-      minReplicas: <NONCRITICAL_MIN_REPLICAS>
-      maxReplicas: <OB_REPLICAS>
-      metrics:
-        - type: Resource
-          resource:
-            name: cpu
-            target:
-              type: Utilization
-              averageUtilization: <NONCRITICAL_SCALE_UTIL>
+<adservice_SCALING_SPEC>
 
   - name: cartservice
     components:
     - "github.com/ServiceWeaver/onlineboutique/cartservice/CartService"
-    scalingSpec:
-      minReplicas: <CRITICAL_MIN_REPLICAS>
-      maxReplicas: <OB_REPLICAS>
-      metrics:
-        - type: Resource
-          resource:
-            name: cpu
-            target:
-              type: Utilization
-              averageUtilization: <CRITICAL_SCALE_UTIL>
+<cartservice_SCALING_SPEC>
 
   - name: cartcache
     components:
     - "github.com/ServiceWeaver/onlineboutique/cartservice/cartCache"
-    scalingSpec:
-      minReplicas: <TRIVIAL_MIN_REPLICAS>
-      maxReplicas: <OB_REPLICAS>
-      metrics:
-        - type: Resource
-          resource:
-            name: cpu
-            target:
-              type: Utilization
-              averageUtilization: <TRIVIAL_SCALE_UTIL>
+<cartcache_SCALING_SPEC>
 
   - name: checkoutservice
     components:
     - "github.com/ServiceWeaver/onlineboutique/checkoutservice/CheckoutService"
-    scalingSpec:
-      minReplicas: <NONCRITICAL_MIN_REPLICAS>
-      maxReplicas: <OB_REPLICAS>
-      metrics:
-        - type: Resource
-          resource:
-            name: cpu
-            target:
-              type: Utilization
-              averageUtilization: <NONCRITICAL_SCALE_UTIL>
+<checkoutservice_SCALING_SPEC>
 
   - name: currencyservice
     components:
     - "github.com/ServiceWeaver/onlineboutique/currencyservice/CurrencyService"
-    scalingSpec:
-      minReplicas: <CRITICAL_MIN_REPLICAS>
-      maxReplicas: <OB_REPLICAS>
-      metrics:
-        - type: Resource
-          resource:
-            name: cpu
-            target:
-              type: Utilization
-              averageUtilization: <CRITICAL_SCALE_UTIL>
+<currencyservice_SCALING_SPEC>
 
   - name: emailservice
     components:
     - "github.com/ServiceWeaver/onlineboutique/emailservice/EmailService"
-    scalingSpec:
-      minReplicas: <TRIVIAL_MIN_REPLICAS>
-      maxReplicas: <OB_REPLICAS>
-      metrics:
-        - type: Resource
-          resource:
-            name: cpu
-            target:
-              type: Utilization
-              averageUtilization: <TRIVIAL_SCALE_UTIL>
+<emailservice_SCALING_SPEC>
 
   - name: paymentservice
     components:
     - "github.com/ServiceWeaver/onlineboutique/paymentservice/PaymentService"
-    scalingSpec:
-      minReplicas: <TRIVIAL_MIN_REPLICAS>
-      maxReplicas: <OB_REPLICAS>
-      metrics:
-        - type: Resource
-          resource:
-            name: cpu
-            target:
-              type: Utilization
-              averageUtilization: <TRIVIAL_SCALE_UTIL>
+<paymentservice_SCALING_SPEC>
 
-  - name: catalogservice
+  - name: productcatalogservice
     components:
-    - "github.com/ServiceWeaver/onlineboutique/catalogservice/CatalogService"
-    scalingSpec:
-      minReplicas: <CRITICAL_MIN_REPLICAS>
-      maxReplicas: <OB_REPLICAS>
-      metrics:
-        - type: Resource
-          resource:
-            name: cpu
-            target:
-              type: Utilization
-              averageUtilization: <CRITICAL_SCALE_UTIL>
+    - "github.com/ServiceWeaver/onlineboutique/productcatalogservice/ProductCatalogService"
+<productcatalogservice_SCALING_SPEC>
 
   - name: recservice
     components:
     - "github.com/ServiceWeaver/onlineboutique/recommendationservice/RecService"
-    scalingSpec:
-      minReplicas: <NONCRITICAL_MIN_REPLICAS>
-      maxReplicas: <OB_REPLICAS>
-      metrics:
-        - type: Resource
-          resource:
-            name: cpu
-            target:
-              type: Utilization
-              averageUtilization: <NONCRITICAL_SCALE_UTIL>
+<recservice_SCALING_SPEC>
 
   - name: shippingservice
     components:
     - "github.com/ServiceWeaver/onlineboutique/shippingservice/ShippingService"
-    scalingSpec:
-      minReplicas: <NONCRITICAL_MIN_REPLICAS>
-      maxReplicas: <OB_REPLICAS>
-      metrics:
-        - type: Resource
-          resource:
-            name: cpu
-            target:
-              type: Utilization
-              averageUtilization: <NONCRITICAL_SCALE_UTIL>
+<shippingservice_SCALING_SPEC>
