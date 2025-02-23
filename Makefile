@@ -2,6 +2,7 @@
 TOP := .
 include auto/paths.mk
 
+WEAVER_KUBE ?= ./weaver-kube/cmd/weaver-kube/weaver-kube # weaver-kube
 
 SHELL := /bin/bash
 CONFIG_FILE ?= CONFIG.cfg
@@ -89,6 +90,8 @@ bench_all: clear_logs
 	@echo 
 	./make_scripts/bench_all.sh
 
+$(WEAVER_KUBE): 
+	go build -C weaver-kube/cmd/weaver-kube
 
 # if deployment specifications or src code was modified,
 # 	Update Weaver kubernetes yaml

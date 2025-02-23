@@ -32,7 +32,7 @@ EOF
 # if we are allocing 3 cores, and OB_inc is 37, return "37,38,39"
 # also sets OB_inc to 39. Needs to be set to 40 by code below.
 core_string() {
-  local out_str=OB_inc
+  local out_str=$OB_inc
   for i in $(seq 2 $OB_CORES); do 
     (( OB_inc += 1 ))
     out_str+=",$OB_inc"
@@ -43,7 +43,6 @@ core_string() {
 IFS=$'\n'
 for pod in $all_pods; do
   echo $pod
-  # continue
 
   if [[ $(echo $pod | grep loadgenerator) ]] ; then
     bind_pod $pod $locust_inc locust
@@ -54,6 +53,6 @@ for pod in $all_pods; do
     OB_inc=$(( locust_inc > OB_inc ? locust_inc : OB_inc ))
     
     bind_pod $pod $(core_string) "/weaver/ob"
-    (( OB_inc += 1 ))
+    (( OB_inc += $OB_CORES ))
   fi
 done
