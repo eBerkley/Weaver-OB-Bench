@@ -40,8 +40,3 @@ VERSION_FILE := $(GENERATED)/version.txt
 LOGS_FILE := $(TOP)/logs.txt
 TMP_LOGS := $(TOP)/tmp_logs.txt
 
-ifeq ($(VERBOSE), 1)
-	DEBUG_OUTPUT := $(LOGS_FILE)
-else
-	DEBUG_OUTPUT := /dev/null
-endif

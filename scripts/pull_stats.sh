@@ -9,7 +9,7 @@ full_podname=$(kubectl get pod -o name --selector app=loadgenerator )
 podname="${full_podname#*/}"
 echo load generator podname = $podname
 
-
+if [[ -x 'pod_stats.csv' ]]; then rm 'pod_stats.csv'; fi
 
 finish () {
   kubectl cp $podname:/stats ../benchmark/stats
@@ -60,8 +60,8 @@ log_debug_info() {
     # kubectl logs -l="serviceweaver/name=$mainpod"
     # echo
     date -d@$SECONDS -u +%H:%M:%S
-    kubectl top pod
-    echo
+    # kubectl top pod
+    # echo
     ./get_replicas.sh
     ./get_replicas.sh 1 >pod_stats.csv
     echo
@@ -81,19 +81,45 @@ size=${#str}
 echo $str
 last_str=""
 
+# usage: loop_continue SIZE
+#   we should terminate => echo 0
+#   else => echo 1
+
 if [[ $LOCUST_SHAPE = 'scaleload' ]]; then
   loop_continue () {
     local size=$1
-    [[ $(./check_capacity.sh) = 0 ]] && { [[ $size -le 5 ]] || [[ $size -ge 20 ]]; }
+
+    if [[ $(./check_capacity.sh 2>> $logfile) = 1 ]]; then
+      echo we are at capacity. Preparing to terminate... >&2
+      echo 0
+    else
+
+      if [[ $size > 5 ]] && [[ $size < 28 ]]; then
+        echo 0
+        echo we are not at capacity, but size = $size. Preparing to terminate... >&2
+      else 
+        echo 1
+      fi
+    
+    fi
   }
+
 else
   loop_continue () {
     local size=$1
-    [[ $size -le 5 ]] || [[ $size -ge 20 ]]
+    
+    if [[ $size > 5 ]] && [[ $size < 28 ]]; then
+      echo Size = $size. Preparing to terminate... >&2
+      echo 0
+    else
+      echo 1
+    fi
   }
+
 fi
 
-while loop_continue; do
+continue_result=$(loop_continue $size)
+while [[ $continue_result = 1 ]]; do
   write_cpu_util
   
   sleep 10
@@ -101,7 +127,7 @@ while loop_continue; do
   str=$(echo "$strs" | tail -1)
   strPrev=$(echo "$strs" | head -1)
   size=${#str}
-
+  
   if [[ $strPrev != $last_str ]]; then
     echo -e $timestamp$strPrev
     echo $strPrev >> $logfile   
@@ -121,7 +147,8 @@ while loop_continue; do
   
   (( iterations+=1 ))
   log_debug_info $iterations >> $logfile
-  
+  continue_result=$(loop_continue $size)
+
 done
 
 if [[ $SECONDS -lt 150 ]]; then

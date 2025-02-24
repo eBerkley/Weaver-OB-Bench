@@ -51,8 +51,8 @@ for alloc in $(cat $CSCHEME_FILE); do
     min_alloc=$(( min_alloc < cores ? min_alloc : cores ))
 
     stats_pattern="^$name,([0-9]+)"
-
-    if [[ $(grep $name $CUR_STATS) =~ $stats_pattern ]]; then
+    
+    if [[ $(grep ^$name $CUR_STATS) =~ $stats_pattern ]]; then
       replicas=${BASH_REMATCH[1]}
       (( total_cores += replicas * $cores ))
     else

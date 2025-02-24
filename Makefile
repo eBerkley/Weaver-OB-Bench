@@ -13,6 +13,12 @@ include .env
 # sets LOADGEN_REPLICAS, OB_CORES, OB_REPLICAS, and optionally SCHEME.
 include $(CONFIG_FILE)
 
+ifeq ($(VERBOSE), 1)
+	DEBUG_OUTPUT := $(LOGS_FILE)
+else
+	DEBUG_OUTPUT := /dev/null
+endif
+
 
 .PHONY: all clean minikube_start minikube_restart check_smt toggle_smt deploy bench bench_all stop clear_logs check_docker check_loadgen pre_deploy bench_once 
 
@@ -46,13 +52,14 @@ pre_deploy: check_docker check_loadgen $(WEAVER_GEN_YAML) $(LOAD_GEN_YAML)
 	@./scripts/checks/check_hyperthreading.sh
 	@./scripts/checks/check_numa_balance.sh
 	
-	@echo 																								| tee -a $(LOGS_FILE)
-	@echo "scheme:                    $$SCHEME"						| tee -a $(LOGS_FILE)
-	@echo "loadshape:                 $$LOCUST_SHAPE"			| tee -a $(LOGS_FILE)
-	@echo "loadgenerator workers:     $$LOADGEN_REPLICAS"	| tee -a $(LOGS_FILE)
-	@echo "cores per OB pod:          $$OB_CORES"					| tee -a $(LOGS_FILE)
-	@echo "replicas per fusion group: $$OB_REPLICAS" 			| tee -a $(LOGS_FILE)
-	@echo 																								| tee -a $(LOGS_FILE)
+	@echo 																															| tee -a $(LOGS_FILE)
+	@echo "scheme:                        $$SCHEME"											| tee -a $(LOGS_FILE)
+	@echo "cscheme:                       $$C_SCHEME"										| tee -a $(LOGS_FILE)
+	@echo "loadshape:                     $$LOCUST_SHAPE"								| tee -a $(LOGS_FILE)
+	@echo "loadgenerator workers:         $$LOADGEN_REPLICAS"						| tee -a $(LOGS_FILE)
+	@echo "max replicas per fusion group: $$OB_REPLICAS" 								| tee -a $(LOGS_FILE)
+	@echo "VERBOSE, DEBUG_OUTPUT:         $$VERBOSE, $(DEBUG_OUTPUT)" 	| tee -a $(LOGS_FILE)
+	@echo 																															| tee -a $(LOGS_FILE)
 	
 	@echo pre deploy check / code gen complete.
 
