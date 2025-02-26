@@ -102,7 +102,7 @@ $(WEAVER_KUBE):
 # if deployment specifications or src code was modified,
 # 	Update Weaver kubernetes yaml
 # 	modifies version file, which should trigger LOAD_GEN_YAML
-$(WEAVER_GEN_YAML): $(KUBE_BASE_YAML) $(KUBE_GEN_YAML) $(BIN) $(CONFIG_FILE) .env
+$(WEAVER_GEN_YAML): $(KUBE_BASE_YAML) $(BIN) $(CONFIG_FILE) .env
 	@echo rebuilding onlineboutique container...
 	@if [ -z $$ALLOC_FILE ]; then \
 		echo "pods=dynamic"; \
