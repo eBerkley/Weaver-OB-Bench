@@ -1,5 +1,11 @@
 #!/bin/bash
 
+get_envvars () {
+  cat CONFIG.cfg
+  
+}
+
+
 # Use tmp logs file as aggregate of logs
 cat $LOGS_FILE > $TMP_LOGS
 
@@ -23,9 +29,12 @@ loop_body () {
   # Create the dir that the next batch of stats will use
   mkdir -p benchmark/stats
 
+  start_time=$(date)
 
   # run the benchmark
   make bench_once
+
+  end_time=$(date)
 
   # Terminate the benchmark
   kubectl delete po -A
@@ -54,6 +63,17 @@ loop_body () {
   cat $LOGS_FILE >> $TMP_LOGS
   # Save logs from this run into out dir
   cp $LOGS_FILE benchmark/out/$cfg/logs.txt
+
+  # Write info into dir
+  echo start: $start_time              >benchmark/out/$cfg/info.txt
+  echo end: $end_time                 >>benchmark/out/$cfg/info.txt
+  echo config.cfg:                    >>benchmark/out/$cfg/info.txt
+  cat CONFIG.cfg                      >>benchmark/out/$cfg/info.txt
+  echo                                >>benchmark/out/$cfg/info.txt 
+  echo .env:                          >>benchmark/out/$cfg/info.txt 
+  grep -ve '#' .env | grep -e '[A-Z]' >>benchmark/out/$cfg/info.txt 
+
+
   # Clear logs for use with next run
   printf "" > $LOGS_FILE
 

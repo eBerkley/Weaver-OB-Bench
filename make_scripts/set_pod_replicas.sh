@@ -11,7 +11,8 @@ alloc_lines=$(cat ${ALLOC_FILE:-$2})
 
 cp $SCHEME_FILE $GROUPS_FILE
 
-pattern="([a-z_\-]+),([0-9]+),([0-9]+)m,([0-9]+)m"
+# pattern="([a-z_\-]+),([0-9]+),([0-9]+)m,([0-9]+)m"
+pattern="([a-z_\-]+)=([0-9]+)"
 
 for l in $alloc_lines; do
   if [[ $l =~ $pattern ]]; then

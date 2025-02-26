@@ -42,10 +42,13 @@ class BenchData:
         users: users_t
         data: Data
 
+    class SummaryData(NamedTuple):
+        means: Data
+
 
     def __init__(self):
         self._agg_data = defaultdict(list[Data])
-        self._mean_data: dict[int, Data] = {}
+        self._summary_data: dict[int, BenchData.SummaryData] = {}
     
     def add(self, users: int, data: Data):
         self._agg_data[users].append(data)
@@ -60,7 +63,7 @@ class BenchData:
             p50s = [x.p50 for x in vals]
             qps = [x.qps for x in vals]
 
-            self._mean_data[i[0]] = Data(p99=np.mean(p99s), p50=np.mean(p50s), qps=np.mean(qps))
+            self._summary_data[i[0]] = BenchData.SummaryData(Data(p99=np.mean(p99s), p50=np.mean(p50s), qps=np.mean(qps)))
 
     def get_violation_p50_rat(self, low_load: int, qos_ratio: float)-> Ratio_Violation_Data:
         """For now, `low_load` is a user count.
@@ -70,21 +73,21 @@ class BenchData:
         """
 
         best_low_load = -1
-        for k, _ in self._mean_data.items():
+        for k, _ in self._summary_data.items():
             if k > low_load: 
                 break
             best_low_load = k
 
         assert best_low_load != -1
         
-        low_load_data = self._mean_data[best_low_load]
-        low_load_p50 = low_load_data.p50
+        low_load_data = self._summary_data[best_low_load]
+        low_load_p50 = low_load_data.means.p50
         best_high_load = -1
 
-        for k, v in self._mean_data.items():
+        for k, v in self._summary_data.items():
             if k <= best_low_load:
                 continue
-            if v.p99 / low_load_p50 > qos_ratio: 
+            if v.means.p99 / low_load_p50 > qos_ratio: 
                 continue
             best_high_load = k
         
@@ -93,18 +96,18 @@ class BenchData:
         #     for k, v in self._mean_data.items():
         assert best_high_load != -1
 
-        return BenchData.Ratio_Violation_Data(best_low_load, best_high_load, self._mean_data[best_high_load])
+        return BenchData.Ratio_Violation_Data(best_low_load, best_high_load, self._summary_data[best_high_load].means)
 
     def get_violation_max_p99(self, max_p99: float) -> Max_Violation_Data:
         """returns `(user_count, Data)` tuple corresponding to the highest p99 latency <= `max_p99`"""
 
         best_k = -1
-        for k, v in self._mean_data.items():
-            if v.p99 > max_p99 : 
+        for k, v in self._summary_data.items():
+            if v.means.p99 > max_p99 : 
                 continue
             best_k = k
 
-        return BenchData.Max_Violation_Data(best_k, self._mean_data[best_k])
+        return BenchData.Max_Violation_Data(best_k, self._summary_data[best_k].means)
 
 def get_data(testname: TestName) -> BenchData:
     fname = os.path.join("benchmark", "out", testname.get_name(), 

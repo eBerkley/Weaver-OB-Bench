@@ -86,21 +86,24 @@ class SlowLoad(LoadTestShape):
 
     def set_ramp(self, cur_users: int) -> None:
         rate = 0
-        if   self._p99 < 50:    rate =  1.15
-        elif self._p99 < 75:    rate =  1.125
-        elif self._p99 < 100:   rate =  1.110
-        elif self._p99 < 125:   rate =  1.100
-        elif self._p99 < 150:   rate =  1.075
-        elif self._p99 < 200:   rate =  1.050
-        elif self._p99 < 250:   rate =  1.025
-        elif self._p99 < 300:   rate = -1.025
-        else:                   rate = -1.050
+        if   self._p99 < 50:    rate = 1.15
+        elif self._p99 < 75:    rate = 1.125
+        elif self._p99 < 100:   rate = 1.110
+        elif self._p99 < 125:   rate = 1.100
+        elif self._p99 < 150:   rate = 1.075
+        elif self._p99 < 200:   rate = 1.050
+        elif self._p99 < 250:   rate = 1.025
+        elif self._p99 < 300:   rate = 1.015
+        elif self._p99 < 400:   rate = 1.010
+        elif self._p99 < 500:   rate = 1.008
+        elif self._p99 < 750:   rate = 0.995
+        else:                   rate = 0.990
 
         self._target = int(cur_users * rate)
-        if rate > 0:
+        if rate > 1:
             self._target += 500
         
-        self._ramp_speed = (self._target - cur_users) / self.ramp_duration
+        self._ramp_speed = abs(self._target - cur_users) / self.ramp_duration
         self._user_secs = 0
         self._history.clear()
 

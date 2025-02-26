@@ -13,7 +13,7 @@ STABLE_TAIL = int(getenv("LOCUST_STABLE_P99", "25")) # ms
 VARIANCE_WINDOW = int(getenv("LOCUST_VARIANCE_WINDOW", "30"))
 MAX_VARIANCE = float(getenv("LOCUST_MAX_VARIANCE", "0.3"))
 
-USERS_ADDED = 500
+USERS_ADDED = 750
 
 class SlowLoad(LoadTestShape):
     init_users: Final = 1000 # users
@@ -35,7 +35,7 @@ class SlowLoad(LoadTestShape):
     max_variance: Final = MAX_VARIANCE
     """What is the 30-second window's max variance to be considered stabilized?"""
 
-    stable_alt: Final = 60
+    stable_alt: Final = 90
     """If we have been at this user count for this long, say we are stabilized anyways."""
 
     def __init__(self, *args, **kwargs):

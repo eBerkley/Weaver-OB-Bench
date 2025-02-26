@@ -63,8 +63,13 @@ log_debug_info() {
     # kubectl top pod
     # echo
     ./get_replicas.sh
-    ./get_replicas.sh 1 >pod_stats.csv
-    echo
+    code=$?
+    if [[ $? = 0 ]]; then
+      ./get_replicas.sh 1 >pod_stats.csv
+      echo
+    else
+      rm -f pod_stats.csv
+    fi
     
     # echo "=*=*=*=*=*=*=*=*= END DEBUG. =*=*=*=*=*=*=*=*="
 
@@ -94,7 +99,7 @@ if [[ $LOCUST_SHAPE = 'scaleload' ]]; then
       echo 0
     else
 
-      if [[ $size > 5 ]] && [[ $size < 28 ]]; then
+      if [[ $size -gt 5 ]] && [[ $size -lt 28 ]]; then
         echo 0
         echo we are not at capacity, but size = $size. Preparing to terminate... >&2
       else 
@@ -107,9 +112,9 @@ if [[ $LOCUST_SHAPE = 'scaleload' ]]; then
 else
   loop_continue () {
     local size=$1
-    
-    if [[ $size > 5 ]] && [[ $size < 28 ]]; then
-      echo Size = $size. Preparing to terminate... >&2
+
+    if [[ $size -gt 5 ]] && [[ $size -lt 31 ]]; then
+      echo size = $size. Preparing to terminate... >&2
       echo 0
     else
       echo 1

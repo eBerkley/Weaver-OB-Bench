@@ -15,6 +15,10 @@
 pod_list=$(kubectl top po 2>/dev/null)
 # pod_list=$(cat scripts/sample.txt) # Used for testing when developing this script.
 
+if [[ ${#pod_list} < 10 ]]; then 
+  exit 1
+fi
+
 CSV_MODE=$1
 
 if [[ -z $CSV_MODE ]]; then
@@ -83,9 +87,14 @@ for s in loadgenerator all all-but-main carts front back mainad checkoutemailpay
   fi
 done
 
+if [[ $ob_replicas = 0 ]]; then
+  exit 1
+fi
+
 if [[ -z $CSV_MODE ]]; then
   echo '-------------------------------------------------------------------------------------'
 fi
+
 print_tab "ob aggregate" $TITLE_PADDING
 print_tab $ob_replicas $REPLICAS_PADDING
 print_tab "$ob_util"m $CPU_PADDING

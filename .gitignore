@@ -1,13 +1,11 @@
-release/generated/ob
+release/generated/*
+!release/generated/weaver.toml
 test/weaverOut
 test/gRPCOut
 test/inputs.txt
 benchmark/*/*
 logs.txt
 tmp_logs.txt
-*/*/__pycache__
-*.*.pyc
-*.pyc
 notes.md
 .TMP
 cfgs
@@ -18,3 +16,4 @@ env/*
 del.*
 tmp.*
 CONFIG.cfg
+scripts/pod_stats.csv

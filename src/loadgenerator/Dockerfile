@@ -33,6 +33,7 @@ COPY load_shapes/constload.py .
 COPY load_shapes/slowload.py .
 COPY load_shapes/stable_rampload.py .
 COPY load_shapes/scaleload.py .
+COPY load_shapes/testload.py .
 
 RUN chmod +x entrypoint.sh
 

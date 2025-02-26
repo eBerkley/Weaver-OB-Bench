@@ -34,5 +34,8 @@ esac
 
 
 locust ${LOCUST_OPTS}
-echo all done!
-sleep 3000 # don't terminate, let us view logs easily.
+err=$?
+for i in $(seq 15); do
+    echo all done! code: $err
+    sleep 200 # don't terminate, let us view logs easily.
+done

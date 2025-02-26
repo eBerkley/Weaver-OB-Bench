@@ -68,7 +68,7 @@ for alloc in $(cat $CSCHEME_FILE); do
 done
 
 remaining=$(( MAX_CORES - total_cores ))
-if [[ $remaining < $min_alloc ]]; then
+if [[ $remaining -lt $min_alloc ]]; then
   echo 1
 else
   echo 0
