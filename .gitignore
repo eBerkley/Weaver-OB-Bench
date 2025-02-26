@@ -17,3 +17,4 @@ del.*
 tmp.*
 CONFIG.cfg
 scripts/pod_stats.csv
+cfgs_todo
