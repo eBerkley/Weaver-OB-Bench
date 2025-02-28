@@ -16,11 +16,10 @@ package cartservice
 
 import (
 	"context"
-	"runtime"
 
-	_ "go.uber.org/automaxprocs"
 	"github.com/ServiceWeaver/weaver"
 	lru "github.com/hashicorp/golang-lru/v2"
+	_ "go.uber.org/automaxprocs"
 )
 
 const cacheSize = 1 << 20 // 1M entries
@@ -47,7 +46,6 @@ type cartCacheImpl struct {
 }
 
 func (c *cartCacheImpl) Init(context.Context) error {
-	runtime.GOMAXPROCS(1)
 	cache, err := lru.New[string, []CartItem](cacheSize)
 	c.cache = cache
 	return err

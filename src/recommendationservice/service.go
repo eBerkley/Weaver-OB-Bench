@@ -16,8 +16,6 @@ package recommendationservice
 
 import (
 	"context"
-	// "math/rand"
-	_ "go.uber.org/automaxprocs"
 
 	"github.com/ServiceWeaver/onlineboutique/productcatalogservice"
 	"github.com/ServiceWeaver/weaver"

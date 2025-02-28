@@ -17,7 +17,6 @@ package shippingservice
 import (
 	"context"
 	"fmt"
-	_ "go.uber.org/automaxprocs"
 
 	"github.com/ServiceWeaver/onlineboutique/cartservice"
 	"github.com/ServiceWeaver/onlineboutique/types/money"
