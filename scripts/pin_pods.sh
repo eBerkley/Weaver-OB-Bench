@@ -1,7 +1,8 @@
 #!/bin/bash
-
 CORES_PER_SOCKET=36 # Change!!
 
+SCHEME=${SCHEME:-$1}
+C_SCHEME=${C_SCHEME:-$2}
 
 # What is allocated to kubernetes runtime?
 KUBE_CORES=${KUBE_CORES:-"0-2"} # Should start with 0.
@@ -41,6 +42,7 @@ core_string() {
     (( OB_inc += 1 ))
     out_str+=",$OB_inc"
   done
+  
   echo $out_str
 }
 
@@ -59,11 +61,14 @@ OB_inc=$(( locust_inc > OB_inc ? locust_inc : OB_inc ))
 CSCHEME_PATH="release/base/colocation/$SCHEME/$C_SCHEME.cfg"
 pattern="([a-z_\-]+)=([0-9]+)"
 for alloc in $(cat $CSCHEME_PATH); do
+  
   if [[ $alloc =~ $pattern ]]; then
     pod_name=${BASH_REMATCH[1]}
     cores=${BASH_REMATCH[2]}
-    for pod in $(echo "$all_pods" | grep $pod_name); do
 
+    for pod in $(echo "$all_pods"); do  
+      if [[ ! $pod =~ "pod/ob-$pod_name" ]]; then continue; fi
+      echo binding pod $pod to $cores cores, starting at $OB_inc.
       bind_pod $pod $(core_string $cores) "/weaver/ob"
       (( OB_inc += $cores ))
     

@@ -89,6 +89,12 @@ spec:
         - name: LOCUST_RESET_CONN
           value: <LOCUST_RESET_CONN>
 
+        - name: LOCUST_MAX_TAIL
+          value: <LOCUST_MAX_TAIL>
+
+        - name: LOCUST_SLOWLOAD_RAMP
+          value: <LOCUST_SLOWLOAD_RAMP>
+
         resources:
           requests:
             cpu: 1
@@ -175,6 +181,12 @@ spec:
         
         - name: LOCUST_RESET_CONN
           value: <LOCUST_RESET_CONN>
+
+        - name: LOCUST_MAX_TAIL
+          value: <LOCUST_MAX_TAIL>
+        
+        - name: LOCUST_SLOWLOAD_RAMP
+          value: <LOCUST_SLOWLOAD_RAMP>
 
         resources:
           requests: 

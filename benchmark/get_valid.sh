@@ -33,6 +33,7 @@ for d in $path/*; do
   fi
 
   if [[ $(grep BENCH_STATIC "$d/info.txt") = "BENCH_STATIC=0" ]]; then
+    NOT_STATIC+="$name, "
     continue
   fi
 

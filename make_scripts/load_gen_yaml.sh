@@ -48,6 +48,12 @@ sed -i "s#<LOCUST_VARIANCE_WINDOW>#\"$LOCUST_VARIANCE_WINDOW\"#g" $LOAD_GEN_YAML
 # Set max variance before ramping up for stable_rampload shape
 sed -i "s#<LOCUST_MAX_VARIANCE>#\"$LOCUST_MAX_VARIANCE\"#g" $LOAD_GEN_YAML          
 
+# set max tail latency for terminating tests.
+sed -i "s#<LOCUST_MAX_TAIL>#\"$LOCUST_MAX_TAIL\"#g" $LOAD_GEN_YAML
+
+# set number of users to add for low load
+sed -i "s#<LOCUST_SLOWLOAD_RAMP>#\"$LOCUST_SLOWLOAD_RAMP\"#g" $LOAD_GEN_YAML
+
 # If we are going to be adding replicas, 
 # ensure connections are periodically reset to route traffic to new main components.
 if [[ $BENCH_STATIC = "1" ]]; then

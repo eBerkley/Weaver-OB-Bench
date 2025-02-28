@@ -1,4 +1,5 @@
 #!/bin/bash
+sleep 10
 
 KUBE_CORES=${KUBE_CORES:-"0-2"} # Should start with 0.
 
