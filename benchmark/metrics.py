@@ -11,16 +11,39 @@ import os
 VARIANCE_WINDOW = 30
 LOW_LOAD_USERS  = 10000
 VIOLATION_RATIO = 10.0
+COLORS          = ["red", "orange", "turquoise", "springgreen", "yellow", "magenta", "lightcoral", "olive", "steelblue", "violet", "sienna", "deepskyblue", "crimson"]
+
+# SCHEMES=["all-but-main", "carts", "frontend", "backend", "microservices", "mixed", "monolith"]
+
+# CSCHEMES=["1core", "2allbutmain", "2main", "2core", 
+# "4allbutmain-2main", "4allbutmain", "4core", "4main-2allbutmain", 
+# "4main", "6core", "9core", "9main-6allbutmain", "9allbutmain-6main"]
+
+CSCHEMES=["12core", "1core",  "2core", "3core", "4core", "6core", "9core"] # "1replica-36", "18core"
+ALLOC=["36"]
+IMG_NAME='monolith'
+# IMG_NAME='all-but-main'
+SCHEMES=[IMG_NAME]
+# IMG_NAME='all-but-main'
+
+RUN_GRAPH_TESTS=True
+GRAPH_P50 = False
+GRAPH_YSCALE='linear' # 'log'
+
+RUN_PRINT_STATS=False
+
+FIXED_TAIL_STATS = [100.0, 125.0, 150.0]
+
 
 users_t: TypeAlias = int
 
 class TestName(NamedTuple):
     scheme: str
-    cores: str
+    cscheme: str
     alloc: str
 
     def get_name(self):
-        return f"{self.scheme}_{self.cores}_{self.alloc}"
+        return f"{self.scheme}_{self.cscheme}_{self.alloc}"
 
 class Data(NamedTuple):
   
@@ -46,7 +69,8 @@ class BenchData:
         means: Data
 
 
-    def __init__(self):
+    def __init__(self, name: TestName):
+        self._name = name
         self._agg_data = defaultdict(list[Data])
         self._summary_data: dict[int, BenchData.SummaryData] = {}
     
@@ -64,6 +88,24 @@ class BenchData:
             qps = [x.qps for x in vals]
 
             self._summary_data[i[0]] = BenchData.SummaryData(Data(p99=np.mean(p99s), p50=np.mean(p50s), qps=np.mean(qps)))
+
+    def graph_self(self, color: str, graph_p50: bool):
+        X = []
+        Y_p99s = []
+        Y_p50s = []
+        for x, y in self._summary_data.items():
+            X.append(y.means.qps)
+            Y_p99s.append(y.means.p99)
+
+            Y_p50s.append(y.means.p50)
+        
+
+        plt.plot(X, Y_p99s, '-', c=color, label=f"{self._name.get_name()}")
+
+        # , label=f"{self._name.get_name()} p50"
+        if graph_p50:
+            plt.plot(X, Y_p50s, '--', c=color) 
+
 
     def get_violation_p50_rat(self, low_load: int, qos_ratio: float)-> Ratio_Violation_Data:
         """For now, `low_load` is a user count.
@@ -120,7 +162,7 @@ def get_data(testname: TestName) -> BenchData:
     p99_arr = df_agg['99%'].astype(float).values
     qps_arr = df_agg['Requests/s'].astype(float).values
 
-    bd = BenchData()
+    bd = BenchData(testname)
 
     for i in range(len(user_arr)):
         bd.add(user_arr[i], Data(p99=p99_arr[i], p50=p50_arr[i], qps=qps_arr[i]))
@@ -130,22 +172,19 @@ def get_data(testname: TestName) -> BenchData:
 
     return bd
 
-if __name__ == '__main__':
-    SCHEMES=["all_but_main", "carts", "frontend", "microservices", "mixed", "monolith"]
-    CORES=["01"]
-    ALLOC=["36"]
-
+if __name__ == '__main__':    
     tests_arr: list[TestName] = []
     tests_dict: dict[TestName, BenchData] = {}
     
     for s in SCHEMES:
-        for c in CORES:
+        for c in CSCHEMES:
             for a in ALLOC:
                 tests_arr.append(TestName(s, c, a))
-    
+    # tests_arr.append(TestName(""))
     
     for t in tests_arr:
         tests_dict[t] = get_data(t)
+
 
     def print_rat_stats(low_load_users, violation_ratio):
         
@@ -153,13 +192,11 @@ if __name__ == '__main__':
 
         
         for t in tests_arr:
-            # violation_dict[t] = tests_dict[t].get_violation_p50_rat(
-            #     low_load_users, violation_ratio)
             low_users, high_users, data = tests_dict[t].get_violation_p50_rat(
                 low_load_users, violation_ratio)
 
             s=""
-            s += f"{t.get_name().ljust(20)}:"
+            s += f"{t.get_name().ljust(25)}:"
             s += "\t\t"
             s += f"({high_users}, {round(data.qps, 3)})".ljust(25)
             s+= "\t"
@@ -187,20 +224,34 @@ if __name__ == '__main__':
             print(s)
         print()
 
+    def graph_tests(name):
+        for i in range(len(tests_arr)):
+            tests_dict[tests_arr[i]].graph_self(COLORS[i], GRAPH_P50)
+        plt.legend()
+        plt.xlabel('queries per second')
+        plt.ylabel('latency (ms)')
+        plt.yscale(GRAPH_YSCALE)
+        plt.ylim(0, 300)
+        plt.title('mean latency / qps')
+        plt.savefig(f'benchmark/imgs/{name}.png')
 
-    print(f"{'name'.ljust(20)}: SLO violation (users, qps),\t \tviolation p99, \t offset from low load\n")
-    
-    print_rat_stats(10_000, 10.0)
-    print_rat_stats(10_000, 15.0)
-    print_rat_stats(12_500, 10.0)
-    print_rat_stats(12_500, 15.0)
-    print('\n')
+    if RUN_GRAPH_TESTS:
+        graph_tests(IMG_NAME)
 
-    print_fixed_stats(100.0)
-    print_fixed_stats(125.0)
-    print_fixed_stats(150.0)
-    # print_stats(15_000, 10.0)
-    # print_stats(15_000, 15.0)
-    
+    if RUN_PRINT_STATS:
+        print(f"{'name'.ljust(20)}: SLO violation (users, qps),\t \tviolation p99, \t offset from low load\n")
+        
+        print_rat_stats(5_000,  15.0)
+        print_rat_stats(10_000, 10.0)
+        print_rat_stats(10_000, 15.0)
+        print_rat_stats(12_500, 10.0)
+        print_rat_stats(12_500, 15.0)
+        print('\n')
+        for l in FIXED_TAIL_STATS:
+            print_fixed_stats(l)
+            print_fixed_stats(l)
+            print_fixed_stats(l)
+
+        
 
     

@@ -1,11 +1,5 @@
 #!/bin/bash
 
-get_envvars () {
-  cat CONFIG.cfg
-  
-}
-
-
 # Use tmp logs file as aggregate of logs
 cat $LOGS_FILE > $TMP_LOGS
 

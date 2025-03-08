@@ -4,12 +4,11 @@ sleep 15
 
 logfile="../logs.txt"
 
-# podname=$(kubectl get pod | grep 'loadgenerator-[a-z0-9]\+-[a-z0-9]\+ ' | awk '{print $1}')
 full_podname=$(kubectl get pod -o name --selector app=loadgenerator )
 podname="${full_podname#*/}"
 echo load generator podname = $podname
 
-if [[ -x 'pod_stats.csv' ]]; then rm 'pod_stats.csv'; fi
+rm -f 'pod_stats.csv'
 
 finish () {
   kubectl cp $podname:/stats ../benchmark/stats
@@ -64,7 +63,7 @@ log_debug_info() {
     # echo
     ./get_replicas.sh
     code=$?
-    if [[ $? = 0 ]]; then
+    if [[ $code = 0 ]]; then
       ./get_replicas.sh 1 >pod_stats.csv
       echo
     else
