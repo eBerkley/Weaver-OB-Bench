@@ -18,7 +18,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/ServiceWeaver/weaver"
 	"github.com/eBerkley/Weaver-OB-Bench/cartservice"
 	"github.com/eBerkley/Weaver-OB-Bench/currencyservice"
 	"github.com/eBerkley/Weaver-OB-Bench/emailservice"
@@ -27,6 +26,7 @@ import (
 	"github.com/eBerkley/Weaver-OB-Bench/shippingservice"
 	"github.com/eBerkley/Weaver-OB-Bench/types"
 	"github.com/eBerkley/Weaver-OB-Bench/types/money"
+	"github.com/eberkley/weaver"
 	"github.com/google/uuid"
 
 	_ "go.uber.org/automaxprocs"

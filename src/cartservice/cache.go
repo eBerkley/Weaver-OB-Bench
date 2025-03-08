@@ -17,7 +17,7 @@ package cartservice
 import (
 	"context"
 
-	"github.com/ServiceWeaver/weaver"
+	"github.com/eberkley/weaver"
 	lru "github.com/hashicorp/golang-lru/v2"
 	_ "go.uber.org/automaxprocs"
 )

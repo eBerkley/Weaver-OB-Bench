@@ -24,7 +24,6 @@ import (
 	"os"
 	"slices"
 
-	"github.com/ServiceWeaver/weaver"
 	"github.com/eBerkley/Weaver-OB-Bench/adservice"
 	"github.com/eBerkley/Weaver-OB-Bench/cartservice"
 	"github.com/eBerkley/Weaver-OB-Bench/checkoutservice"
@@ -32,6 +31,7 @@ import (
 	"github.com/eBerkley/Weaver-OB-Bench/productcatalogservice"
 	"github.com/eBerkley/Weaver-OB-Bench/recommendationservice"
 	"github.com/eBerkley/Weaver-OB-Bench/shippingservice"
+	"github.com/eberkley/weaver"
 	_ "go.uber.org/automaxprocs"
 )
 

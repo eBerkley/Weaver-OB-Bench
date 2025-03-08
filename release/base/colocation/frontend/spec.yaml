@@ -1,7 +1,7 @@
 groups:
   - name: front
     components:
-    - "github.com/ServiceWeaver/weaver/Main"
+    - "github.com/eberkley/weaver/Main"
     - "github.com/eBerkley/Weaver-OB-Bench/adservice/AdService"
     - "github.com/eBerkley/Weaver-OB-Bench/checkoutservice/CheckoutService"
     - "github.com/eBerkley/Weaver-OB-Bench/recommendationservice/RecService"

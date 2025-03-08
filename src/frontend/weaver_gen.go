@@ -5,15 +5,15 @@ package frontend
 
 import (
 	"context"
-	"github.com/ServiceWeaver/weaver"
-	"github.com/ServiceWeaver/weaver/runtime/codegen"
+	"github.com/eberkley/weaver"
+	"github.com/eberkley/weaver/runtime/codegen"
 	"go.opentelemetry.io/otel/trace"
 	"reflect"
 )
 
 func init() {
 	codegen.Register(codegen.Registration{
-		Name:      "github.com/ServiceWeaver/weaver/Main",
+		Name:      "github.com/eberkley/weaver/Main",
 		Iface:     reflect.TypeOf((*weaver.Main)(nil)).Elem(),
 		Impl:      reflect.TypeOf(Server{}),
 		Listeners: []string{"boutique"},
@@ -30,7 +30,7 @@ func init() {
 		RoutedLocalStubFn: func(impl any, stub codegen.Stub, caller string, tracer trace.Tracer, isLocal func(shardKey uint64) bool) any {
 			return main_routed_local_stub{impl: impl.(weaver.Main), stub: stub, tracer: tracer, isLocal: isLocal}
 		},
-		RefData: "⟦ed5e8533:wEaVeReDgE:github.com/ServiceWeaver/weaver/Main→github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService⟧\n⟦b2c1d93f:wEaVeReDgE:github.com/ServiceWeaver/weaver/Main→github.com/eBerkley/Weaver-OB-Bench/currencyservice/CurrencyService⟧\n⟦d35fc4cb:wEaVeReDgE:github.com/ServiceWeaver/weaver/Main→github.com/eBerkley/Weaver-OB-Bench/cartservice/CartService⟧\n⟦d75c4e33:wEaVeReDgE:github.com/ServiceWeaver/weaver/Main→github.com/eBerkley/Weaver-OB-Bench/recommendationservice/RecService⟧\n⟦fae737ba:wEaVeReDgE:github.com/ServiceWeaver/weaver/Main→github.com/eBerkley/Weaver-OB-Bench/checkoutservice/CheckoutService⟧\n⟦1008b812:wEaVeReDgE:github.com/ServiceWeaver/weaver/Main→github.com/eBerkley/Weaver-OB-Bench/shippingservice/ShippingService⟧\n⟦6fb3b9f1:wEaVeReDgE:github.com/ServiceWeaver/weaver/Main→github.com/eBerkley/Weaver-OB-Bench/adservice/AdService⟧\n⟦29a161ab:wEaVeRlIsTeNeRs:github.com/ServiceWeaver/weaver/Main→boutique⟧\n",
+		RefData: "⟦ed5e8533:wEaVeReDgE:github.com/eberkley/weaver/Main→github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService⟧\n⟦b2c1d93f:wEaVeReDgE:github.com/eberkley/weaver/Main→github.com/eBerkley/Weaver-OB-Bench/currencyservice/CurrencyService⟧\n⟦d35fc4cb:wEaVeReDgE:github.com/eberkley/weaver/Main→github.com/eBerkley/Weaver-OB-Bench/cartservice/CartService⟧\n⟦d75c4e33:wEaVeReDgE:github.com/eberkley/weaver/Main→github.com/eBerkley/Weaver-OB-Bench/recommendationservice/RecService⟧\n⟦fae737ba:wEaVeReDgE:github.com/eberkley/weaver/Main→github.com/eBerkley/Weaver-OB-Bench/checkoutservice/CheckoutService⟧\n⟦1008b812:wEaVeReDgE:github.com/eberkley/weaver/Main→github.com/eBerkley/Weaver-OB-Bench/shippingservice/ShippingService⟧\n⟦6fb3b9f1:wEaVeReDgE:github.com/eberkley/weaver/Main→github.com/eBerkley/Weaver-OB-Bench/adservice/AdService⟧\n⟦29a161ab:wEaVeRlIsTeNeRs:github.com/eberkley/weaver/Main→boutique⟧\n",
 	})
 }
 
@@ -78,19 +78,19 @@ var _ codegen.LatestVersion = codegen.Version[[0][24]struct{}](`
 
 ERROR: You generated this file with 'weaver generate' (devel) (codegen
 version v0.24.0). The generated code is incompatible with the version of the
-github.com/ServiceWeaver/weaver module that you're using. The weaver module
+github.com/eberkley/weaver module that you're using. The weaver module
 version can be found in your go.mod file or by running the following command.
 
-    go list -m github.com/ServiceWeaver/weaver
+    go list -m github.com/eberkley/weaver
 
 We recommend updating the weaver module and the 'weaver generate' command by
 running the following.
 
-    go get github.com/ServiceWeaver/weaver@latest
-    go install github.com/ServiceWeaver/weaver/cmd/weaver@latest
+    go get github.com/eberkley/weaver@latest
+    go install github.com/eberkley/weaver/cmd/weaver@latest
 
 Then, re-run 'weaver generate' and re-build your code. If the problem persists,
-please file an issue at https://github.com/ServiceWeaver/weaver/issues.
+please file an issue at https://github.com/eberkley/weaver/issues.
 
 `)
 

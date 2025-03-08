@@ -22,8 +22,8 @@ import (
 	"math"
 	"strconv"
 
-	"github.com/ServiceWeaver/weaver"
 	"github.com/eBerkley/Weaver-OB-Bench/types/money"
+	"github.com/eberkley/weaver"
 	"github.com/iancoleman/orderedmap"
 	_ "go.uber.org/automaxprocs"
 )

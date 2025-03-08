@@ -8,7 +8,7 @@ groups:
 
   - name: main
     components:
-    - "github.com/ServiceWeaver/weaver/Main"
+    - "github.com/eberkley/weaver/Main"
 <main_RESOURCE_SPEC>
 <main_SCALING_SPEC>
 

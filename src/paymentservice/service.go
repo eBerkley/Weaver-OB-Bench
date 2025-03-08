@@ -18,8 +18,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/ServiceWeaver/weaver"
 	"github.com/eBerkley/Weaver-OB-Bench/types/money"
+	"github.com/eberkley/weaver"
 	_ "go.uber.org/automaxprocs"
 )
 

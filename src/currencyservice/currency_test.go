@@ -6,8 +6,8 @@ import (
 	"math"
 	"testing"
 
-	"github.com/ServiceWeaver/weaver/weavertest"
 	"github.com/eBerkley/Weaver-OB-Bench/types/money"
+	"github.com/eberkley/weaver/weavertest"
 	// "github.com/iancoleman/orderedmap"
 )
 
