@@ -26,8 +26,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/ServiceWeaver/onlineboutique/types/money"
 	"github.com/ServiceWeaver/weaver"
+	"github.com/eBerkley/Weaver-OB-Bench/types/money"
 	_ "go.uber.org/automaxprocs"
 )
 

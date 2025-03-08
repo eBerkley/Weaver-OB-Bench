@@ -3,6 +3,7 @@ TOP := .
 include auto/paths.mk
 
 WEAVER_KUBE ?= ./weaver-kube/cmd/weaver-kube/weaver-kube # weaver-kube
+WEAVER ?= ./weaver/cmd/weaver/weaver # weaver
 
 SHELL := /bin/bash
 CONFIG_FILE ?= CONFIG.cfg
@@ -96,6 +97,9 @@ bench_all: clear_logs
 	@echo 
 	./make_scripts/bench_all.sh
 
+$(WEAVER):
+	go build -C weaver/cmd/weaver
+
 $(WEAVER_KUBE): 
 	go build -C weaver-kube/cmd/weaver-kube
 
@@ -126,5 +130,5 @@ $(BIN): $(MAIN_SRC)
 	@echo rebuilding binary...
 
 	@cd $(SRC); weaver generate ./...; go build -o ../release/generated; cd ..
-	@mv release/generated/onlineboutique release/generated/ob
+	@mv release/generated/Weaver-OB-Bench release/generated/ob
 

@@ -2,3 +2,6 @@
   path="weaver-kube"
   url="https://github.com/eBerkley/weaver-kube.git"
   
+[submodule "weaver"]
+	path = weaver
+	url = https://github.com/eBerkley/weaver.git

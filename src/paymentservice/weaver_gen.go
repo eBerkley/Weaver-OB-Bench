@@ -7,9 +7,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/ServiceWeaver/onlineboutique/types/money"
 	"github.com/ServiceWeaver/weaver"
 	"github.com/ServiceWeaver/weaver/runtime/codegen"
+	"github.com/eBerkley/Weaver-OB-Bench/types/money"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	"reflect"
@@ -18,20 +18,23 @@ import (
 
 func init() {
 	codegen.Register(codegen.Registration{
-		Name:  "github.com/ServiceWeaver/onlineboutique/paymentservice/PaymentService",
+		Name:  "github.com/eBerkley/Weaver-OB-Bench/paymentservice/PaymentService",
 		Iface: reflect.TypeOf((*PaymentService)(nil)).Elem(),
 		Impl:  reflect.TypeOf(impl{}),
 		LocalStubFn: func(impl any, caller string, tracer trace.Tracer) any {
-			return paymentService_local_stub{impl: impl.(PaymentService), tracer: tracer, chargeMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/ServiceWeaver/onlineboutique/paymentservice/PaymentService", Method: "Charge", Remote: false, Generated: true})}
+			return paymentService_local_stub{impl: impl.(PaymentService), tracer: tracer, chargeMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/paymentservice/PaymentService", Method: "Charge", Remote: false, Generated: true})}
 		},
 		ClientStubFn: func(stub codegen.Stub, caller string) any {
-			return paymentService_client_stub{stub: stub, chargeMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/ServiceWeaver/onlineboutique/paymentservice/PaymentService", Method: "Charge", Remote: true, Generated: true})}
+			return paymentService_client_stub{stub: stub, chargeMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/paymentservice/PaymentService", Method: "Charge", Remote: true, Generated: true})}
 		},
 		ServerStubFn: func(impl any, addLoad func(uint64, float64)) codegen.Server {
 			return paymentService_server_stub{impl: impl.(PaymentService), addLoad: addLoad}
 		},
 		ReflectStubFn: func(caller func(string, context.Context, []any, []any) error) any {
 			return paymentService_reflect_stub{caller: caller}
+		},
+		RoutedLocalStubFn: func(impl any, stub codegen.Stub, caller string, tracer trace.Tracer, isLocal func(shardKey uint64) bool) any {
+			return paymentService_routed_local_stub{impl: impl.(PaymentService), stub: stub, tracer: tracer, isLocal: isLocal, chargeMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/paymentservice/PaymentService", Method: "Charge", Remote: true, Generated: true})}
 		},
 		RefData: "",
 	})
@@ -136,12 +139,31 @@ func (s paymentService_client_stub) Charge(ctx context.Context, a0 money.T, a1 C
 	return
 }
 
+// Routed local stub implementations.
+
+type paymentService_routed_local_stub struct {
+	impl          PaymentService
+	stub          codegen.Stub
+	tracer        trace.Tracer
+	isLocal       func(shardKey uint64) bool
+	chargeMetrics *codegen.MethodMetrics
+}
+
+// Check that paymentService_routed_local_stub implements the PaymentService interface.
+var _ PaymentService = (*paymentService_routed_local_stub)(nil)
+
+func (s paymentService_routed_local_stub) Charge(ctx context.Context, a0 money.T, a1 CreditCardInfo) (r0 string, err error) {
+	err = errors.New("can not call routed local method on unrouted component")
+	err = errors.Join(weaver.RemoteCallError, err)
+	return
+}
+
 // Note that "weaver generate" will always generate the error message below.
 // Everything is okay. The error message is only relevant if you see it when
 // you run "go build" or "go run".
 var _ codegen.LatestVersion = codegen.Version[[0][24]struct{}](`
 
-ERROR: You generated this file with 'weaver generate' v0.24.6 (codegen
+ERROR: You generated this file with 'weaver generate' (devel) (codegen
 version v0.24.0). The generated code is incompatible with the version of the
 github.com/ServiceWeaver/weaver module that you're using. The weaver module
 version can be found in your go.mod file or by running the following command.

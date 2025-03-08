@@ -21,8 +21,8 @@ import (
 	"fmt"
 	"html/template"
 
-	"github.com/ServiceWeaver/onlineboutique/types"
 	"github.com/ServiceWeaver/weaver"
+	"github.com/eBerkley/Weaver-OB-Bench/types"
 	_ "go.uber.org/automaxprocs"
 )
 

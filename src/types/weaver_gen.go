@@ -5,11 +5,11 @@ package types
 
 import (
 	"fmt"
-	"github.com/ServiceWeaver/onlineboutique/cartservice"
-	"github.com/ServiceWeaver/onlineboutique/shippingservice"
-	"github.com/ServiceWeaver/onlineboutique/types/money"
 	"github.com/ServiceWeaver/weaver"
 	"github.com/ServiceWeaver/weaver/runtime/codegen"
+	"github.com/eBerkley/Weaver-OB-Bench/cartservice"
+	"github.com/eBerkley/Weaver-OB-Bench/shippingservice"
+	"github.com/eBerkley/Weaver-OB-Bench/types/money"
 )
 
 // weaver.InstanceOf checks.
@@ -20,12 +20,14 @@ import (
 
 // Client stub implementations.
 
+// Routed local stub implementations.
+
 // Note that "weaver generate" will always generate the error message below.
 // Everything is okay. The error message is only relevant if you see it when
 // you run "go build" or "go run".
 var _ codegen.LatestVersion = codegen.Version[[0][24]struct{}](`
 
-ERROR: You generated this file with 'weaver generate' v0.24.6 (codegen
+ERROR: You generated this file with 'weaver generate' (devel) (codegen
 version v0.24.0). The generated code is incompatible with the version of the
 github.com/ServiceWeaver/weaver module that you're using. The weaver module
 version can be found in your go.mod file or by running the following command.
@@ -70,7 +72,7 @@ func (x *Order) WeaverMarshal(enc *codegen.Encoder) {
 	enc.String(x.ShippingTrackingID)
 	(x.ShippingCost).WeaverMarshal(enc)
 	(x.ShippingAddress).WeaverMarshal(enc)
-	serviceweaver_enc_slice_OrderItem_7622e708(enc, x.Items)
+	serviceweaver_enc_slice_OrderItem_57423b62(enc, x.Items)
 }
 
 func (x *Order) WeaverUnmarshal(dec *codegen.Decoder) {
@@ -81,10 +83,10 @@ func (x *Order) WeaverUnmarshal(dec *codegen.Decoder) {
 	x.ShippingTrackingID = dec.String()
 	(&x.ShippingCost).WeaverUnmarshal(dec)
 	(&x.ShippingAddress).WeaverUnmarshal(dec)
-	x.Items = serviceweaver_dec_slice_OrderItem_7622e708(dec)
+	x.Items = serviceweaver_dec_slice_OrderItem_57423b62(dec)
 }
 
-func serviceweaver_enc_slice_OrderItem_7622e708(enc *codegen.Encoder, arg []OrderItem) {
+func serviceweaver_enc_slice_OrderItem_57423b62(enc *codegen.Encoder, arg []OrderItem) {
 	if arg == nil {
 		enc.Len(-1)
 		return
@@ -95,7 +97,7 @@ func serviceweaver_enc_slice_OrderItem_7622e708(enc *codegen.Encoder, arg []Orde
 	}
 }
 
-func serviceweaver_dec_slice_OrderItem_7622e708(dec *codegen.Decoder) []OrderItem {
+func serviceweaver_dec_slice_OrderItem_57423b62(dec *codegen.Decoder) []OrderItem {
 	n := dec.Len()
 	if n == -1 {
 		return nil

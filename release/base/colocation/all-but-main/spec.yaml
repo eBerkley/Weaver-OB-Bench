@@ -7,15 +7,15 @@ groups:
 
   - name: all-but-main
     components:
-    - "github.com/ServiceWeaver/onlineboutique/adservice/AdService"
-    - "github.com/ServiceWeaver/onlineboutique/cartservice/CartService"
-    - "github.com/ServiceWeaver/onlineboutique/cartservice/cartCache"
-    - "github.com/ServiceWeaver/onlineboutique/checkoutservice/CheckoutService"
-    - "github.com/ServiceWeaver/onlineboutique/currencyservice/CurrencyService"
-    - "github.com/ServiceWeaver/onlineboutique/emailservice/EmailService"
-    - "github.com/ServiceWeaver/onlineboutique/paymentservice/PaymentService"
-    - "github.com/ServiceWeaver/onlineboutique/productcatalogservice/ProductCatalogService"
-    - "github.com/ServiceWeaver/onlineboutique/recommendationservice/RecService"
-    - "github.com/ServiceWeaver/onlineboutique/shippingservice/ShippingService"
+    - "github.com/eBerkley/Weaver-OB-Bench/adservice/AdService"
+    - "github.com/eBerkley/Weaver-OB-Bench/cartservice/CartService"
+    - "github.com/eBerkley/Weaver-OB-Bench/cartservice/cartCache"
+    - "github.com/eBerkley/Weaver-OB-Bench/checkoutservice/CheckoutService"
+    - "github.com/eBerkley/Weaver-OB-Bench/currencyservice/CurrencyService"
+    - "github.com/eBerkley/Weaver-OB-Bench/emailservice/EmailService"
+    - "github.com/eBerkley/Weaver-OB-Bench/paymentservice/PaymentService"
+    - "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService"
+    - "github.com/eBerkley/Weaver-OB-Bench/recommendationservice/RecService"
+    - "github.com/eBerkley/Weaver-OB-Bench/shippingservice/ShippingService"
 <all-but-main_RESOURCE_SPEC>
 <all-but-main_SCALING_SPEC>

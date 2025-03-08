@@ -17,8 +17,8 @@ package recommendationservice
 import (
 	"context"
 
-	"github.com/ServiceWeaver/onlineboutique/productcatalogservice"
 	"github.com/ServiceWeaver/weaver"
+	"github.com/eBerkley/Weaver-OB-Bench/productcatalogservice"
 	_ "go.uber.org/automaxprocs"
 )
 

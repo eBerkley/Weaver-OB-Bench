@@ -27,7 +27,10 @@ func init() {
 		ReflectStubFn: func(caller func(string, context.Context, []any, []any) error) any {
 			return main_reflect_stub{caller: caller}
 		},
-		RefData: "⟦a4d40c1c:wEaVeReDgE:github.com/ServiceWeaver/weaver/Main→github.com/ServiceWeaver/onlineboutique/productcatalogservice/ProductCatalogService⟧\n⟦6dedcea3:wEaVeReDgE:github.com/ServiceWeaver/weaver/Main→github.com/ServiceWeaver/onlineboutique/currencyservice/CurrencyService⟧\n⟦0cb0000d:wEaVeReDgE:github.com/ServiceWeaver/weaver/Main→github.com/ServiceWeaver/onlineboutique/cartservice/CartService⟧\n⟦624011ea:wEaVeReDgE:github.com/ServiceWeaver/weaver/Main→github.com/ServiceWeaver/onlineboutique/recommendationservice/RecService⟧\n⟦107bd009:wEaVeReDgE:github.com/ServiceWeaver/weaver/Main→github.com/ServiceWeaver/onlineboutique/checkoutservice/CheckoutService⟧\n⟦7d051df1:wEaVeReDgE:github.com/ServiceWeaver/weaver/Main→github.com/ServiceWeaver/onlineboutique/shippingservice/ShippingService⟧\n⟦4c49de02:wEaVeReDgE:github.com/ServiceWeaver/weaver/Main→github.com/ServiceWeaver/onlineboutique/adservice/AdService⟧\n⟦29a161ab:wEaVeRlIsTeNeRs:github.com/ServiceWeaver/weaver/Main→boutique⟧\n",
+		RoutedLocalStubFn: func(impl any, stub codegen.Stub, caller string, tracer trace.Tracer, isLocal func(shardKey uint64) bool) any {
+			return main_routed_local_stub{impl: impl.(weaver.Main), stub: stub, tracer: tracer, isLocal: isLocal}
+		},
+		RefData: "⟦ed5e8533:wEaVeReDgE:github.com/ServiceWeaver/weaver/Main→github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService⟧\n⟦b2c1d93f:wEaVeReDgE:github.com/ServiceWeaver/weaver/Main→github.com/eBerkley/Weaver-OB-Bench/currencyservice/CurrencyService⟧\n⟦d35fc4cb:wEaVeReDgE:github.com/ServiceWeaver/weaver/Main→github.com/eBerkley/Weaver-OB-Bench/cartservice/CartService⟧\n⟦d75c4e33:wEaVeReDgE:github.com/ServiceWeaver/weaver/Main→github.com/eBerkley/Weaver-OB-Bench/recommendationservice/RecService⟧\n⟦fae737ba:wEaVeReDgE:github.com/ServiceWeaver/weaver/Main→github.com/eBerkley/Weaver-OB-Bench/checkoutservice/CheckoutService⟧\n⟦1008b812:wEaVeReDgE:github.com/ServiceWeaver/weaver/Main→github.com/eBerkley/Weaver-OB-Bench/shippingservice/ShippingService⟧\n⟦6fb3b9f1:wEaVeReDgE:github.com/ServiceWeaver/weaver/Main→github.com/eBerkley/Weaver-OB-Bench/adservice/AdService⟧\n⟦29a161ab:wEaVeRlIsTeNeRs:github.com/ServiceWeaver/weaver/Main→boutique⟧\n",
 	})
 }
 
@@ -56,12 +59,24 @@ type main_client_stub struct {
 // Check that main_client_stub implements the weaver.Main interface.
 var _ weaver.Main = (*main_client_stub)(nil)
 
+// Routed local stub implementations.
+
+type main_routed_local_stub struct {
+	impl    weaver.Main
+	stub    codegen.Stub
+	tracer  trace.Tracer
+	isLocal func(shardKey uint64) bool
+}
+
+// Check that main_routed_local_stub implements the weaver.Main interface.
+var _ weaver.Main = (*main_routed_local_stub)(nil)
+
 // Note that "weaver generate" will always generate the error message below.
 // Everything is okay. The error message is only relevant if you see it when
 // you run "go build" or "go run".
 var _ codegen.LatestVersion = codegen.Version[[0][24]struct{}](`
 
-ERROR: You generated this file with 'weaver generate' v0.24.6 (codegen
+ERROR: You generated this file with 'weaver generate' (devel) (codegen
 version v0.24.0). The generated code is incompatible with the version of the
 github.com/ServiceWeaver/weaver module that you're using. The weaver module
 version can be found in your go.mod file or by running the following command.

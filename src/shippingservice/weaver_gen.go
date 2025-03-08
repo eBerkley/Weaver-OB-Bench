@@ -7,10 +7,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/ServiceWeaver/onlineboutique/cartservice"
-	"github.com/ServiceWeaver/onlineboutique/types/money"
 	"github.com/ServiceWeaver/weaver"
 	"github.com/ServiceWeaver/weaver/runtime/codegen"
+	"github.com/eBerkley/Weaver-OB-Bench/cartservice"
+	"github.com/eBerkley/Weaver-OB-Bench/types/money"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	"reflect"
@@ -18,20 +18,23 @@ import (
 
 func init() {
 	codegen.Register(codegen.Registration{
-		Name:  "github.com/ServiceWeaver/onlineboutique/shippingservice/ShippingService",
+		Name:  "github.com/eBerkley/Weaver-OB-Bench/shippingservice/ShippingService",
 		Iface: reflect.TypeOf((*ShippingService)(nil)).Elem(),
 		Impl:  reflect.TypeOf(impl{}),
 		LocalStubFn: func(impl any, caller string, tracer trace.Tracer) any {
-			return shippingService_local_stub{impl: impl.(ShippingService), tracer: tracer, getQuoteMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/ServiceWeaver/onlineboutique/shippingservice/ShippingService", Method: "GetQuote", Remote: false, Generated: true}), shipOrderMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/ServiceWeaver/onlineboutique/shippingservice/ShippingService", Method: "ShipOrder", Remote: false, Generated: true})}
+			return shippingService_local_stub{impl: impl.(ShippingService), tracer: tracer, getQuoteMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/shippingservice/ShippingService", Method: "GetQuote", Remote: false, Generated: true}), shipOrderMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/shippingservice/ShippingService", Method: "ShipOrder", Remote: false, Generated: true})}
 		},
 		ClientStubFn: func(stub codegen.Stub, caller string) any {
-			return shippingService_client_stub{stub: stub, getQuoteMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/ServiceWeaver/onlineboutique/shippingservice/ShippingService", Method: "GetQuote", Remote: true, Generated: true}), shipOrderMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/ServiceWeaver/onlineboutique/shippingservice/ShippingService", Method: "ShipOrder", Remote: true, Generated: true})}
+			return shippingService_client_stub{stub: stub, getQuoteMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/shippingservice/ShippingService", Method: "GetQuote", Remote: true, Generated: true}), shipOrderMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/shippingservice/ShippingService", Method: "ShipOrder", Remote: true, Generated: true})}
 		},
 		ServerStubFn: func(impl any, addLoad func(uint64, float64)) codegen.Server {
 			return shippingService_server_stub{impl: impl.(ShippingService), addLoad: addLoad}
 		},
 		ReflectStubFn: func(caller func(string, context.Context, []any, []any) error) any {
 			return shippingService_reflect_stub{caller: caller}
+		},
+		RoutedLocalStubFn: func(impl any, stub codegen.Stub, caller string, tracer trace.Tracer, isLocal func(shardKey uint64) bool) any {
+			return shippingService_routed_local_stub{impl: impl.(ShippingService), stub: stub, tracer: tracer, isLocal: isLocal, getQuoteMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/shippingservice/ShippingService", Method: "GetQuote", Remote: true, Generated: true}), shipOrderMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/shippingservice/ShippingService", Method: "ShipOrder", Remote: true, Generated: true})}
 		},
 		RefData: "",
 	})
@@ -138,7 +141,7 @@ func (s shippingService_client_stub) GetQuote(ctx context.Context, a0 Address, a
 	// Encode arguments.
 	enc := codegen.NewEncoder()
 	(a0).WeaverMarshal(enc)
-	serviceweaver_enc_slice_CartItem_7164ef85(enc, a1)
+	serviceweaver_enc_slice_CartItem_2f1b43d4(enc, a1)
 	var shardKey uint64
 
 	// Call the remote method.
@@ -190,7 +193,7 @@ func (s shippingService_client_stub) ShipOrder(ctx context.Context, a0 Address, 
 	// Encode arguments.
 	enc := codegen.NewEncoder()
 	(a0).WeaverMarshal(enc)
-	serviceweaver_enc_slice_CartItem_7164ef85(enc, a1)
+	serviceweaver_enc_slice_CartItem_2f1b43d4(enc, a1)
 	var shardKey uint64
 
 	// Call the remote method.
@@ -210,12 +213,38 @@ func (s shippingService_client_stub) ShipOrder(ctx context.Context, a0 Address, 
 	return
 }
 
+// Routed local stub implementations.
+
+type shippingService_routed_local_stub struct {
+	impl             ShippingService
+	stub             codegen.Stub
+	tracer           trace.Tracer
+	isLocal          func(shardKey uint64) bool
+	getQuoteMetrics  *codegen.MethodMetrics
+	shipOrderMetrics *codegen.MethodMetrics
+}
+
+// Check that shippingService_routed_local_stub implements the ShippingService interface.
+var _ ShippingService = (*shippingService_routed_local_stub)(nil)
+
+func (s shippingService_routed_local_stub) GetQuote(ctx context.Context, a0 Address, a1 []cartservice.CartItem) (r0 money.T, err error) {
+	err = errors.New("can not call routed local method on unrouted component")
+	err = errors.Join(weaver.RemoteCallError, err)
+	return
+}
+
+func (s shippingService_routed_local_stub) ShipOrder(ctx context.Context, a0 Address, a1 []cartservice.CartItem) (r0 string, err error) {
+	err = errors.New("can not call routed local method on unrouted component")
+	err = errors.Join(weaver.RemoteCallError, err)
+	return
+}
+
 // Note that "weaver generate" will always generate the error message below.
 // Everything is okay. The error message is only relevant if you see it when
 // you run "go build" or "go run".
 var _ codegen.LatestVersion = codegen.Version[[0][24]struct{}](`
 
-ERROR: You generated this file with 'weaver generate' v0.24.6 (codegen
+ERROR: You generated this file with 'weaver generate' (devel) (codegen
 version v0.24.0). The generated code is incompatible with the version of the
 github.com/ServiceWeaver/weaver module that you're using. The weaver module
 version can be found in your go.mod file or by running the following command.
@@ -268,7 +297,7 @@ func (s shippingService_server_stub) getQuote(ctx context.Context, args []byte) 
 	var a0 Address
 	(&a0).WeaverUnmarshal(dec)
 	var a1 []cartservice.CartItem
-	a1 = serviceweaver_dec_slice_CartItem_7164ef85(dec)
+	a1 = serviceweaver_dec_slice_CartItem_2f1b43d4(dec)
 
 	// TODO(rgrandl): The deferred function above will recover from panics in the
 	// user code: fix this.
@@ -295,7 +324,7 @@ func (s shippingService_server_stub) shipOrder(ctx context.Context, args []byte)
 	var a0 Address
 	(&a0).WeaverUnmarshal(dec)
 	var a1 []cartservice.CartItem
-	a1 = serviceweaver_dec_slice_CartItem_7164ef85(dec)
+	a1 = serviceweaver_dec_slice_CartItem_2f1b43d4(dec)
 
 	// TODO(rgrandl): The deferred function above will recover from panics in the
 	// user code: fix this.
@@ -367,7 +396,7 @@ func (x *Address) WeaverUnmarshal(dec *codegen.Decoder) {
 
 // Encoding/decoding implementations.
 
-func serviceweaver_enc_slice_CartItem_7164ef85(enc *codegen.Encoder, arg []cartservice.CartItem) {
+func serviceweaver_enc_slice_CartItem_2f1b43d4(enc *codegen.Encoder, arg []cartservice.CartItem) {
 	if arg == nil {
 		enc.Len(-1)
 		return
@@ -378,7 +407,7 @@ func serviceweaver_enc_slice_CartItem_7164ef85(enc *codegen.Encoder, arg []carts
 	}
 }
 
-func serviceweaver_dec_slice_CartItem_7164ef85(dec *codegen.Decoder) []cartservice.CartItem {
+func serviceweaver_dec_slice_CartItem_2f1b43d4(dec *codegen.Decoder) []cartservice.CartItem {
 	n := dec.Len()
 	if n == -1 {
 		return nil

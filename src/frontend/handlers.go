@@ -29,13 +29,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ServiceWeaver/onlineboutique/adservice"
-	"github.com/ServiceWeaver/onlineboutique/cartservice"
-	"github.com/ServiceWeaver/onlineboutique/checkoutservice"
-	"github.com/ServiceWeaver/onlineboutique/paymentservice"
-	"github.com/ServiceWeaver/onlineboutique/productcatalogservice"
-	"github.com/ServiceWeaver/onlineboutique/shippingservice"
-	"github.com/ServiceWeaver/onlineboutique/types/money"
+	"github.com/eBerkley/Weaver-OB-Bench/adservice"
+	"github.com/eBerkley/Weaver-OB-Bench/cartservice"
+	"github.com/eBerkley/Weaver-OB-Bench/checkoutservice"
+	"github.com/eBerkley/Weaver-OB-Bench/paymentservice"
+	"github.com/eBerkley/Weaver-OB-Bench/productcatalogservice"
+	"github.com/eBerkley/Weaver-OB-Bench/shippingservice"
+	"github.com/eBerkley/Weaver-OB-Bench/types/money"
 )
 
 const (

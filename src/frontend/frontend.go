@@ -24,14 +24,14 @@ import (
 	"os"
 	"slices"
 
-	"github.com/ServiceWeaver/onlineboutique/adservice"
-	"github.com/ServiceWeaver/onlineboutique/cartservice"
-	"github.com/ServiceWeaver/onlineboutique/checkoutservice"
-	"github.com/ServiceWeaver/onlineboutique/currencyservice"
-	"github.com/ServiceWeaver/onlineboutique/productcatalogservice"
-	"github.com/ServiceWeaver/onlineboutique/recommendationservice"
-	"github.com/ServiceWeaver/onlineboutique/shippingservice"
 	"github.com/ServiceWeaver/weaver"
+	"github.com/eBerkley/Weaver-OB-Bench/adservice"
+	"github.com/eBerkley/Weaver-OB-Bench/cartservice"
+	"github.com/eBerkley/Weaver-OB-Bench/checkoutservice"
+	"github.com/eBerkley/Weaver-OB-Bench/currencyservice"
+	"github.com/eBerkley/Weaver-OB-Bench/productcatalogservice"
+	"github.com/eBerkley/Weaver-OB-Bench/recommendationservice"
+	"github.com/eBerkley/Weaver-OB-Bench/shippingservice"
 	_ "go.uber.org/automaxprocs"
 )
 

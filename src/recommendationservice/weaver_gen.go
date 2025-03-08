@@ -15,14 +15,14 @@ import (
 
 func init() {
 	codegen.Register(codegen.Registration{
-		Name:  "github.com/ServiceWeaver/onlineboutique/recommendationservice/RecService",
+		Name:  "github.com/eBerkley/Weaver-OB-Bench/recommendationservice/RecService",
 		Iface: reflect.TypeOf((*RecService)(nil)).Elem(),
 		Impl:  reflect.TypeOf(impl{}),
 		LocalStubFn: func(impl any, caller string, tracer trace.Tracer) any {
-			return recService_local_stub{impl: impl.(RecService), tracer: tracer, listRecommendationsMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/ServiceWeaver/onlineboutique/recommendationservice/RecService", Method: "ListRecommendations", Remote: false, Generated: true})}
+			return recService_local_stub{impl: impl.(RecService), tracer: tracer, listRecommendationsMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/recommendationservice/RecService", Method: "ListRecommendations", Remote: false, Generated: true})}
 		},
 		ClientStubFn: func(stub codegen.Stub, caller string) any {
-			return recService_client_stub{stub: stub, listRecommendationsMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/ServiceWeaver/onlineboutique/recommendationservice/RecService", Method: "ListRecommendations", Remote: true, Generated: true})}
+			return recService_client_stub{stub: stub, listRecommendationsMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/recommendationservice/RecService", Method: "ListRecommendations", Remote: true, Generated: true})}
 		},
 		ServerStubFn: func(impl any, addLoad func(uint64, float64)) codegen.Server {
 			return recService_server_stub{impl: impl.(RecService), addLoad: addLoad}
@@ -30,7 +30,10 @@ func init() {
 		ReflectStubFn: func(caller func(string, context.Context, []any, []any) error) any {
 			return recService_reflect_stub{caller: caller}
 		},
-		RefData: "⟦b2bc5a05:wEaVeReDgE:github.com/ServiceWeaver/onlineboutique/recommendationservice/RecService→github.com/ServiceWeaver/onlineboutique/productcatalogservice/ProductCatalogService⟧\n",
+		RoutedLocalStubFn: func(impl any, stub codegen.Stub, caller string, tracer trace.Tracer, isLocal func(shardKey uint64) bool) any {
+			return recService_routed_local_stub{impl: impl.(RecService), stub: stub, tracer: tracer, isLocal: isLocal, listRecommendationsMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/recommendationservice/RecService", Method: "ListRecommendations", Remote: true, Generated: true})}
+		},
+		RefData: "⟦ed06b3e4:wEaVeReDgE:github.com/eBerkley/Weaver-OB-Bench/recommendationservice/RecService→github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService⟧\n",
 	})
 }
 
@@ -133,12 +136,31 @@ func (s recService_client_stub) ListRecommendations(ctx context.Context, a0 stri
 	return
 }
 
+// Routed local stub implementations.
+
+type recService_routed_local_stub struct {
+	impl                       RecService
+	stub                       codegen.Stub
+	tracer                     trace.Tracer
+	isLocal                    func(shardKey uint64) bool
+	listRecommendationsMetrics *codegen.MethodMetrics
+}
+
+// Check that recService_routed_local_stub implements the RecService interface.
+var _ RecService = (*recService_routed_local_stub)(nil)
+
+func (s recService_routed_local_stub) ListRecommendations(ctx context.Context, a0 string, a1 []string) (r0 []string, err error) {
+	err = errors.New("can not call routed local method on unrouted component")
+	err = errors.Join(weaver.RemoteCallError, err)
+	return
+}
+
 // Note that "weaver generate" will always generate the error message below.
 // Everything is okay. The error message is only relevant if you see it when
 // you run "go build" or "go run".
 var _ codegen.LatestVersion = codegen.Version[[0][24]struct{}](`
 
-ERROR: You generated this file with 'weaver generate' v0.24.6 (codegen
+ERROR: You generated this file with 'weaver generate' (devel) (codegen
 version v0.24.0). The generated code is incompatible with the version of the
 github.com/ServiceWeaver/weaver module that you're using. The weaver module
 version can be found in your go.mod file or by running the following command.

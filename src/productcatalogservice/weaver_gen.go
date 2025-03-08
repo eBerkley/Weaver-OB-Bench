@@ -7,9 +7,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/ServiceWeaver/onlineboutique/types/money"
 	"github.com/ServiceWeaver/weaver"
 	"github.com/ServiceWeaver/weaver/runtime/codegen"
+	"github.com/eBerkley/Weaver-OB-Bench/types/money"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	"reflect"
@@ -17,20 +17,23 @@ import (
 
 func init() {
 	codegen.Register(codegen.Registration{
-		Name:  "github.com/ServiceWeaver/onlineboutique/productcatalogservice/ProductCatalogService",
+		Name:  "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService",
 		Iface: reflect.TypeOf((*ProductCatalogService)(nil)).Elem(),
 		Impl:  reflect.TypeOf(impl{}),
 		LocalStubFn: func(impl any, caller string, tracer trace.Tracer) any {
-			return productCatalogService_local_stub{impl: impl.(ProductCatalogService), tracer: tracer, getProductMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/ServiceWeaver/onlineboutique/productcatalogservice/ProductCatalogService", Method: "GetProduct", Remote: false, Generated: true}), listProductsMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/ServiceWeaver/onlineboutique/productcatalogservice/ProductCatalogService", Method: "ListProducts", Remote: false, Generated: true}), searchProductsMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/ServiceWeaver/onlineboutique/productcatalogservice/ProductCatalogService", Method: "SearchProducts", Remote: false, Generated: true})}
+			return productCatalogService_local_stub{impl: impl.(ProductCatalogService), tracer: tracer, getProductMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService", Method: "GetProduct", Remote: false, Generated: true}), listProductsMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService", Method: "ListProducts", Remote: false, Generated: true}), searchProductsMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService", Method: "SearchProducts", Remote: false, Generated: true})}
 		},
 		ClientStubFn: func(stub codegen.Stub, caller string) any {
-			return productCatalogService_client_stub{stub: stub, getProductMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/ServiceWeaver/onlineboutique/productcatalogservice/ProductCatalogService", Method: "GetProduct", Remote: true, Generated: true}), listProductsMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/ServiceWeaver/onlineboutique/productcatalogservice/ProductCatalogService", Method: "ListProducts", Remote: true, Generated: true}), searchProductsMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/ServiceWeaver/onlineboutique/productcatalogservice/ProductCatalogService", Method: "SearchProducts", Remote: true, Generated: true})}
+			return productCatalogService_client_stub{stub: stub, getProductMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService", Method: "GetProduct", Remote: true, Generated: true}), listProductsMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService", Method: "ListProducts", Remote: true, Generated: true}), searchProductsMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService", Method: "SearchProducts", Remote: true, Generated: true})}
 		},
 		ServerStubFn: func(impl any, addLoad func(uint64, float64)) codegen.Server {
 			return productCatalogService_server_stub{impl: impl.(ProductCatalogService), addLoad: addLoad}
 		},
 		ReflectStubFn: func(caller func(string, context.Context, []any, []any) error) any {
 			return productCatalogService_reflect_stub{caller: caller}
+		},
+		RoutedLocalStubFn: func(impl any, stub codegen.Stub, caller string, tracer trace.Tracer, isLocal func(shardKey uint64) bool) any {
+			return productCatalogService_routed_local_stub{impl: impl.(ProductCatalogService), stub: stub, tracer: tracer, isLocal: isLocal, getProductMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService", Method: "GetProduct", Remote: true, Generated: true}), listProductsMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService", Method: "ListProducts", Remote: true, Generated: true}), searchProductsMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService", Method: "SearchProducts", Remote: true, Generated: true})}
 		},
 		RefData: "",
 	})
@@ -225,7 +228,7 @@ func (s productCatalogService_client_stub) ListProducts(ctx context.Context) (r0
 
 	// Decode the results.
 	dec := codegen.NewDecoder(results)
-	r0 = serviceweaver_dec_slice_Product_2bf2ec03(dec)
+	r0 = serviceweaver_dec_slice_Product_447363d0(dec)
 	err = dec.Error()
 	return
 }
@@ -281,8 +284,41 @@ func (s productCatalogService_client_stub) SearchProducts(ctx context.Context, a
 
 	// Decode the results.
 	dec := codegen.NewDecoder(results)
-	r0 = serviceweaver_dec_slice_Product_2bf2ec03(dec)
+	r0 = serviceweaver_dec_slice_Product_447363d0(dec)
 	err = dec.Error()
+	return
+}
+
+// Routed local stub implementations.
+
+type productCatalogService_routed_local_stub struct {
+	impl                  ProductCatalogService
+	stub                  codegen.Stub
+	tracer                trace.Tracer
+	isLocal               func(shardKey uint64) bool
+	getProductMetrics     *codegen.MethodMetrics
+	listProductsMetrics   *codegen.MethodMetrics
+	searchProductsMetrics *codegen.MethodMetrics
+}
+
+// Check that productCatalogService_routed_local_stub implements the ProductCatalogService interface.
+var _ ProductCatalogService = (*productCatalogService_routed_local_stub)(nil)
+
+func (s productCatalogService_routed_local_stub) GetProduct(ctx context.Context, a0 string) (r0 Product, err error) {
+	err = errors.New("can not call routed local method on unrouted component")
+	err = errors.Join(weaver.RemoteCallError, err)
+	return
+}
+
+func (s productCatalogService_routed_local_stub) ListProducts(ctx context.Context) (r0 []Product, err error) {
+	err = errors.New("can not call routed local method on unrouted component")
+	err = errors.Join(weaver.RemoteCallError, err)
+	return
+}
+
+func (s productCatalogService_routed_local_stub) SearchProducts(ctx context.Context, a0 string) (r0 []Product, err error) {
+	err = errors.New("can not call routed local method on unrouted component")
+	err = errors.Join(weaver.RemoteCallError, err)
 	return
 }
 
@@ -291,7 +327,7 @@ func (s productCatalogService_client_stub) SearchProducts(ctx context.Context, a
 // you run "go build" or "go run".
 var _ codegen.LatestVersion = codegen.Version[[0][24]struct{}](`
 
-ERROR: You generated this file with 'weaver generate' v0.24.6 (codegen
+ERROR: You generated this file with 'weaver generate' (devel) (codegen
 version v0.24.0). The generated code is incompatible with the version of the
 github.com/ServiceWeaver/weaver module that you're using. The weaver module
 version can be found in your go.mod file or by running the following command.
@@ -373,7 +409,7 @@ func (s productCatalogService_server_stub) listProducts(ctx context.Context, arg
 
 	// Encode the results.
 	enc := codegen.NewEncoder()
-	serviceweaver_enc_slice_Product_2bf2ec03(enc, r0)
+	serviceweaver_enc_slice_Product_447363d0(enc, r0)
 	enc.Error(appErr)
 	return enc.Data(), nil
 }
@@ -398,7 +434,7 @@ func (s productCatalogService_server_stub) searchProducts(ctx context.Context, a
 
 	// Encode the results.
 	enc := codegen.NewEncoder()
-	serviceweaver_enc_slice_Product_2bf2ec03(enc, r0)
+	serviceweaver_enc_slice_Product_447363d0(enc, r0)
 	enc.Error(appErr)
 	return enc.Data(), nil
 }
@@ -492,7 +528,7 @@ func serviceweaver_dec_slice_string_4af10117(dec *codegen.Decoder) []string {
 
 // Encoding/decoding implementations.
 
-func serviceweaver_enc_slice_Product_2bf2ec03(enc *codegen.Encoder, arg []Product) {
+func serviceweaver_enc_slice_Product_447363d0(enc *codegen.Encoder, arg []Product) {
 	if arg == nil {
 		enc.Len(-1)
 		return
@@ -503,7 +539,7 @@ func serviceweaver_enc_slice_Product_2bf2ec03(enc *codegen.Encoder, arg []Produc
 	}
 }
 
-func serviceweaver_dec_slice_Product_2bf2ec03(dec *codegen.Decoder) []Product {
+func serviceweaver_dec_slice_Product_447363d0(dec *codegen.Decoder) []Product {
 	n := dec.Len()
 	if n == -1 {
 		return nil
