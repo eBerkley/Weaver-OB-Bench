@@ -3,7 +3,7 @@ module github.com/eBerkley/Weaver-OB-Bench
 go 1.21
 
 require (
-	github.com/eberkley/weaver v0.25.0
+	github.com/eberkley/weaver v0.25.1
 	github.com/google/uuid v1.3.1
 	github.com/hashicorp/golang-lru/v2 v2.0.1
 	github.com/iancoleman/orderedmap v0.3.0
