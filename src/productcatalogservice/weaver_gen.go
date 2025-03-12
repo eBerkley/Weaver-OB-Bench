@@ -7,9 +7,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/eBerkley/Weaver-OB-Bench/types/money"
 	"github.com/eberkley/weaver"
 	"github.com/eberkley/weaver/runtime/codegen"
-	"github.com/eBerkley/Weaver-OB-Bench/types/money"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	"reflect"
@@ -17,14 +17,15 @@ import (
 
 func init() {
 	codegen.Register(codegen.Registration{
-		Name:  "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService",
-		Iface: reflect.TypeOf((*ProductCatalogService)(nil)).Elem(),
-		Impl:  reflect.TypeOf(impl{}),
+		Name:   "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService",
+		Iface:  reflect.TypeOf((*ProductCatalogService)(nil)).Elem(),
+		Impl:   reflect.TypeOf(impl{}),
+		Routed: true,
 		LocalStubFn: func(impl any, caller string, tracer trace.Tracer) any {
-			return productCatalogService_local_stub{impl: impl.(ProductCatalogService), tracer: tracer, getProductMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService", Method: "GetProduct", Remote: false, Generated: true}), listProductsMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService", Method: "ListProducts", Remote: false, Generated: true}), searchProductsMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService", Method: "SearchProducts", Remote: false, Generated: true})}
+			return productCatalogService_local_stub{impl: impl.(ProductCatalogService), tracer: tracer, getIndexMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService", Method: "GetIndex", Remote: false, Generated: true}), getProductMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService", Method: "GetProduct", Remote: false, Generated: true}), getProductsMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService", Method: "GetProducts", Remote: false, Generated: true}), listProductsMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService", Method: "ListProducts", Remote: false, Generated: true}), searchProductsMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService", Method: "SearchProducts", Remote: false, Generated: true})}
 		},
 		ClientStubFn: func(stub codegen.Stub, caller string) any {
-			return productCatalogService_client_stub{stub: stub, getProductMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService", Method: "GetProduct", Remote: true, Generated: true}), listProductsMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService", Method: "ListProducts", Remote: true, Generated: true}), searchProductsMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService", Method: "SearchProducts", Remote: true, Generated: true})}
+			return productCatalogService_client_stub{stub: stub, getIndexMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService", Method: "GetIndex", Remote: true, Generated: true}), getProductMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService", Method: "GetProduct", Remote: true, Generated: true}), getProductsMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService", Method: "GetProducts", Remote: true, Generated: true}), listProductsMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService", Method: "ListProducts", Remote: true, Generated: true}), searchProductsMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService", Method: "SearchProducts", Remote: true, Generated: true})}
 		},
 		ServerStubFn: func(impl any, addLoad func(uint64, float64)) codegen.Server {
 			return productCatalogService_server_stub{impl: impl.(ProductCatalogService), addLoad: addLoad}
@@ -33,7 +34,7 @@ func init() {
 			return productCatalogService_reflect_stub{caller: caller}
 		},
 		RoutedLocalStubFn: func(impl any, stub codegen.Stub, caller string, tracer trace.Tracer, isLocal func(shardKey uint64) bool) any {
-			return productCatalogService_routed_local_stub{impl: impl.(ProductCatalogService), stub: stub, tracer: tracer, isLocal: isLocal, getProductMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService", Method: "GetProduct", Remote: true, Generated: true}), listProductsMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService", Method: "ListProducts", Remote: true, Generated: true}), searchProductsMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService", Method: "SearchProducts", Remote: true, Generated: true})}
+			return productCatalogService_routed_local_stub{impl: impl.(ProductCatalogService), stub: stub, tracer: tracer, isLocal: isLocal, getIndexMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService", Method: "GetIndex", Remote: true, Generated: true}), getProductMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService", Method: "GetProduct", Remote: true, Generated: true}), getProductsMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService", Method: "GetProducts", Remote: true, Generated: true}), listProductsMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService", Method: "ListProducts", Remote: true, Generated: true}), searchProductsMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService", Method: "SearchProducts", Remote: true, Generated: true})}
 		},
 		RefData: "",
 	})
@@ -43,14 +44,23 @@ func init() {
 var _ weaver.InstanceOf[ProductCatalogService] = (*impl)(nil)
 
 // weaver.Router checks.
-var _ weaver.Unrouted = (*impl)(nil)
+var _ weaver.RoutedBy[ProductCatalogRouter] = (*impl)(nil)
+
+// Component "impl", router "ProductCatalogRouter" checks.
+var _ func(_ context.Context, shard int) int = (&ProductCatalogRouter{}).ListProducts             // routed
+var _ func(_ context.Context, _ string, shard int) int = (&ProductCatalogRouter{}).GetProduct     // routed
+var _ func(_ context.Context, _ []string, shard int) int = (&ProductCatalogRouter{}).GetProducts  // routed
+var _ func(_ context.Context, _ string, shard int) int = (&ProductCatalogRouter{}).SearchProducts // routed
+var _ func(_ context.Context, shard int) int = (&ProductCatalogRouter{}).GetIndex                 // routed
 
 // Local stub implementations.
 
 type productCatalogService_local_stub struct {
 	impl                  ProductCatalogService
 	tracer                trace.Tracer
+	getIndexMetrics       *codegen.MethodMetrics
 	getProductMetrics     *codegen.MethodMetrics
+	getProductsMetrics    *codegen.MethodMetrics
 	listProductsMetrics   *codegen.MethodMetrics
 	searchProductsMetrics *codegen.MethodMetrics
 }
@@ -58,7 +68,27 @@ type productCatalogService_local_stub struct {
 // Check that productCatalogService_local_stub implements the ProductCatalogService interface.
 var _ ProductCatalogService = (*productCatalogService_local_stub)(nil)
 
-func (s productCatalogService_local_stub) GetProduct(ctx context.Context, a0 string) (r0 Product, err error) {
+func (s productCatalogService_local_stub) GetIndex(ctx context.Context, a0 int) (r0 int, err error) {
+	// Update metrics.
+	begin := s.getIndexMetrics.Begin()
+	defer func() { s.getIndexMetrics.End(begin, err != nil, 0, 0) }()
+	span := trace.SpanFromContext(ctx)
+	if span.SpanContext().IsValid() {
+		// Create a child span for this method.
+		ctx, span = s.tracer.Start(ctx, "productcatalogservice.ProductCatalogService.GetIndex", trace.WithSpanKind(trace.SpanKindInternal))
+		defer func() {
+			if err != nil {
+				span.RecordError(err)
+				span.SetStatus(codes.Error, err.Error())
+			}
+			span.End()
+		}()
+	}
+
+	return s.impl.GetIndex(ctx, a0)
+}
+
+func (s productCatalogService_local_stub) GetProduct(ctx context.Context, a0 string, a1 int) (r0 Product, err error) {
 	// Update metrics.
 	begin := s.getProductMetrics.Begin()
 	defer func() { s.getProductMetrics.End(begin, err != nil, 0, 0) }()
@@ -75,10 +105,30 @@ func (s productCatalogService_local_stub) GetProduct(ctx context.Context, a0 str
 		}()
 	}
 
-	return s.impl.GetProduct(ctx, a0)
+	return s.impl.GetProduct(ctx, a0, a1)
 }
 
-func (s productCatalogService_local_stub) ListProducts(ctx context.Context) (r0 []Product, err error) {
+func (s productCatalogService_local_stub) GetProducts(ctx context.Context, a0 []string, a1 int) (r0 []Product, err error) {
+	// Update metrics.
+	begin := s.getProductsMetrics.Begin()
+	defer func() { s.getProductsMetrics.End(begin, err != nil, 0, 0) }()
+	span := trace.SpanFromContext(ctx)
+	if span.SpanContext().IsValid() {
+		// Create a child span for this method.
+		ctx, span = s.tracer.Start(ctx, "productcatalogservice.ProductCatalogService.GetProducts", trace.WithSpanKind(trace.SpanKindInternal))
+		defer func() {
+			if err != nil {
+				span.RecordError(err)
+				span.SetStatus(codes.Error, err.Error())
+			}
+			span.End()
+		}()
+	}
+
+	return s.impl.GetProducts(ctx, a0, a1)
+}
+
+func (s productCatalogService_local_stub) ListProducts(ctx context.Context, a0 int) (r0 []Product, err error) {
 	// Update metrics.
 	begin := s.listProductsMetrics.Begin()
 	defer func() { s.listProductsMetrics.End(begin, err != nil, 0, 0) }()
@@ -95,10 +145,10 @@ func (s productCatalogService_local_stub) ListProducts(ctx context.Context) (r0 
 		}()
 	}
 
-	return s.impl.ListProducts(ctx)
+	return s.impl.ListProducts(ctx, a0)
 }
 
-func (s productCatalogService_local_stub) SearchProducts(ctx context.Context, a0 string) (r0 []Product, err error) {
+func (s productCatalogService_local_stub) SearchProducts(ctx context.Context, a0 string, a1 int) (r0 []Product, err error) {
 	// Update metrics.
 	begin := s.searchProductsMetrics.Begin()
 	defer func() { s.searchProductsMetrics.End(begin, err != nil, 0, 0) }()
@@ -115,14 +165,16 @@ func (s productCatalogService_local_stub) SearchProducts(ctx context.Context, a0
 		}()
 	}
 
-	return s.impl.SearchProducts(ctx, a0)
+	return s.impl.SearchProducts(ctx, a0, a1)
 }
 
 // Client stub implementations.
 
 type productCatalogService_client_stub struct {
 	stub                  codegen.Stub
+	getIndexMetrics       *codegen.MethodMetrics
 	getProductMetrics     *codegen.MethodMetrics
+	getProductsMetrics    *codegen.MethodMetrics
 	listProductsMetrics   *codegen.MethodMetrics
 	searchProductsMetrics *codegen.MethodMetrics
 }
@@ -130,7 +182,66 @@ type productCatalogService_client_stub struct {
 // Check that productCatalogService_client_stub implements the ProductCatalogService interface.
 var _ ProductCatalogService = (*productCatalogService_client_stub)(nil)
 
-func (s productCatalogService_client_stub) GetProduct(ctx context.Context, a0 string) (r0 Product, err error) {
+func (s productCatalogService_client_stub) GetIndex(ctx context.Context, a0 int) (r0 int, err error) {
+	// Update metrics.
+	var requestBytes, replyBytes int
+	begin := s.getIndexMetrics.Begin()
+	defer func() { s.getIndexMetrics.End(begin, err != nil, requestBytes, replyBytes) }()
+
+	span := trace.SpanFromContext(ctx)
+	if span.SpanContext().IsValid() {
+		// Create a child span for this method.
+		ctx, span = s.stub.Tracer().Start(ctx, "productcatalogservice.ProductCatalogService.GetIndex", trace.WithSpanKind(trace.SpanKindClient))
+	}
+
+	defer func() {
+		// Catch and return any panics detected during encoding/decoding/rpc.
+		if err == nil {
+			err = codegen.CatchPanics(recover())
+			if err != nil {
+				err = errors.Join(weaver.RemoteCallError, err)
+			}
+		}
+
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+		}
+		span.End()
+
+	}()
+
+	// Preallocate a buffer of the right size.
+	size := 0
+	size += 8
+	enc := codegen.NewEncoder()
+	enc.Reset(size)
+
+	// Encode arguments.
+	enc.Int(a0)
+
+	// Set the shardKey.
+	var r ProductCatalogRouter
+	shardKey := _hashProductCatalogService(r.GetIndex(ctx, a0))
+
+	// Call the remote method.
+	requestBytes = len(enc.Data())
+	var results []byte
+	results, err = s.stub.Run(ctx, 0, enc.Data(), shardKey)
+	replyBytes = len(results)
+	if err != nil {
+		err = errors.Join(weaver.RemoteCallError, err)
+		return
+	}
+
+	// Decode the results.
+	dec := codegen.NewDecoder(results)
+	r0 = dec.Int()
+	err = dec.Error()
+	return
+}
+
+func (s productCatalogService_client_stub) GetProduct(ctx context.Context, a0 string, a1 int) (r0 Product, err error) {
 	// Update metrics.
 	var requestBytes, replyBytes int
 	begin := s.getProductMetrics.Begin()
@@ -162,17 +273,22 @@ func (s productCatalogService_client_stub) GetProduct(ctx context.Context, a0 st
 	// Preallocate a buffer of the right size.
 	size := 0
 	size += (4 + len(a0))
+	size += 8
 	enc := codegen.NewEncoder()
 	enc.Reset(size)
 
 	// Encode arguments.
 	enc.String(a0)
-	var shardKey uint64
+	enc.Int(a1)
+
+	// Set the shardKey.
+	var r ProductCatalogRouter
+	shardKey := _hashProductCatalogService(r.GetProduct(ctx, a0, a1))
 
 	// Call the remote method.
 	requestBytes = len(enc.Data())
 	var results []byte
-	results, err = s.stub.Run(ctx, 0, enc.Data(), shardKey)
+	results, err = s.stub.Run(ctx, 1, enc.Data(), shardKey)
 	replyBytes = len(results)
 	if err != nil {
 		err = errors.Join(weaver.RemoteCallError, err)
@@ -186,7 +302,62 @@ func (s productCatalogService_client_stub) GetProduct(ctx context.Context, a0 st
 	return
 }
 
-func (s productCatalogService_client_stub) ListProducts(ctx context.Context) (r0 []Product, err error) {
+func (s productCatalogService_client_stub) GetProducts(ctx context.Context, a0 []string, a1 int) (r0 []Product, err error) {
+	// Update metrics.
+	var requestBytes, replyBytes int
+	begin := s.getProductsMetrics.Begin()
+	defer func() { s.getProductsMetrics.End(begin, err != nil, requestBytes, replyBytes) }()
+
+	span := trace.SpanFromContext(ctx)
+	if span.SpanContext().IsValid() {
+		// Create a child span for this method.
+		ctx, span = s.stub.Tracer().Start(ctx, "productcatalogservice.ProductCatalogService.GetProducts", trace.WithSpanKind(trace.SpanKindClient))
+	}
+
+	defer func() {
+		// Catch and return any panics detected during encoding/decoding/rpc.
+		if err == nil {
+			err = codegen.CatchPanics(recover())
+			if err != nil {
+				err = errors.Join(weaver.RemoteCallError, err)
+			}
+		}
+
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+		}
+		span.End()
+
+	}()
+
+	// Encode arguments.
+	enc := codegen.NewEncoder()
+	serviceweaver_enc_slice_string_4af10117(enc, a0)
+	enc.Int(a1)
+
+	// Set the shardKey.
+	var r ProductCatalogRouter
+	shardKey := _hashProductCatalogService(r.GetProducts(ctx, a0, a1))
+
+	// Call the remote method.
+	requestBytes = len(enc.Data())
+	var results []byte
+	results, err = s.stub.Run(ctx, 2, enc.Data(), shardKey)
+	replyBytes = len(results)
+	if err != nil {
+		err = errors.Join(weaver.RemoteCallError, err)
+		return
+	}
+
+	// Decode the results.
+	dec := codegen.NewDecoder(results)
+	r0 = serviceweaver_dec_slice_Product_447363d0(dec)
+	err = dec.Error()
+	return
+}
+
+func (s productCatalogService_client_stub) ListProducts(ctx context.Context, a0 int) (r0 []Product, err error) {
 	// Update metrics.
 	var requestBytes, replyBytes int
 	begin := s.listProductsMetrics.Begin()
@@ -215,11 +386,23 @@ func (s productCatalogService_client_stub) ListProducts(ctx context.Context) (r0
 
 	}()
 
-	var shardKey uint64
+	// Preallocate a buffer of the right size.
+	size := 0
+	size += 8
+	enc := codegen.NewEncoder()
+	enc.Reset(size)
+
+	// Encode arguments.
+	enc.Int(a0)
+
+	// Set the shardKey.
+	var r ProductCatalogRouter
+	shardKey := _hashProductCatalogService(r.ListProducts(ctx, a0))
 
 	// Call the remote method.
+	requestBytes = len(enc.Data())
 	var results []byte
-	results, err = s.stub.Run(ctx, 1, nil, shardKey)
+	results, err = s.stub.Run(ctx, 3, enc.Data(), shardKey)
 	replyBytes = len(results)
 	if err != nil {
 		err = errors.Join(weaver.RemoteCallError, err)
@@ -233,7 +416,7 @@ func (s productCatalogService_client_stub) ListProducts(ctx context.Context) (r0
 	return
 }
 
-func (s productCatalogService_client_stub) SearchProducts(ctx context.Context, a0 string) (r0 []Product, err error) {
+func (s productCatalogService_client_stub) SearchProducts(ctx context.Context, a0 string, a1 int) (r0 []Product, err error) {
 	// Update metrics.
 	var requestBytes, replyBytes int
 	begin := s.searchProductsMetrics.Begin()
@@ -265,17 +448,22 @@ func (s productCatalogService_client_stub) SearchProducts(ctx context.Context, a
 	// Preallocate a buffer of the right size.
 	size := 0
 	size += (4 + len(a0))
+	size += 8
 	enc := codegen.NewEncoder()
 	enc.Reset(size)
 
 	// Encode arguments.
 	enc.String(a0)
-	var shardKey uint64
+	enc.Int(a1)
+
+	// Set the shardKey.
+	var r ProductCatalogRouter
+	shardKey := _hashProductCatalogService(r.SearchProducts(ctx, a0, a1))
 
 	// Call the remote method.
 	requestBytes = len(enc.Data())
 	var results []byte
-	results, err = s.stub.Run(ctx, 2, enc.Data(), shardKey)
+	results, err = s.stub.Run(ctx, 4, enc.Data(), shardKey)
 	replyBytes = len(results)
 	if err != nil {
 		err = errors.Join(weaver.RemoteCallError, err)
@@ -296,7 +484,9 @@ type productCatalogService_routed_local_stub struct {
 	stub                  codegen.Stub
 	tracer                trace.Tracer
 	isLocal               func(shardKey uint64) bool
+	getIndexMetrics       *codegen.MethodMetrics
 	getProductMetrics     *codegen.MethodMetrics
+	getProductsMetrics    *codegen.MethodMetrics
 	listProductsMetrics   *codegen.MethodMetrics
 	searchProductsMetrics *codegen.MethodMetrics
 }
@@ -304,21 +494,353 @@ type productCatalogService_routed_local_stub struct {
 // Check that productCatalogService_routed_local_stub implements the ProductCatalogService interface.
 var _ ProductCatalogService = (*productCatalogService_routed_local_stub)(nil)
 
-func (s productCatalogService_routed_local_stub) GetProduct(ctx context.Context, a0 string) (r0 Product, err error) {
-	err = errors.New("can not call routed local method on unrouted component")
-	err = errors.Join(weaver.RemoteCallError, err)
+func (s productCatalogService_routed_local_stub) GetIndex(ctx context.Context, a0 int) (r0 int, err error) {
+	// Update metrics.
+	var requestBytes, replyBytes int
+	begin := s.getIndexMetrics.Begin()
+	defer func() { s.getIndexMetrics.End(begin, err != nil, requestBytes, replyBytes) }()
+
+	span := trace.SpanFromContext(ctx)
+	if span.SpanContext().IsValid() {
+		// Create a child span for this method.
+		ctx, span = s.stub.Tracer().Start(ctx, "productcatalogservice.ProductCatalogService.GetIndex", trace.WithSpanKind(trace.SpanKindClient))
+		defer func() {
+			if err != nil {
+				span.RecordError(err)
+				span.SetStatus(codes.Error, err.Error())
+			}
+			span.End()
+		}()
+	}
+
+	// Set the shardKey.
+	var r ProductCatalogRouter
+	shardKey := _hashProductCatalogService(r.GetIndex(ctx, a0))
+	if s.isLocal(shardKey) {
+		r0, err = s.impl.GetIndex(ctx, a0)
+		return
+	}
+
+	defer func() {
+		// Catch and return any panics detected during encoding/decoding/rpc.
+		if err == nil {
+			err = codegen.CatchPanics(recover())
+			if err != nil {
+				err = errors.Join(weaver.RemoteCallError, err)
+			}
+		}
+
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+		}
+		span.End()
+
+	}()
+
+	// Preallocate a buffer of the right size.
+	size := 0
+	size += 8
+	enc := codegen.NewEncoder()
+	enc.Reset(size)
+
+	// Encode arguments.
+	enc.Int(a0)
+
+	// Call the remote method.
+	requestBytes = len(enc.Data())
+	var results []byte
+	results, err = s.stub.Run(ctx, 0, enc.Data(), shardKey)
+	replyBytes = len(results)
+	if err != nil {
+		err = errors.Join(weaver.RemoteCallError, err)
+		return
+	}
+
+	// Decode the results.
+	dec := codegen.NewDecoder(results)
+	r0 = dec.Int()
+	err = dec.Error()
 	return
 }
 
-func (s productCatalogService_routed_local_stub) ListProducts(ctx context.Context) (r0 []Product, err error) {
-	err = errors.New("can not call routed local method on unrouted component")
-	err = errors.Join(weaver.RemoteCallError, err)
+func (s productCatalogService_routed_local_stub) GetProduct(ctx context.Context, a0 string, a1 int) (r0 Product, err error) {
+	// Update metrics.
+	var requestBytes, replyBytes int
+	begin := s.getProductMetrics.Begin()
+	defer func() { s.getProductMetrics.End(begin, err != nil, requestBytes, replyBytes) }()
+
+	span := trace.SpanFromContext(ctx)
+	if span.SpanContext().IsValid() {
+		// Create a child span for this method.
+		ctx, span = s.stub.Tracer().Start(ctx, "productcatalogservice.ProductCatalogService.GetProduct", trace.WithSpanKind(trace.SpanKindClient))
+		defer func() {
+			if err != nil {
+				span.RecordError(err)
+				span.SetStatus(codes.Error, err.Error())
+			}
+			span.End()
+		}()
+	}
+
+	// Set the shardKey.
+	var r ProductCatalogRouter
+	shardKey := _hashProductCatalogService(r.GetProduct(ctx, a0, a1))
+	if s.isLocal(shardKey) {
+		r0, err = s.impl.GetProduct(ctx, a0, a1)
+		return
+	}
+
+	defer func() {
+		// Catch and return any panics detected during encoding/decoding/rpc.
+		if err == nil {
+			err = codegen.CatchPanics(recover())
+			if err != nil {
+				err = errors.Join(weaver.RemoteCallError, err)
+			}
+		}
+
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+		}
+		span.End()
+
+	}()
+
+	// Preallocate a buffer of the right size.
+	size := 0
+	size += (4 + len(a0))
+	size += 8
+	enc := codegen.NewEncoder()
+	enc.Reset(size)
+
+	// Encode arguments.
+	enc.String(a0)
+	enc.Int(a1)
+
+	// Call the remote method.
+	requestBytes = len(enc.Data())
+	var results []byte
+	results, err = s.stub.Run(ctx, 1, enc.Data(), shardKey)
+	replyBytes = len(results)
+	if err != nil {
+		err = errors.Join(weaver.RemoteCallError, err)
+		return
+	}
+
+	// Decode the results.
+	dec := codegen.NewDecoder(results)
+	(&r0).WeaverUnmarshal(dec)
+	err = dec.Error()
 	return
 }
 
-func (s productCatalogService_routed_local_stub) SearchProducts(ctx context.Context, a0 string) (r0 []Product, err error) {
-	err = errors.New("can not call routed local method on unrouted component")
-	err = errors.Join(weaver.RemoteCallError, err)
+func (s productCatalogService_routed_local_stub) GetProducts(ctx context.Context, a0 []string, a1 int) (r0 []Product, err error) {
+	// Update metrics.
+	var requestBytes, replyBytes int
+	begin := s.getProductsMetrics.Begin()
+	defer func() { s.getProductsMetrics.End(begin, err != nil, requestBytes, replyBytes) }()
+
+	span := trace.SpanFromContext(ctx)
+	if span.SpanContext().IsValid() {
+		// Create a child span for this method.
+		ctx, span = s.stub.Tracer().Start(ctx, "productcatalogservice.ProductCatalogService.GetProducts", trace.WithSpanKind(trace.SpanKindClient))
+		defer func() {
+			if err != nil {
+				span.RecordError(err)
+				span.SetStatus(codes.Error, err.Error())
+			}
+			span.End()
+		}()
+	}
+
+	// Set the shardKey.
+	var r ProductCatalogRouter
+	shardKey := _hashProductCatalogService(r.GetProducts(ctx, a0, a1))
+	if s.isLocal(shardKey) {
+		r0, err = s.impl.GetProducts(ctx, a0, a1)
+		return
+	}
+
+	defer func() {
+		// Catch and return any panics detected during encoding/decoding/rpc.
+		if err == nil {
+			err = codegen.CatchPanics(recover())
+			if err != nil {
+				err = errors.Join(weaver.RemoteCallError, err)
+			}
+		}
+
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+		}
+		span.End()
+
+	}()
+
+	// Encode arguments.
+	enc := codegen.NewEncoder()
+	serviceweaver_enc_slice_string_4af10117(enc, a0)
+	enc.Int(a1)
+
+	// Call the remote method.
+	requestBytes = len(enc.Data())
+	var results []byte
+	results, err = s.stub.Run(ctx, 2, enc.Data(), shardKey)
+	replyBytes = len(results)
+	if err != nil {
+		err = errors.Join(weaver.RemoteCallError, err)
+		return
+	}
+
+	// Decode the results.
+	dec := codegen.NewDecoder(results)
+	r0 = serviceweaver_dec_slice_Product_447363d0(dec)
+	err = dec.Error()
+	return
+}
+
+func (s productCatalogService_routed_local_stub) ListProducts(ctx context.Context, a0 int) (r0 []Product, err error) {
+	// Update metrics.
+	var requestBytes, replyBytes int
+	begin := s.listProductsMetrics.Begin()
+	defer func() { s.listProductsMetrics.End(begin, err != nil, requestBytes, replyBytes) }()
+
+	span := trace.SpanFromContext(ctx)
+	if span.SpanContext().IsValid() {
+		// Create a child span for this method.
+		ctx, span = s.stub.Tracer().Start(ctx, "productcatalogservice.ProductCatalogService.ListProducts", trace.WithSpanKind(trace.SpanKindClient))
+		defer func() {
+			if err != nil {
+				span.RecordError(err)
+				span.SetStatus(codes.Error, err.Error())
+			}
+			span.End()
+		}()
+	}
+
+	// Set the shardKey.
+	var r ProductCatalogRouter
+	shardKey := _hashProductCatalogService(r.ListProducts(ctx, a0))
+	if s.isLocal(shardKey) {
+		r0, err = s.impl.ListProducts(ctx, a0)
+		return
+	}
+
+	defer func() {
+		// Catch and return any panics detected during encoding/decoding/rpc.
+		if err == nil {
+			err = codegen.CatchPanics(recover())
+			if err != nil {
+				err = errors.Join(weaver.RemoteCallError, err)
+			}
+		}
+
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+		}
+		span.End()
+
+	}()
+
+	// Preallocate a buffer of the right size.
+	size := 0
+	size += 8
+	enc := codegen.NewEncoder()
+	enc.Reset(size)
+
+	// Encode arguments.
+	enc.Int(a0)
+
+	// Call the remote method.
+	requestBytes = len(enc.Data())
+	var results []byte
+	results, err = s.stub.Run(ctx, 3, enc.Data(), shardKey)
+	replyBytes = len(results)
+	if err != nil {
+		err = errors.Join(weaver.RemoteCallError, err)
+		return
+	}
+
+	// Decode the results.
+	dec := codegen.NewDecoder(results)
+	r0 = serviceweaver_dec_slice_Product_447363d0(dec)
+	err = dec.Error()
+	return
+}
+
+func (s productCatalogService_routed_local_stub) SearchProducts(ctx context.Context, a0 string, a1 int) (r0 []Product, err error) {
+	// Update metrics.
+	var requestBytes, replyBytes int
+	begin := s.searchProductsMetrics.Begin()
+	defer func() { s.searchProductsMetrics.End(begin, err != nil, requestBytes, replyBytes) }()
+
+	span := trace.SpanFromContext(ctx)
+	if span.SpanContext().IsValid() {
+		// Create a child span for this method.
+		ctx, span = s.stub.Tracer().Start(ctx, "productcatalogservice.ProductCatalogService.SearchProducts", trace.WithSpanKind(trace.SpanKindClient))
+		defer func() {
+			if err != nil {
+				span.RecordError(err)
+				span.SetStatus(codes.Error, err.Error())
+			}
+			span.End()
+		}()
+	}
+
+	// Set the shardKey.
+	var r ProductCatalogRouter
+	shardKey := _hashProductCatalogService(r.SearchProducts(ctx, a0, a1))
+	if s.isLocal(shardKey) {
+		r0, err = s.impl.SearchProducts(ctx, a0, a1)
+		return
+	}
+
+	defer func() {
+		// Catch and return any panics detected during encoding/decoding/rpc.
+		if err == nil {
+			err = codegen.CatchPanics(recover())
+			if err != nil {
+				err = errors.Join(weaver.RemoteCallError, err)
+			}
+		}
+
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+		}
+		span.End()
+
+	}()
+
+	// Preallocate a buffer of the right size.
+	size := 0
+	size += (4 + len(a0))
+	size += 8
+	enc := codegen.NewEncoder()
+	enc.Reset(size)
+
+	// Encode arguments.
+	enc.String(a0)
+	enc.Int(a1)
+
+	// Call the remote method.
+	requestBytes = len(enc.Data())
+	var results []byte
+	results, err = s.stub.Run(ctx, 4, enc.Data(), shardKey)
+	replyBytes = len(results)
+	if err != nil {
+		err = errors.Join(weaver.RemoteCallError, err)
+		return
+	}
+
+	// Decode the results.
+	dec := codegen.NewDecoder(results)
+	r0 = serviceweaver_dec_slice_Product_447363d0(dec)
+	err = dec.Error()
 	return
 }
 
@@ -358,8 +880,12 @@ var _ codegen.Server = (*productCatalogService_server_stub)(nil)
 // GetStubFn implements the codegen.Server interface.
 func (s productCatalogService_server_stub) GetStubFn(method string) func(ctx context.Context, args []byte) ([]byte, error) {
 	switch method {
+	case "GetIndex":
+		return s.getIndex
 	case "GetProduct":
 		return s.getProduct
+	case "GetProducts":
+		return s.getProducts
 	case "ListProducts":
 		return s.listProducts
 	case "SearchProducts":
@@ -367,6 +893,33 @@ func (s productCatalogService_server_stub) GetStubFn(method string) func(ctx con
 	default:
 		return nil
 	}
+}
+
+func (s productCatalogService_server_stub) getIndex(ctx context.Context, args []byte) (res []byte, err error) {
+	// Catch and return any panics detected during encoding/decoding/rpc.
+	defer func() {
+		if err == nil {
+			err = codegen.CatchPanics(recover())
+		}
+	}()
+
+	// Decode arguments.
+	dec := codegen.NewDecoder(args)
+	var a0 int
+	a0 = dec.Int()
+	var r ProductCatalogRouter
+	s.addLoad(_hashProductCatalogService(r.GetIndex(ctx, a0)), 1.0)
+
+	// TODO(rgrandl): The deferred function above will recover from panics in the
+	// user code: fix this.
+	// Call the local method.
+	r0, appErr := s.impl.GetIndex(ctx, a0)
+
+	// Encode the results.
+	enc := codegen.NewEncoder()
+	enc.Int(r0)
+	enc.Error(appErr)
+	return enc.Data(), nil
 }
 
 func (s productCatalogService_server_stub) getProduct(ctx context.Context, args []byte) (res []byte, err error) {
@@ -381,15 +934,48 @@ func (s productCatalogService_server_stub) getProduct(ctx context.Context, args 
 	dec := codegen.NewDecoder(args)
 	var a0 string
 	a0 = dec.String()
+	var a1 int
+	a1 = dec.Int()
+	var r ProductCatalogRouter
+	s.addLoad(_hashProductCatalogService(r.GetProduct(ctx, a0, a1)), 1.0)
 
 	// TODO(rgrandl): The deferred function above will recover from panics in the
 	// user code: fix this.
 	// Call the local method.
-	r0, appErr := s.impl.GetProduct(ctx, a0)
+	r0, appErr := s.impl.GetProduct(ctx, a0, a1)
 
 	// Encode the results.
 	enc := codegen.NewEncoder()
 	(r0).WeaverMarshal(enc)
+	enc.Error(appErr)
+	return enc.Data(), nil
+}
+
+func (s productCatalogService_server_stub) getProducts(ctx context.Context, args []byte) (res []byte, err error) {
+	// Catch and return any panics detected during encoding/decoding/rpc.
+	defer func() {
+		if err == nil {
+			err = codegen.CatchPanics(recover())
+		}
+	}()
+
+	// Decode arguments.
+	dec := codegen.NewDecoder(args)
+	var a0 []string
+	a0 = serviceweaver_dec_slice_string_4af10117(dec)
+	var a1 int
+	a1 = dec.Int()
+	var r ProductCatalogRouter
+	s.addLoad(_hashProductCatalogService(r.GetProducts(ctx, a0, a1)), 1.0)
+
+	// TODO(rgrandl): The deferred function above will recover from panics in the
+	// user code: fix this.
+	// Call the local method.
+	r0, appErr := s.impl.GetProducts(ctx, a0, a1)
+
+	// Encode the results.
+	enc := codegen.NewEncoder()
+	serviceweaver_enc_slice_Product_447363d0(enc, r0)
 	enc.Error(appErr)
 	return enc.Data(), nil
 }
@@ -402,10 +988,17 @@ func (s productCatalogService_server_stub) listProducts(ctx context.Context, arg
 		}
 	}()
 
+	// Decode arguments.
+	dec := codegen.NewDecoder(args)
+	var a0 int
+	a0 = dec.Int()
+	var r ProductCatalogRouter
+	s.addLoad(_hashProductCatalogService(r.ListProducts(ctx, a0)), 1.0)
+
 	// TODO(rgrandl): The deferred function above will recover from panics in the
 	// user code: fix this.
 	// Call the local method.
-	r0, appErr := s.impl.ListProducts(ctx)
+	r0, appErr := s.impl.ListProducts(ctx, a0)
 
 	// Encode the results.
 	enc := codegen.NewEncoder()
@@ -426,11 +1019,15 @@ func (s productCatalogService_server_stub) searchProducts(ctx context.Context, a
 	dec := codegen.NewDecoder(args)
 	var a0 string
 	a0 = dec.String()
+	var a1 int
+	a1 = dec.Int()
+	var r ProductCatalogRouter
+	s.addLoad(_hashProductCatalogService(r.SearchProducts(ctx, a0, a1)), 1.0)
 
 	// TODO(rgrandl): The deferred function above will recover from panics in the
 	// user code: fix this.
 	// Call the local method.
-	r0, appErr := s.impl.SearchProducts(ctx, a0)
+	r0, appErr := s.impl.SearchProducts(ctx, a0, a1)
 
 	// Encode the results.
 	enc := codegen.NewEncoder()
@@ -448,18 +1045,28 @@ type productCatalogService_reflect_stub struct {
 // Check that productCatalogService_reflect_stub implements the ProductCatalogService interface.
 var _ ProductCatalogService = (*productCatalogService_reflect_stub)(nil)
 
-func (s productCatalogService_reflect_stub) GetProduct(ctx context.Context, a0 string) (r0 Product, err error) {
-	err = s.caller("GetProduct", ctx, []any{a0}, []any{&r0})
+func (s productCatalogService_reflect_stub) GetIndex(ctx context.Context, a0 int) (r0 int, err error) {
+	err = s.caller("GetIndex", ctx, []any{a0}, []any{&r0})
 	return
 }
 
-func (s productCatalogService_reflect_stub) ListProducts(ctx context.Context) (r0 []Product, err error) {
-	err = s.caller("ListProducts", ctx, []any{}, []any{&r0})
+func (s productCatalogService_reflect_stub) GetProduct(ctx context.Context, a0 string, a1 int) (r0 Product, err error) {
+	err = s.caller("GetProduct", ctx, []any{a0, a1}, []any{&r0})
 	return
 }
 
-func (s productCatalogService_reflect_stub) SearchProducts(ctx context.Context, a0 string) (r0 []Product, err error) {
-	err = s.caller("SearchProducts", ctx, []any{a0}, []any{&r0})
+func (s productCatalogService_reflect_stub) GetProducts(ctx context.Context, a0 []string, a1 int) (r0 []Product, err error) {
+	err = s.caller("GetProducts", ctx, []any{a0, a1}, []any{&r0})
+	return
+}
+
+func (s productCatalogService_reflect_stub) ListProducts(ctx context.Context, a0 int) (r0 []Product, err error) {
+	err = s.caller("ListProducts", ctx, []any{a0}, []any{&r0})
+	return
+}
+
+func (s productCatalogService_reflect_stub) SearchProducts(ctx context.Context, a0 string, a1 int) (r0 []Product, err error) {
+	err = s.caller("SearchProducts", ctx, []any{a0, a1}, []any{&r0})
 	return
 }
 
@@ -524,6 +1131,22 @@ func serviceweaver_dec_slice_string_4af10117(dec *codegen.Decoder) []string {
 		res[i] = dec.String()
 	}
 	return res
+}
+
+// Router methods.
+
+// _hashProductCatalogService returns a 64 bit hash of the provided value.
+func _hashProductCatalogService(r int) uint64 {
+	var h codegen.Hasher
+	h.WriteInt(int(r))
+	return h.Sum64()
+}
+
+// _orderedCodeProductCatalogService returns an order-preserving serialization of the provided value.
+func _orderedCodeProductCatalogService(r int) codegen.OrderedCode {
+	var enc codegen.OrderedEncoder
+	enc.WriteInt(int(r))
+	return enc.Encode()
 }
 
 // Encoding/decoding implementations.

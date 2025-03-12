@@ -71,7 +71,17 @@ type Server struct {
 	shippingService       weaver.Ref[shippingservice.ShippingService]
 	adService             weaver.Ref[adservice.AdService]
 
-	boutique weaver.Listener
+	boutique            weaver.Listener
+	catalogRoutingTable map[int]int
+}
+
+func (s *Server) Init(ctx context.Context) error {
+	s.catalogRoutingTable = productcatalogservice.GetRoutingTable(s.catalogService)
+	if s.catalogRoutingTable == nil {
+		return fmt.Errorf("failed to construct routing table for product catalog service")
+	}
+
+	return nil
 }
 
 func Serve(ctx context.Context, s *Server) error {

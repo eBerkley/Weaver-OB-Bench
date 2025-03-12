@@ -5,11 +5,11 @@ package types
 
 import (
 	"fmt"
-	"github.com/eberkley/weaver"
-	"github.com/eberkley/weaver/runtime/codegen"
 	"github.com/eBerkley/Weaver-OB-Bench/cartservice"
 	"github.com/eBerkley/Weaver-OB-Bench/shippingservice"
 	"github.com/eBerkley/Weaver-OB-Bench/types/money"
+	"github.com/eberkley/weaver"
+	"github.com/eberkley/weaver/runtime/codegen"
 )
 
 // weaver.InstanceOf checks.

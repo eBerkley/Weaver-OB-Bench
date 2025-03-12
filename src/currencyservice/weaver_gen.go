@@ -6,9 +6,9 @@ package currencyservice
 import (
 	"context"
 	"errors"
+	"github.com/eBerkley/Weaver-OB-Bench/types/money"
 	"github.com/eberkley/weaver"
 	"github.com/eberkley/weaver/runtime/codegen"
-	"github.com/eBerkley/Weaver-OB-Bench/types/money"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	"reflect"

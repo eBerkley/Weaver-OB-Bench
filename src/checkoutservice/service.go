@@ -138,7 +138,7 @@ func (s *impl) prepareOrderItemsAndShippingQuoteFromCart(ctx context.Context, us
 func (s *impl) prepOrderItems(ctx context.Context, items []cartservice.CartItem, userCurrency string) ([]types.OrderItem, error) {
 	out := make([]types.OrderItem, len(items))
 	for i, item := range items {
-		product, err := s.catalogService.Get().GetProduct(ctx, item.ProductID)
+		product, err := s.catalogService.Get().GetProduct(ctx, item.ProductID, productcatalogservice.HashProductID(item.ProductID))
 		if err != nil {
 			return nil, fmt.Errorf("failed to get product #%q: %w", item.ProductID, err)
 		}
