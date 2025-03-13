@@ -13,3 +13,5 @@ notes.md
 cfgs
 *.pyc
 DELETE.txt
+cfgtemp
+inst_fp_collection

@@ -51,8 +51,13 @@ VERSION_FILE := $(GENERATED)/version.txt
 LOGS_FILE := $(TOP)/logs.txt
 TMP_LOGS := $(TOP)/tmp_logs.txt
 
+#Metrics 
+
 CHECK_METRICS_SERVER = $(shell kubectl get deployment -n kube-system metrics-server 2>/dev/null | grep -c metrics-server)
 
+INST_FP_PERF := false
+
+METRICS_PROFILE := false
 ifeq ($(VERBOSE), 1)
 	DEBUG_OUTPUT := $(LOGS_FILE)
 else
@@ -83,6 +88,8 @@ all:
 	@echo "bench_all            - Run benchmark using every colocation scheme in release/base/colocation"
 	@echo "stop                 - remove deployments"
 	@echo "collect_traces       - Runs the Jaeger trace collection script."
+	@ehco "bench_metric_all     - Run metrics collection for evey benchmarking fusion scheme"
+	@echo "bench_inst_perf_all      - Run instruction footprint collection for evey benchmarking fusion scheme"
 
 check_docker: 
 	@./make_scripts/check_docker.sh
@@ -135,7 +142,12 @@ deploy: minikube_start pre_deploy
 	@-kubectl delete all --all >>$(DEBUG_OUTPUT) 2>&1
 
 	@# should be first so that if running on a NUMA architecture, first socket can be entirely used.
-	@kubectl apply -f $(JAEGER_TRACE_YAML) >> $(DEBUG_OUTPUT) 2>&1
+	@if [ "$(METRICS_PROFILE)" = "true" ]; then \
+		echo "Jaeger is enabled" ; \
+	    kubectl apply -f $(JAEGER_TRACE_YAML) >> $(DEBUG_OUTPUT) 2>&1; \
+	else \
+	    echo "Skipping Jaeger deployment." >> $(DEBUG_OUTPUT); \
+	fi
 	@kubectl apply -f $(LOAD_GEN_YAML) >> $(DEBUG_OUTPUT) 2>&1
 	@kubectl apply -f $(WEAVER_GEN_YAML) >> $(DEBUG_OUTPUT) 2>&1
 
@@ -151,11 +163,12 @@ bench: deploy
 bench_once: deploy
 	./scripts/pull_stats.sh
 
-bench_trace: deploy
-	./scripts/pull_stats_trace.sh
+bench_metric: deploy
+	./scripts/pull_trace.sh
 	@echo deleting deployment...
-	@-kubectl delete all --all >> $(DEBUG_OUTPUT) 2>&1
-	@./make_scripts/post_bench.sh
+
+bench_perf: deploy
+	./scripts/pull_inst.sh $(TOP)
 
 # ./bench_all changes $(WEAVER_GEN_YAML) every time it runs, 
 # 	new images built each time.
@@ -164,12 +177,14 @@ bench_all: minikube_start clear_logs
 	@echo 
 	./make_scripts/bench_all.sh
 
-bench_trace_all: minikube_start clear_logs
-	@echo Colocation Schemes: $(COLOCATION_BASE)
-	@echo 
-	./make_scripts/bench_trace_all.sh
+bench_metric_all: 
+	$(MAKE) bench_all METRICS_PROFILE=true
+
+bench_inst_perf_all: 
+	$(MAKE) bench_all INST_FP_PERF=true
 
 stop:
+	@[ "$$(cat /proc/sys/kernel/perf_event_paranoid)" = "4" ] || sudo sysctl -w kernel.perf_event_paranoid=4
 	./scripts/stop.sh
 	minikube delete
 
@@ -178,7 +193,14 @@ stop:
 # 	modifies version file, which should trigger LOAD_GEN_YAML
 $(WEAVER_GEN_YAML): $(KUBE_BASE_YAML) $(KUBE_GEN_YAML) $(BIN) $(CONFIG_FILE) .env
 	@echo rebuilding onlineboutique container...
-	@./make_scripts/weaver_gen_yaml.sh 
+	@if [ "$(METRICS_PROFILE)" = "true" ]; then \
+	    echo "telemetry-local is employed to deploy"; \
+	    ./make_scripts/weaver_gen_yaml.sh telemetry-local; \
+	else \
+	    ./make_scripts/weaver_gen_yaml.sh weaver-kube; \
+	fi
+
+	
 
 # if deployment specifications or loadgen code was modified, 
 #	Update Load Generator

@@ -16,8 +16,18 @@ loop_body () {
   # Create the dir that the next batch of stats will use
   mkdir -p benchmark/stats
 
-  # run the benchmark
-  make bench_once
+  if [ "$INST_FP_PERF" = "true" ]; then
+    echo "Instruction Footprint-based benchmarking..."
+    make bench_perf
+  elif [ "$METRICS_PROFILE" = "true" ]; then
+    echo "Metrics-based benchmarking"
+    make bench_metric
+  else
+    echo "CPU Time-based benchmarking..."
+    # run the benchmark
+    make bench_once
+  fi
+  
 
   # Terminate the benchmark
   kubectl delete all --all
@@ -32,11 +42,25 @@ loop_body () {
   # Create the dir results will be stored in
   mkdir -p benchmark/out/$cfg
   
-  # Move the stats dir into the dir created above
-  mv benchmark/stats benchmark/out/$cfg/stats
+  if [ "$INST_FP_PERF" = "true" ]; then
+    mkdir -p benchmark/out/$cfg/inst_fp_collection
+    mv inst_fp_collection benchmark/out/$cfg/inst_fp_collection
+  elif [ "$METRICS_PROFILE" = "true" ]; then
+    mv benchmark/stats benchmark/out/$cfg/stats
+    # Create aggregated.csv that only has the aggregate latency stats
+    cat benchmark/out/$cfg/stats/lat_stats_history.csv | grep -o "Aggregated[^\n]*" > benchmark/out/$cfg/stats/aggregated.csv
 
-  # Create aggregated.csv that only has the aggregate latency stats
-  cat benchmark/out/$cfg/stats/lat_stats_history.csv | grep -o "Aggregated[^\n]*" > benchmark/out/$cfg/stats/aggregated.csv
+    mkdir -p benchmark/out/$cfg/traces
+    mv jaeger_traces benchmark/out/$cfg/traces
+  else
+    mv benchmark/stats benchmark/out/$cfg/stats
+    # Create aggregated.csv that only has the aggregate latency stats
+    cat benchmark/out/$cfg/stats/lat_stats_history.csv | grep -o "Aggregated[^\n]*" > benchmark/out/$cfg/stats/aggregated.csv
+  fi
+  # Move the stats dir into the dir created above
+  
+
+  
 
   # Append logs from this run into tmp
   cat $LOGS_FILE >> $TMP_LOGS

@@ -59,7 +59,7 @@ def aggregate_json_files_to_csv(input_dir):
                     invalid_spans, total_spans, valid_traces = count_invalid_parent_spans(data)
                     
                     # Check filtering conditions
-                    if invalid_spans > 30 or (total_spans > 0 and invalid_spans / total_spans > 0.1):
+                    if invalid_spans > 300 or (total_spans > 0 and invalid_spans / total_spans > 0.1):
                         print(f"Skipping {filename} due to excessive invalid parent spans.")
                         continue
                     
