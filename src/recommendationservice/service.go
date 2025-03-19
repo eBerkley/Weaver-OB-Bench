@@ -17,6 +17,7 @@ package recommendationservice
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 
 	"github.com/eBerkley/Weaver-OB-Bench/productcatalogservice"
@@ -38,7 +39,7 @@ type impl struct {
 func (s *impl) Init(ctx context.Context) error {
 	s.catalogRoutingTable = productcatalogservice.GetRoutingTable(s.catalogService)
 	if s.catalogRoutingTable == nil {
-		return fmt.Errorf("Failed to construct routing table for product catalog service")
+		return fmt.Errorf("failed to construct routing table for product catalog service")
 	}
 
 	return nil
@@ -62,6 +63,11 @@ func (s *impl) ListRecommendations(ctx context.Context, userID string, userProdu
 	errChan := make(chan error, productcatalogservice.ProductCatalogReplicas)
 	for shard := 0; shard < productcatalogservice.ProductCatalogReplicas; shard++ {
 		go func(shard int) {
+			// Don't send RPC if we aren't requesting any products.
+			if len(productShardMap[shard]) == 0 {
+				wg.Done()
+				return
+			}
 			// Routing key that will route to the correct shard.
 			key := s.catalogRoutingTable[shard]
 			prods, err := s.catalogService.Get().GetProducts(ctx, productShardMap[shard], key)
@@ -71,7 +77,7 @@ func (s *impl) ListRecommendations(ctx context.Context, userID string, userProdu
 				productShards[shard] = prods
 			}
 			wg.Done()
-			return
+
 		}(shard)
 	}
 	// Halt thread until all requests have responses.
@@ -83,15 +89,29 @@ func (s *impl) ListRecommendations(ctx context.Context, userID string, userProdu
 	default:
 		break
 	}
-	// Get the aggregate of products.
-	var products []productcatalogservice.Product
+
+	// Each product name is 3 words: color, material, object.
+	// We split them up into words, give material 2x as much
+	freq := make(map[string]int)
+
 	for _, s := range productShards {
-		products = append(products, s...)
+		for _, product := range s {
+			words := strings.Split(product.Name, " ")
+			if len(words) != 3 {
+				return nil, fmt.Errorf("product with name %v couldn't be parsed", product.Name)
+			}
+			freq[words[0]]++
+			freq[words[1]]++
+			freq[words[2]] += 2
+		}
 	}
-
-	// TODO: Logic to get search string.
-	searchQuery := "PLACEHOLDER"
-
+	var searchQuery string
+	highestFreq := 0
+	for k, v := range freq {
+		if v > highestFreq {
+			searchQuery = k
+		}
+	}
 	// shard index => list of similar products
 	productStringShards := make([][]string, productcatalogservice.ProductCatalogReplicas)
 
@@ -121,9 +141,7 @@ func (s *impl) ListRecommendations(ctx context.Context, userID string, userProdu
 				}
 				productStringShards[shard] = append(productStringShards[shard], prod.ID)
 			}
-
 			wg.Done()
-			return
 		}(shard)
 	}
 

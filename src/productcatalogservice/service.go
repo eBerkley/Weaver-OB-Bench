@@ -16,13 +16,14 @@ package productcatalogservice
 
 import (
 	"context"
-	_ "embed"
+	"path/filepath"
+
+	// _ "embed"
 	"encoding/json"
 	"fmt"
 	"os"
 	"strconv"
 	"strings"
-	"sync"
 
 	"github.com/eBerkley/Weaver-OB-Bench/types/money"
 	"github.com/eberkley/weaver"
@@ -33,10 +34,19 @@ const (
 	maxProducts = 10
 )
 
-var (
-	//go:embed products.json
-	catalogFileData []byte
-)
+// var (
+// //go:embed products.json
+// catalogFileData []bytes
+// )
+
+func must[T any](t T, err error) T {
+	if err != nil {
+		panic(err)
+	}
+	return t
+}
+
+var productsDirname = filepath.Clean(filepath.Join(filepath.Dir(must(os.Executable())), "..", "products"))
 
 type NotFoundError struct{}
 
@@ -79,7 +89,7 @@ type impl struct {
 	weaver.Implements[ProductCatalogService]
 	weaver.WithRouter[ProductCatalogRouter]
 
-	mu      sync.RWMutex
+	// mu      sync.RWMutex
 	db      map[string]Product
 	myIndex int
 }
@@ -95,7 +105,7 @@ func (s *impl) Init(ctx context.Context) error {
 		s.myIndex = 1
 	}
 
-	_, err = s.refreshCatalogFile()
+	err = s.refreshCatalogFile()
 	if err != nil {
 		return fmt.Errorf("could not parse product catalog: %w", err)
 	}
@@ -111,15 +121,35 @@ func (s *impl) fillDB(agg []Product) {
 	}
 }
 
-func (s *impl) refreshCatalogFile() ([]Product, error) {
-	var products []Product
-	if err := json.Unmarshal(catalogFileData, &products); err != nil {
-		return nil, err
+func (s *impl) refreshCatalogFile() error {
+
+	entries, err := os.ReadDir(productsDirname)
+	if err != nil {
+		return err
 	}
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	s.fillDB(products)
-	return products, nil
+	for _, entry := range entries {
+
+		file, err := os.Open(filepath.Join(productsDirname, entry.Name()))
+		if err != nil {
+			return err
+		}
+		var data []byte
+
+		if _, err := file.Read(data); err != nil {
+			return err
+		}
+
+		var products []Product
+
+		if err := json.Unmarshal(data, &products); err != nil {
+			return err
+		}
+
+		s.fillDB(products)
+	}
+
+	return nil
+
 }
 
 func (s *impl) ListProducts(ctx context.Context, _ int) ([]Product, error) {
@@ -159,9 +189,9 @@ func (s *impl) SearchProducts(ctx context.Context, query string, _ int) ([]Produ
 	// Interpret query as a substring match in name or description.
 	var ps []Product
 	i := 0
+	q := strings.ToLower(query)
 	for _, p := range s.db {
-		if strings.Contains(strings.ToLower(p.Name), strings.ToLower(query)) ||
-			strings.Contains(strings.ToLower(p.Description), strings.ToLower(query)) {
+		if strings.Contains(strings.ToLower(p.Name), q) {
 			ps = append(ps, p)
 			i++
 			if i >= maxProducts {

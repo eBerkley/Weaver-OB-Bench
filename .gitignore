@@ -19,3 +19,4 @@ CONFIG.cfg
 scripts/pod_stats.csv
 cfgs_todo
 cfgs_archive
+src/productcatalogservice/product_gen/product_gen
