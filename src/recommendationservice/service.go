@@ -59,7 +59,7 @@ func (s *impl) ListRecommendations(ctx context.Context, userID string, userProdu
 	productShardMap := make([][]string, productcatalogservice.ProductCatalogReplicas)
 	for _, pid := range userProductIDs {
 		shard := productcatalogservice.HashProductID(pid)
-		productShardMap[shard-1] = append(productShardMap[shard-1], pid)
+		productShardMap[shard] = append(productShardMap[shard], pid)
 	}
 
 	// shard index => list of products
@@ -70,20 +70,20 @@ func (s *impl) ListRecommendations(ctx context.Context, userID string, userProdu
 	wg := sync.WaitGroup{}
 	wg.Add(productcatalogservice.ProductCatalogReplicas)
 	errChan := make(chan error, productcatalogservice.ProductCatalogReplicas)
-	for shard := 1; shard < productcatalogservice.ProductCatalogReplicas+1; shard++ {
+	for shard := 0; shard < productcatalogservice.ProductCatalogReplicas; shard++ {
 		go func(shard int) {
 			// Don't send RPC if we aren't requesting any products.
-			if len(productShardMap[shard-1]) == 0 {
+			if len(productShardMap[shard]) == 0 {
 				wg.Done()
 				return
 			}
 			// Routing key that will route to the correct shard.
 			key := s.catalogRoutingTable[shard]
-			prods, err := s.catalogService.Get().GetProducts(ctx, productShardMap[shard-1], key)
+			prods, err := s.catalogService.Get().GetProducts(ctx, productShardMap[shard], key)
 			if err != nil {
 				errChan <- err
 			} else {
-				productShards[shard-1] = prods
+				productShards[shard] = prods
 			}
 			wg.Done()
 
@@ -128,7 +128,7 @@ func (s *impl) ListRecommendations(ctx context.Context, userID string, userProdu
 	// If one returns an error, this function returns an error.
 	wg.Add(productcatalogservice.ProductCatalogReplicas)
 	errChan2 := make(chan error, productcatalogservice.ProductCatalogReplicas)
-	for shard := 1; shard < productcatalogservice.ProductCatalogReplicas+1; shard++ {
+	for shard := 0; shard < productcatalogservice.ProductCatalogReplicas; shard++ {
 		go func(shard int) {
 			// Routing key that will route to the correct shard.
 			key := s.catalogRoutingTable[shard]
@@ -143,12 +143,12 @@ func (s *impl) ListRecommendations(ctx context.Context, userID string, userProdu
 			// Since only the products in this shard could be returned by
 			// this method call, we just use the products in productShards[shard].
 			for _, prod := range prods {
-				for _, userProd := range productShards[shard-1] {
+				for _, userProd := range productShards[shard] {
 					if prod.ID == userProd.ID {
 						break
 					}
 				}
-				productStringShards[shard-1] = append(productStringShards[shard-1], prod.ID)
+				productStringShards[shard] = append(productStringShards[shard], prod.ID)
 			}
 			wg.Done()
 		}(shard)
@@ -171,30 +171,4 @@ func (s *impl) ListRecommendations(ctx context.Context, userID string, userProdu
 	}
 
 	return ret, nil
-	// // Remove user-provided products from the catalog, to avoid recommending
-	// // them.
-	// userIDs := make(map[string]struct{}, len(userProductIDs))
-	// for _, id := range userProductIDs {
-	// 	userIDs[id] = struct{}{}
-	// }
-	// filtered := make([]string, 0, len(catalogProducts))
-	// for _, product := range catalogProducts {
-	// 	if _, ok := userIDs[product.ID]; ok {
-	// 		continue
-	// 	}
-	// 	filtered = append(filtered, product.ID)
-	// }
-
-	// // Sample from filtered products and return them.
-	// // perm := rand.Perm(len(filtered))
-	// const maxResponses = 5
-	// ret := make([]string, 0, maxResponses)
-	// // for _, idx := range perm {
-	// for idx := 0; idx < len(filtered); idx++ {
-	// 	ret = append(ret, filtered[idx])
-	// 	if len(ret) >= maxResponses {
-	// 		break
-	// 	}
-	// }
-	// return ret, nil
 }

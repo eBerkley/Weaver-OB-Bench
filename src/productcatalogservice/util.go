@@ -34,7 +34,7 @@ func HashProductID(id string) int {
 	h := fnv.New32a()
 	h.Write([]byte(id))
 	idx := h.Sum32() % uint32(ProductCatalogReplicas)
-	return int(idx) + 1
+	return int(idx)
 }
 
 type ProductRoutingTable map[int]int
@@ -49,7 +49,7 @@ func GetRoutingTable(ref *weaver.Ref[ProductCatalogService]) ProductRoutingTable
 
 	// map[index]routeKey
 	routingTable := make(map[int]int, ProductCatalogReplicas)
-	for i := 1; i < ProductCatalogReplicas+1; i++ {
+	for i := 0; i < ProductCatalogReplicas; i++ {
 		routingTable[i] = NOT_FOUND
 	}
 
@@ -58,7 +58,7 @@ func GetRoutingTable(ref *weaver.Ref[ProductCatalogService]) ProductRoutingTable
 		idx, err := ref.Get().GetIndex(ctx, key)
 		if err != nil {
 			// we just restart whenever one isn't ready.
-			for i := 1; i < ProductCatalogReplicas+1; i++ {
+			for i := 0; i < ProductCatalogReplicas; i++ {
 				routingTable[i] = NOT_FOUND
 			}
 			foundVals = 0
@@ -72,7 +72,7 @@ func GetRoutingTable(ref *weaver.Ref[ProductCatalogService]) ProductRoutingTable
 		if foundVals == ProductCatalogReplicas {
 			break
 		}
-		time.Sleep(500)
+		time.Sleep(250)
 	}
 
 	for i := 1; i < ProductCatalogReplicas+1; i++ {

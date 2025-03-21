@@ -40,10 +40,6 @@ var (
 	catalogFileData embed.FS
 )
 
-type NotFoundError struct{}
-
-func (e NotFoundError) Error() string { return "product not found" }
-
 type Product struct {
 	weaver.AutoMarshal
 	ID          string  `json:"id"`
@@ -92,12 +88,10 @@ func (s *impl) Init(ctx context.Context) error {
 	var err error
 	indexStr := os.Getenv("MY_INDEX")
 	s.myIndex, err = strconv.Atoi(indexStr)
-	s.myIndex++
 	s.db = make(map[string]Product)
 	if err != nil {
-		s.myIndex = rand.Intn(2) + 1
-		s.Logger(ctx).Warn("Envvar MY_INDEX is non-int value. Randomly setting to either 1 or 2:", "value", s.myIndex)
-
+		s.myIndex = rand.Intn(2)
+		s.Logger(ctx).Warn("Envvar MY_INDEX is non-int value. Randomly setting to either 0 or 1:", "value", s.myIndex)
 	}
 	s.Logger(ctx).Info(fmt.Sprintf("myIndex: %v", s.myIndex))
 	err = s.refreshCatalogFile()
@@ -162,7 +156,7 @@ func (s *impl) GetProduct(ctx context.Context, productID string, _ int) (Product
 	if !ok {
 		idx := s.myIndex
 		needed := HashProductID(productID)
-		return Product{}, fmt.Errorf("request for productID %v made to shard %v, but needed to be %v", productID, idx, needed) // NotFoundError{}
+		return Product{}, fmt.Errorf("request for productID %v made to shard %v, but needed to be %v", productID, idx, needed)
 	}
 	return p, nil
 }

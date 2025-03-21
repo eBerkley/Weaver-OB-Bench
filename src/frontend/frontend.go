@@ -77,16 +77,9 @@ type Server struct {
 }
 
 func (fe *Server) Init(ctx context.Context) error {
-	fe.Logger(ctx).Info("In init method!!!!!")
-	fe.catalogRoutingTable = productcatalogservice.GetRoutingTable(&fe.catalogService)
-	// fe.catalogDialer = productcatalogservice.ProductCatalogDialer{Ref: &fe.catalogService}
-	// _, err := fe.catalogDialer.Get()
-	// if err != nil {
-	// 	return err
-	// }
-	fe.Logger(ctx).Info("Out of init method!!!!!")
-	fe.Logger(ctx).Info(fmt.Sprintf("%v", fe.catalogRoutingTable))
 
+	fe.catalogRoutingTable = productcatalogservice.GetRoutingTable(&fe.catalogService)
+	fe.Logger(ctx).Info(fmt.Sprintf("frontend routing table: %v", fe.catalogRoutingTable))
 	return nil
 }
 

@@ -63,6 +63,15 @@ var (
 		"TRY": true,
 	}
 
+	logos = map[string]string{
+		"USD": "$",
+		"CAD": "$",
+		"JPY": "¥",
+		"EUR": "€",
+		"TRY": "₺",
+		"GBP": "£",
+	}
+
 	defaultCurrency = "USD"
 )
 
@@ -84,7 +93,7 @@ func (fe *Server) homeHandler(w http.ResponseWriter, r *http.Request) {
 	wg := sync.WaitGroup{}
 	wg.Add(productcatalogservice.ProductCatalogReplicas)
 	errChan := make(chan error, productcatalogservice.ProductCatalogReplicas)
-	for shard := 1; shard < productcatalogservice.ProductCatalogReplicas+1; shard++ {
+	for shard := 0; shard < productcatalogservice.ProductCatalogReplicas; shard++ {
 		go func(shard int) {
 			// Routing key that will route to the correct shard.
 			key := fe.catalogRoutingTable[shard]
@@ -92,7 +101,7 @@ func (fe *Server) homeHandler(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				errChan <- err
 			} else {
-				productShards[shard-1] = prods
+				productShards[shard] = prods
 			}
 			wg.Done()
 		}(shard)
@@ -113,12 +122,6 @@ func (fe *Server) homeHandler(w http.ResponseWriter, r *http.Request) {
 	for _, s := range productShards {
 		products = append(products, s...)
 	}
-	// *** Old code for nonsharded catalogService ***
-	// products, err := fe.catalogService.Get().ListProducts(r.Context())
-	// if err != nil {
-	// 	fe.renderHTTPError(r, w, fmt.Errorf("could not retrieve products: %w", err), http.StatusInternalServerError)
-	// 	return
-	// }
 
 	cart, err := fe.cartService.Get().GetCart(r.Context(), sessionID(r))
 	if err != nil {
@@ -171,11 +174,11 @@ func (fe *Server) productHandler(w http.ResponseWriter, r *http.Request) {
 	logger.Debug("serving product page", "id", id, "currency", currentCurrency(r))
 	shard := productcatalogservice.HashProductID(id)
 	p, err := fe.catalogService.Get().GetProduct(r.Context(), id, fe.catalogRoutingTable[shard])
-	// p, err := fe.catalogService.Get().GetProduct(r.Context(), id, productcatalogservice.HashProductID(id))
 	if err != nil {
 		fe.renderHTTPError(r, w, fmt.Errorf("could not retrieve product in shard %v: %w", shard, err), http.StatusInternalServerError)
 		return
 	}
+
 	currencies, err := fe.getCurrencies(r.Context())
 	if err != nil {
 		fe.renderHTTPError(r, w, fmt.Errorf("could not retrieve currencies: %w", err), http.StatusInternalServerError)
@@ -250,7 +253,6 @@ func (fe *Server) addToCartHandler(w http.ResponseWriter, r *http.Request) {
 	logger.Debug("adding to cart", "product", productID, "quantity", quantity)
 	shard := productcatalogservice.HashProductID(productID)
 	p, err := fe.catalogService.Get().GetProduct(r.Context(), productID, fe.catalogRoutingTable[shard])
-	// p, err := fe.catalogService.Get().GetProduct(r.Context(), productID, productcatalogservice.HashProductID(productID))
 	if err != nil {
 		fe.renderHTTPError(r, w, fmt.Errorf("could not retrieve product at shard %v: %w", shard, err), http.StatusInternalServerError)
 		return
@@ -281,7 +283,6 @@ func (fe *Server) emptyCartHandler(w http.ResponseWriter, r *http.Request) {
 
 func (fe *Server) viewCartHandler(w http.ResponseWriter, r *http.Request) {
 	logger := r.Context().Value(ctxKeyLogger{}).(*slog.Logger)
-	// logger.Debug("view cart")
 
 	currencies, err := fe.getCurrencies(r.Context())
 	if err != nil {
@@ -316,11 +317,11 @@ func (fe *Server) viewCartHandler(w http.ResponseWriter, r *http.Request) {
 	for i, item := range cart {
 		shard := productcatalogservice.HashProductID(item.ProductID)
 		p, err := fe.catalogService.Get().GetProduct(r.Context(), item.ProductID, fe.catalogRoutingTable[shard])
-		// p, err := fe.catalogService.Get().GetProduct(r.Context(), item.ProductID, productcatalogservice.HashProductID(item.ProductID))
 		if err != nil {
 			fe.renderHTTPError(r, w, fmt.Errorf("could not retrieve product #%s at %v: %w", item.ProductID, shard, err), http.StatusInternalServerError)
 			return
 		}
+
 		price, err := fe.convertCurrency(r.Context(), p.PriceUSD, currentCurrency(r))
 		if err != nil {
 			fe.renderHTTPError(r, w, fmt.Errorf("could not convert currency for product #%s: %w", item.ProductID, err), http.StatusInternalServerError)
@@ -517,7 +518,6 @@ func (fe *Server) getRecommendations(ctx context.Context, userID string, product
 	for i, id := range recommendationIDs {
 		shard := productcatalogservice.HashProductID(id)
 		p, err := fe.catalogService.Get().GetProduct(ctx, id, fe.catalogRoutingTable[shard])
-		// p, err := fe.catalogService.Get().GetProduct(ctx, id, productcatalogservice.HashProductID(id))
 
 		if err != nil {
 			return nil, fmt.Errorf("failed to get recommended product info (#%s) at shard %v: %w", id, shard, err)
@@ -591,14 +591,6 @@ func renderMoney(m money.T) string {
 }
 
 func renderCurrencyLogo(currencyCode string) string {
-	logos := map[string]string{
-		"USD": "$",
-		"CAD": "$",
-		"JPY": "¥",
-		"EUR": "€",
-		"TRY": "₺",
-		"GBP": "£",
-	}
 
 	logo := "$" //default
 	if val, ok := logos[currencyCode]; ok {
