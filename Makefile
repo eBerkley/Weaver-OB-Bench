@@ -128,7 +128,7 @@ $(LOAD_GEN_YAML): $(LOAD_SRC_ALL) $(VERSION_FILE) $(LOAD_BASE_YAML) $(CONFIG_FIL
 #	Update binary
 $(BIN): $(MAIN_SRC)
 	@echo rebuilding binary...
-
-	@cd $(SRC); $(WEAVER) generate ./...; go build -o ../release/generated; cd ..
+	
+	@cd $(SRC); ../$(WEAVER) generate ./...; go build -o ../release/generated; cd ..
 	@mv release/generated/Weaver-OB-Bench release/generated/ob
 

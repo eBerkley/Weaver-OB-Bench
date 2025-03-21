@@ -38,17 +38,44 @@ CHECKOUT_FREQ   = 10
 
 fake = Faker()
 
-products = [
-    '0PUK6V6EV0',
-    '1YMWWN1N4O',
-    '2ZYFJ3GM2N',
-    '66VCHSJNUP',
-    '6E92ZMYYFZ',
-    '9SIQT8TOJO',
-    'L9ECAV7KIM',
-    'LS4PSXUNUM',
-    'OLJCESPC7Z']
+# products = [
+#     '0PUK6V6EV0',
+#     '1YMWWN1N4O',
+#     '2ZYFJ3GM2N',
+#     '66VCHSJNUP',
+#     '6E92ZMYYFZ',
+#     '9SIQT8TOJO',
+#     'L9ECAV7KIM',
+#     'LS4PSXUNUM',
+#     'OLJCESPC7Z']
 
+# Products must be hard coded.
+products = [
+    "f60b9a0918",
+    "50bf7d0d7b",
+    "2f90278351",
+    "f668e2bc0b",
+    "aa9834b37d",
+    "6036b1e2b0",
+    "75753c49a4",
+    "b513792f8d",
+    "9b44c94452",
+    "c6ee2f6679",
+    "2ac80cbeb6",
+    "c952015d1f",
+    "dd30814e25",
+    "bb291f6e5d",
+    "328a7f79d0",
+    "9a9dd201e9",
+    "025e67f5d9",
+    "7127f7b444",
+    "3384848bf7",
+    "35affad863",
+    "64a2f6c4a7",
+    "4b381bf103",
+    "128709e032",
+    "3516b7513b",
+]
 currencies = ['EUR', 'USD', 'JPY', 'CAD', 'GBP', 'TRY']
 
 class WebsiteUser(FastHttpUser):

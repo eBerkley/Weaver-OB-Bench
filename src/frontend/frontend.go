@@ -71,15 +71,21 @@ type Server struct {
 	shippingService       weaver.Ref[shippingservice.ShippingService]
 	adService             weaver.Ref[adservice.AdService]
 
-	boutique            weaver.Listener
-	catalogRoutingTable map[int]int
+	boutique weaver.Listener
+
+	catalogRoutingTable productcatalogservice.ProductRoutingTable
 }
 
-func (s *Server) Init(ctx context.Context) error {
-	s.catalogRoutingTable = productcatalogservice.GetRoutingTable(s.catalogService)
-	if s.catalogRoutingTable == nil {
-		return fmt.Errorf("failed to construct routing table for product catalog service")
-	}
+func (fe *Server) Init(ctx context.Context) error {
+	fe.Logger(ctx).Info("In init method!!!!!")
+	fe.catalogRoutingTable = productcatalogservice.GetRoutingTable(&fe.catalogService)
+	// fe.catalogDialer = productcatalogservice.ProductCatalogDialer{Ref: &fe.catalogService}
+	// _, err := fe.catalogDialer.Get()
+	// if err != nil {
+	// 	return err
+	// }
+	fe.Logger(ctx).Info("Out of init method!!!!!")
+	fe.Logger(ctx).Info(fmt.Sprintf("%v", fe.catalogRoutingTable))
 
 	return nil
 }
@@ -94,6 +100,7 @@ func Serve(ctx context.Context, s *Server) error {
 		fmt.Println("env platform is either empty or invalid")
 		env = "local"
 	}
+
 	// Autodetect GCP
 	addrs, err := net.LookupHost("metadata.google.internal.")
 	if err == nil && len(addrs) >= 0 {

@@ -33,14 +33,23 @@ type impl struct {
 	weaver.Implements[RecService]
 	catalogService weaver.Ref[productcatalogservice.ProductCatalogService]
 
-	catalogRoutingTable map[int]int
+	catalogRoutingTable productcatalogservice.ProductRoutingTable
 }
 
 func (s *impl) Init(ctx context.Context) error {
-	s.catalogRoutingTable = productcatalogservice.GetRoutingTable(s.catalogService)
-	if s.catalogRoutingTable == nil {
-		return fmt.Errorf("failed to construct routing table for product catalog service")
-	}
+	// s.catalogRoutingTable = &productcatalogservice.ProductCatalogDialer{Ref: &s.catalogService}
+	s.Logger(ctx).Info("in rec init")
+	// _, err := s.catalogDialer.Get()
+	// if err != nil {
+
+	// 	return err
+	// }
+	s.catalogRoutingTable = productcatalogservice.GetRoutingTable(&s.catalogService)
+	s.Logger(ctx).Info("out of rec init!!")
+	s.Logger(ctx).Info(fmt.Sprintf("routing table: %v", s.catalogRoutingTable))
+	// if s.catalogRoutingTable == nil {
+	// 	return fmt.Errorf("failed to construct routing table for product catalog service")
+	// }
 
 	return nil
 }
@@ -50,7 +59,7 @@ func (s *impl) ListRecommendations(ctx context.Context, userID string, userProdu
 	productShardMap := make([][]string, productcatalogservice.ProductCatalogReplicas)
 	for _, pid := range userProductIDs {
 		shard := productcatalogservice.HashProductID(pid)
-		productShardMap[shard] = append(productShardMap[shard], pid)
+		productShardMap[shard-1] = append(productShardMap[shard-1], pid)
 	}
 
 	// shard index => list of products
@@ -61,20 +70,20 @@ func (s *impl) ListRecommendations(ctx context.Context, userID string, userProdu
 	wg := sync.WaitGroup{}
 	wg.Add(productcatalogservice.ProductCatalogReplicas)
 	errChan := make(chan error, productcatalogservice.ProductCatalogReplicas)
-	for shard := 0; shard < productcatalogservice.ProductCatalogReplicas; shard++ {
+	for shard := 1; shard < productcatalogservice.ProductCatalogReplicas+1; shard++ {
 		go func(shard int) {
 			// Don't send RPC if we aren't requesting any products.
-			if len(productShardMap[shard]) == 0 {
+			if len(productShardMap[shard-1]) == 0 {
 				wg.Done()
 				return
 			}
 			// Routing key that will route to the correct shard.
 			key := s.catalogRoutingTable[shard]
-			prods, err := s.catalogService.Get().GetProducts(ctx, productShardMap[shard], key)
+			prods, err := s.catalogService.Get().GetProducts(ctx, productShardMap[shard-1], key)
 			if err != nil {
 				errChan <- err
 			} else {
-				productShards[shard] = prods
+				productShards[shard-1] = prods
 			}
 			wg.Done()
 
@@ -119,7 +128,7 @@ func (s *impl) ListRecommendations(ctx context.Context, userID string, userProdu
 	// If one returns an error, this function returns an error.
 	wg.Add(productcatalogservice.ProductCatalogReplicas)
 	errChan2 := make(chan error, productcatalogservice.ProductCatalogReplicas)
-	for shard := 0; shard < productcatalogservice.ProductCatalogReplicas; shard++ {
+	for shard := 1; shard < productcatalogservice.ProductCatalogReplicas+1; shard++ {
 		go func(shard int) {
 			// Routing key that will route to the correct shard.
 			key := s.catalogRoutingTable[shard]
@@ -134,12 +143,12 @@ func (s *impl) ListRecommendations(ctx context.Context, userID string, userProdu
 			// Since only the products in this shard could be returned by
 			// this method call, we just use the products in productShards[shard].
 			for _, prod := range prods {
-				for _, userProd := range productShards[shard] {
+				for _, userProd := range productShards[shard-1] {
 					if prod.ID == userProd.ID {
 						break
 					}
 				}
-				productStringShards[shard] = append(productStringShards[shard], prod.ID)
+				productStringShards[shard-1] = append(productStringShards[shard-1], prod.ID)
 			}
 			wg.Done()
 		}(shard)

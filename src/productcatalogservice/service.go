@@ -16,10 +16,11 @@ package productcatalogservice
 
 import (
 	"context"
-	"path/filepath"
-
-	// _ "embed"
 	"encoding/json"
+	"math/rand"
+	"path"
+
+	"embed"
 	"fmt"
 	"os"
 	"strconv"
@@ -34,19 +35,10 @@ const (
 	maxProducts = 10
 )
 
-// var (
-// //go:embed products.json
-// catalogFileData []bytes
-// )
-
-func must[T any](t T, err error) T {
-	if err != nil {
-		panic(err)
-	}
-	return t
-}
-
-var productsDirname = filepath.Clean(filepath.Join(filepath.Dir(must(os.Executable())), "..", "products"))
+var (
+	//go:embed products/*
+	catalogFileData embed.FS
+)
 
 type NotFoundError struct{}
 
@@ -100,11 +92,14 @@ func (s *impl) Init(ctx context.Context) error {
 	var err error
 	indexStr := os.Getenv("MY_INDEX")
 	s.myIndex, err = strconv.Atoi(indexStr)
+	s.myIndex++
+	s.db = make(map[string]Product)
 	if err != nil {
-		s.Logger(ctx).Warn("Envvar MY_INDEX is non-int value. Assuming default value of 1...", "MY_INDEX", indexStr)
-		s.myIndex = 1
-	}
+		s.myIndex = rand.Intn(2) + 1
+		s.Logger(ctx).Warn("Envvar MY_INDEX is non-int value. Randomly setting to either 1 or 2:", "value", s.myIndex)
 
+	}
+	s.Logger(ctx).Info(fmt.Sprintf("myIndex: %v", s.myIndex))
 	err = s.refreshCatalogFile()
 	if err != nil {
 		return fmt.Errorf("could not parse product catalog: %w", err)
@@ -123,19 +118,16 @@ func (s *impl) fillDB(agg []Product) {
 
 func (s *impl) refreshCatalogFile() error {
 
-	entries, err := os.ReadDir(productsDirname)
+	dir, err := catalogFileData.ReadDir("products")
 	if err != nil {
 		return err
 	}
-	for _, entry := range entries {
 
-		file, err := os.Open(filepath.Join(productsDirname, entry.Name()))
+	for _, entry := range dir {
+
+		data, err := catalogFileData.ReadFile(path.Join("products", entry.Name()))
+
 		if err != nil {
-			return err
-		}
-		var data []byte
-
-		if _, err := file.Read(data); err != nil {
 			return err
 		}
 
@@ -168,7 +160,9 @@ func (s *impl) ListProducts(ctx context.Context, _ int) ([]Product, error) {
 func (s *impl) GetProduct(ctx context.Context, productID string, _ int) (Product, error) {
 	p, ok := s.db[productID]
 	if !ok {
-		return Product{}, NotFoundError{}
+		idx := s.myIndex
+		needed := HashProductID(productID)
+		return Product{}, fmt.Errorf("request for productID %v made to shard %v, but needed to be %v", productID, idx, needed) // NotFoundError{}
 	}
 	return p, nil
 }
@@ -178,7 +172,9 @@ func (s *impl) GetProducts(ctx context.Context, productIDs []string, _ int) ([]P
 	for i, pid := range productIDs {
 		p, ok := s.db[pid]
 		if !ok {
-			return nil, NotFoundError{}
+			idx := s.myIndex
+			needed := HashProductID(pid)
+			return nil, fmt.Errorf("request for productID %v made to shard %v, but needed to be %v", pid, idx, needed)
 		}
 		products[i] = p
 	}

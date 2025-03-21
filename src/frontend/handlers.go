@@ -84,7 +84,7 @@ func (fe *Server) homeHandler(w http.ResponseWriter, r *http.Request) {
 	wg := sync.WaitGroup{}
 	wg.Add(productcatalogservice.ProductCatalogReplicas)
 	errChan := make(chan error, productcatalogservice.ProductCatalogReplicas)
-	for shard := 0; shard < productcatalogservice.ProductCatalogReplicas; shard++ {
+	for shard := 1; shard < productcatalogservice.ProductCatalogReplicas+1; shard++ {
 		go func(shard int) {
 			// Routing key that will route to the correct shard.
 			key := fe.catalogRoutingTable[shard]
@@ -92,7 +92,7 @@ func (fe *Server) homeHandler(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				errChan <- err
 			} else {
-				productShards[shard] = prods
+				productShards[shard-1] = prods
 			}
 			wg.Done()
 		}(shard)
@@ -169,10 +169,11 @@ func (fe *Server) productHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	logger.Debug("serving product page", "id", id, "currency", currentCurrency(r))
-
-	p, err := fe.catalogService.Get().GetProduct(r.Context(), id, fe.catalogRoutingTable[productcatalogservice.HashProductID(id)])
+	shard := productcatalogservice.HashProductID(id)
+	p, err := fe.catalogService.Get().GetProduct(r.Context(), id, fe.catalogRoutingTable[shard])
+	// p, err := fe.catalogService.Get().GetProduct(r.Context(), id, productcatalogservice.HashProductID(id))
 	if err != nil {
-		fe.renderHTTPError(r, w, fmt.Errorf("could not retrieve product: %w", err), http.StatusInternalServerError)
+		fe.renderHTTPError(r, w, fmt.Errorf("could not retrieve product in shard %v: %w", shard, err), http.StatusInternalServerError)
 		return
 	}
 	currencies, err := fe.getCurrencies(r.Context())
@@ -224,6 +225,7 @@ func (fe *Server) productHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (fe *Server) cartHandler(w http.ResponseWriter, r *http.Request) {
+
 	if r.Method == http.MethodGet || r.Method == http.MethodHead {
 		fe.viewCartHandler(w, r)
 		return
@@ -246,10 +248,11 @@ func (fe *Server) addToCartHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	logger.Debug("adding to cart", "product", productID, "quantity", quantity)
-
-	p, err := fe.catalogService.Get().GetProduct(r.Context(), productID, fe.catalogRoutingTable[productcatalogservice.HashProductID(productID)])
+	shard := productcatalogservice.HashProductID(productID)
+	p, err := fe.catalogService.Get().GetProduct(r.Context(), productID, fe.catalogRoutingTable[shard])
+	// p, err := fe.catalogService.Get().GetProduct(r.Context(), productID, productcatalogservice.HashProductID(productID))
 	if err != nil {
-		fe.renderHTTPError(r, w, fmt.Errorf("could not retrieve product: %w", err), http.StatusInternalServerError)
+		fe.renderHTTPError(r, w, fmt.Errorf("could not retrieve product at shard %v: %w", shard, err), http.StatusInternalServerError)
 		return
 	}
 
@@ -311,9 +314,11 @@ func (fe *Server) viewCartHandler(w http.ResponseWriter, r *http.Request) {
 	items := make([]cartItemView, len(cart))
 	totalPrice := money.T{CurrencyCode: currentCurrency(r)}
 	for i, item := range cart {
-		p, err := fe.catalogService.Get().GetProduct(r.Context(), item.ProductID, fe.catalogRoutingTable[productcatalogservice.HashProductID(item.ProductID)])
+		shard := productcatalogservice.HashProductID(item.ProductID)
+		p, err := fe.catalogService.Get().GetProduct(r.Context(), item.ProductID, fe.catalogRoutingTable[shard])
+		// p, err := fe.catalogService.Get().GetProduct(r.Context(), item.ProductID, productcatalogservice.HashProductID(item.ProductID))
 		if err != nil {
-			fe.renderHTTPError(r, w, fmt.Errorf("could not retrieve product #%s: %w", item.ProductID, err), http.StatusInternalServerError)
+			fe.renderHTTPError(r, w, fmt.Errorf("could not retrieve product #%s at %v: %w", item.ProductID, shard, err), http.StatusInternalServerError)
 			return
 		}
 		price, err := fe.convertCurrency(r.Context(), p.PriceUSD, currentCurrency(r))
@@ -503,15 +508,19 @@ func (fe *Server) getShippingQuote(ctx context.Context, items []cartservice.Cart
 }
 
 func (fe *Server) getRecommendations(ctx context.Context, userID string, productIDs []string) ([]productcatalogservice.Product, error) {
+
 	recommendationIDs, err := fe.recommendationService.Get().ListRecommendations(ctx, userID, productIDs)
 	if err != nil {
 		return nil, err
 	}
 	out := make([]productcatalogservice.Product, len(recommendationIDs))
 	for i, id := range recommendationIDs {
-		p, err := fe.catalogService.Get().GetProduct(ctx, id, fe.catalogRoutingTable[productcatalogservice.HashProductID(id)])
+		shard := productcatalogservice.HashProductID(id)
+		p, err := fe.catalogService.Get().GetProduct(ctx, id, fe.catalogRoutingTable[shard])
+		// p, err := fe.catalogService.Get().GetProduct(ctx, id, productcatalogservice.HashProductID(id))
+
 		if err != nil {
-			return nil, fmt.Errorf("failed to get recommended product info (#%s): %w", id, err)
+			return nil, fmt.Errorf("failed to get recommended product info (#%s) at shard %v: %w", id, shard, err)
 		}
 		out[i] = p
 	}
