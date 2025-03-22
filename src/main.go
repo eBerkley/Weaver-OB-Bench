@@ -28,8 +28,8 @@ import (
 	"flag"
 	"log"
 
-	"github.com/ServiceWeaver/onlineboutique/frontend"
-	"github.com/ServiceWeaver/weaver"
+	"github.com/eBerkley/Weaver-OB-Bench/frontend"
+	"github.com/eberkley/weaver"
 )
 
 //go:generate weaver generate ./...

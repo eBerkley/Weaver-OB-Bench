@@ -7,11 +7,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/ServiceWeaver/onlineboutique/paymentservice"
-	"github.com/ServiceWeaver/onlineboutique/shippingservice"
-	"github.com/ServiceWeaver/onlineboutique/types"
-	"github.com/ServiceWeaver/weaver"
-	"github.com/ServiceWeaver/weaver/runtime/codegen"
+	"github.com/eBerkley/Weaver-OB-Bench/paymentservice"
+	"github.com/eBerkley/Weaver-OB-Bench/shippingservice"
+	"github.com/eBerkley/Weaver-OB-Bench/types"
+	"github.com/eberkley/weaver"
+	"github.com/eberkley/weaver/runtime/codegen"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	"reflect"
@@ -19,14 +19,14 @@ import (
 
 func init() {
 	codegen.Register(codegen.Registration{
-		Name:  "github.com/ServiceWeaver/onlineboutique/checkoutservice/CheckoutService",
+		Name:  "github.com/eBerkley/Weaver-OB-Bench/checkoutservice/CheckoutService",
 		Iface: reflect.TypeOf((*CheckoutService)(nil)).Elem(),
 		Impl:  reflect.TypeOf(impl{}),
 		LocalStubFn: func(impl any, caller string, tracer trace.Tracer) any {
-			return checkoutService_local_stub{impl: impl.(CheckoutService), tracer: tracer, placeOrderMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/ServiceWeaver/onlineboutique/checkoutservice/CheckoutService", Method: "PlaceOrder", Remote: false, Generated: true})}
+			return checkoutService_local_stub{impl: impl.(CheckoutService), tracer: tracer, placeOrderMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/checkoutservice/CheckoutService", Method: "PlaceOrder", Remote: false, Generated: true})}
 		},
 		ClientStubFn: func(stub codegen.Stub, caller string) any {
-			return checkoutService_client_stub{stub: stub, placeOrderMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/ServiceWeaver/onlineboutique/checkoutservice/CheckoutService", Method: "PlaceOrder", Remote: true, Generated: true})}
+			return checkoutService_client_stub{stub: stub, placeOrderMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/checkoutservice/CheckoutService", Method: "PlaceOrder", Remote: true, Generated: true})}
 		},
 		ServerStubFn: func(impl any, addLoad func(uint64, float64)) codegen.Server {
 			return checkoutService_server_stub{impl: impl.(CheckoutService), addLoad: addLoad}
@@ -34,7 +34,10 @@ func init() {
 		ReflectStubFn: func(caller func(string, context.Context, []any, []any) error) any {
 			return checkoutService_reflect_stub{caller: caller}
 		},
-		RefData: "⟦3c20d0cc:wEaVeReDgE:github.com/ServiceWeaver/onlineboutique/checkoutservice/CheckoutService→github.com/ServiceWeaver/onlineboutique/productcatalogservice/ProductCatalogService⟧\n⟦eea5d395:wEaVeReDgE:github.com/ServiceWeaver/onlineboutique/checkoutservice/CheckoutService→github.com/ServiceWeaver/onlineboutique/cartservice/CartService⟧\n⟦c2b535dd:wEaVeReDgE:github.com/ServiceWeaver/onlineboutique/checkoutservice/CheckoutService→github.com/ServiceWeaver/onlineboutique/currencyservice/CurrencyService⟧\n⟦48b34240:wEaVeReDgE:github.com/ServiceWeaver/onlineboutique/checkoutservice/CheckoutService→github.com/ServiceWeaver/onlineboutique/shippingservice/ShippingService⟧\n⟦e3a5f8ee:wEaVeReDgE:github.com/ServiceWeaver/onlineboutique/checkoutservice/CheckoutService→github.com/ServiceWeaver/onlineboutique/emailservice/EmailService⟧\n⟦3e18f39d:wEaVeReDgE:github.com/ServiceWeaver/onlineboutique/checkoutservice/CheckoutService→github.com/ServiceWeaver/onlineboutique/paymentservice/PaymentService⟧\n",
+		RoutedLocalStubFn: func(impl any, stub codegen.Stub, caller string, tracer trace.Tracer, isLocal func(shardKey uint64) bool) any {
+			return checkoutService_routed_local_stub{impl: impl.(CheckoutService), stub: stub, tracer: tracer, isLocal: isLocal, placeOrderMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/checkoutservice/CheckoutService", Method: "PlaceOrder", Remote: true, Generated: true})}
+		},
+		RefData: "⟦f5de912c:wEaVeReDgE:github.com/eBerkley/Weaver-OB-Bench/checkoutservice/CheckoutService→github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService⟧\n⟦4d27fb24:wEaVeReDgE:github.com/eBerkley/Weaver-OB-Bench/checkoutservice/CheckoutService→github.com/eBerkley/Weaver-OB-Bench/cartservice/CartService⟧\n⟦1e6f18f9:wEaVeReDgE:github.com/eBerkley/Weaver-OB-Bench/checkoutservice/CheckoutService→github.com/eBerkley/Weaver-OB-Bench/currencyservice/CurrencyService⟧\n⟦9789d5cc:wEaVeReDgE:github.com/eBerkley/Weaver-OB-Bench/checkoutservice/CheckoutService→github.com/eBerkley/Weaver-OB-Bench/shippingservice/ShippingService⟧\n⟦839a6065:wEaVeReDgE:github.com/eBerkley/Weaver-OB-Bench/checkoutservice/CheckoutService→github.com/eBerkley/Weaver-OB-Bench/emailservice/EmailService⟧\n⟦6c526366:wEaVeReDgE:github.com/eBerkley/Weaver-OB-Bench/checkoutservice/CheckoutService→github.com/eBerkley/Weaver-OB-Bench/paymentservice/PaymentService⟧\n",
 	})
 }
 
@@ -136,26 +139,45 @@ func (s checkoutService_client_stub) PlaceOrder(ctx context.Context, a0 PlaceOrd
 	return
 }
 
+// Routed local stub implementations.
+
+type checkoutService_routed_local_stub struct {
+	impl              CheckoutService
+	stub              codegen.Stub
+	tracer            trace.Tracer
+	isLocal           func(shardKey uint64) bool
+	placeOrderMetrics *codegen.MethodMetrics
+}
+
+// Check that checkoutService_routed_local_stub implements the CheckoutService interface.
+var _ CheckoutService = (*checkoutService_routed_local_stub)(nil)
+
+func (s checkoutService_routed_local_stub) PlaceOrder(ctx context.Context, a0 PlaceOrderRequest) (r0 types.Order, err error) {
+	err = errors.New("can not call routed local method on unrouted component")
+	err = errors.Join(weaver.RemoteCallError, err)
+	return
+}
+
 // Note that "weaver generate" will always generate the error message below.
 // Everything is okay. The error message is only relevant if you see it when
 // you run "go build" or "go run".
 var _ codegen.LatestVersion = codegen.Version[[0][24]struct{}](`
 
-ERROR: You generated this file with 'weaver generate' v0.24.6 (codegen
+ERROR: You generated this file with 'weaver generate' (devel) (codegen
 version v0.24.0). The generated code is incompatible with the version of the
-github.com/ServiceWeaver/weaver module that you're using. The weaver module
+github.com/eberkley/weaver module that you're using. The weaver module
 version can be found in your go.mod file or by running the following command.
 
-    go list -m github.com/ServiceWeaver/weaver
+    go list -m github.com/eberkley/weaver
 
 We recommend updating the weaver module and the 'weaver generate' command by
 running the following.
 
-    go get github.com/ServiceWeaver/weaver@latest
-    go install github.com/ServiceWeaver/weaver/cmd/weaver@latest
+    go get github.com/eberkley/weaver@latest
+    go install github.com/eberkley/weaver/cmd/weaver@latest
 
 Then, re-run 'weaver generate' and re-build your code. If the problem persists,
-please file an issue at https://github.com/ServiceWeaver/weaver/issues.
+please file an issue at https://github.com/eberkley/weaver/issues.
 
 `)
 

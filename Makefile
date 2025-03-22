@@ -3,6 +3,7 @@ TOP := .
 include auto/paths.mk
 
 WEAVER_KUBE ?= ./weaver-kube/cmd/weaver-kube/weaver-kube # weaver-kube
+WEAVER ?= ./weaver/cmd/weaver/weaver # weaver
 
 SHELL := /bin/bash
 CONFIG_FILE ?= CONFIG.cfg
@@ -53,6 +54,7 @@ pre_deploy: check_docker check_loadgen $(WEAVER_GEN_YAML) $(LOAD_GEN_YAML)
 	@./scripts/checks/check_numa_balance.sh
 	
 	@echo 																															| tee -a $(LOGS_FILE)
+	@echo "bench type:                    $$BENCH_TYPE"									| tee -a $(LOGS_FILE)
 	@echo "scheme:                        $$SCHEME"											| tee -a $(LOGS_FILE)
 	@echo "cscheme:                       $$C_SCHEME"										| tee -a $(LOGS_FILE)
 	@echo "loadshape:                     $$LOCUST_SHAPE"								| tee -a $(LOGS_FILE)
@@ -96,6 +98,9 @@ bench_all: clear_logs
 	@echo 
 	./make_scripts/bench_all.sh
 
+$(WEAVER):
+	go build -C weaver/cmd/weaver
+
 $(WEAVER_KUBE): 
 	go build -C weaver-kube/cmd/weaver-kube
 
@@ -124,7 +129,7 @@ $(LOAD_GEN_YAML): $(LOAD_SRC_ALL) $(VERSION_FILE) $(LOAD_BASE_YAML) $(CONFIG_FIL
 #	Update binary
 $(BIN): $(MAIN_SRC)
 	@echo rebuilding binary...
-
-	@cd $(SRC); weaver generate ./...; go build -o ../release/generated; cd ..
-	@mv release/generated/onlineboutique release/generated/ob
+	
+	@cd $(SRC); ../$(WEAVER) generate ./...; go build -o ../release/generated; cd ..
+	@mv release/generated/Weaver-OB-Bench release/generated/ob
 

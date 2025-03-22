@@ -24,14 +24,14 @@ import (
 	"os"
 	"slices"
 
-	"github.com/ServiceWeaver/onlineboutique/adservice"
-	"github.com/ServiceWeaver/onlineboutique/cartservice"
-	"github.com/ServiceWeaver/onlineboutique/checkoutservice"
-	"github.com/ServiceWeaver/onlineboutique/currencyservice"
-	"github.com/ServiceWeaver/onlineboutique/productcatalogservice"
-	"github.com/ServiceWeaver/onlineboutique/recommendationservice"
-	"github.com/ServiceWeaver/onlineboutique/shippingservice"
-	"github.com/ServiceWeaver/weaver"
+	"github.com/eBerkley/Weaver-OB-Bench/adservice"
+	"github.com/eBerkley/Weaver-OB-Bench/cartservice"
+	"github.com/eBerkley/Weaver-OB-Bench/checkoutservice"
+	"github.com/eBerkley/Weaver-OB-Bench/currencyservice"
+	"github.com/eBerkley/Weaver-OB-Bench/productcatalogservice"
+	"github.com/eBerkley/Weaver-OB-Bench/recommendationservice"
+	"github.com/eBerkley/Weaver-OB-Bench/shippingservice"
+	"github.com/eberkley/weaver"
 	_ "go.uber.org/automaxprocs"
 )
 
@@ -72,6 +72,15 @@ type Server struct {
 	adService             weaver.Ref[adservice.AdService]
 
 	boutique weaver.Listener
+
+	catalogRoutingTable productcatalogservice.ProductRoutingTable
+}
+
+func (fe *Server) Init(ctx context.Context) error {
+
+	fe.catalogRoutingTable = productcatalogservice.GetRoutingTable(&fe.catalogService)
+	fe.Logger(ctx).Info(fmt.Sprintf("frontend routing table: %v", fe.catalogRoutingTable))
+	return nil
 }
 
 func Serve(ctx context.Context, s *Server) error {
@@ -84,6 +93,7 @@ func Serve(ctx context.Context, s *Server) error {
 		fmt.Println("env platform is either empty or invalid")
 		env = "local"
 	}
+
 	// Autodetect GCP
 	addrs, err := net.LookupHost("metadata.google.internal.")
 	if err == nil && len(addrs) >= 0 {

@@ -7,8 +7,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/ServiceWeaver/weaver"
-	"github.com/ServiceWeaver/weaver/runtime/codegen"
+	"github.com/eberkley/weaver"
+	"github.com/eberkley/weaver/runtime/codegen"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	"reflect"
@@ -16,14 +16,14 @@ import (
 
 func init() {
 	codegen.Register(codegen.Registration{
-		Name:  "github.com/ServiceWeaver/onlineboutique/cartservice/CartService",
+		Name:  "github.com/eBerkley/Weaver-OB-Bench/cartservice/CartService",
 		Iface: reflect.TypeOf((*CartService)(nil)).Elem(),
 		Impl:  reflect.TypeOf(impl{}),
 		LocalStubFn: func(impl any, caller string, tracer trace.Tracer) any {
-			return cartService_local_stub{impl: impl.(CartService), tracer: tracer, addItemMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/ServiceWeaver/onlineboutique/cartservice/CartService", Method: "AddItem", Remote: false, Generated: true}), emptyCartMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/ServiceWeaver/onlineboutique/cartservice/CartService", Method: "EmptyCart", Remote: false, Generated: true}), getCartMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/ServiceWeaver/onlineboutique/cartservice/CartService", Method: "GetCart", Remote: false, Generated: true})}
+			return cartService_local_stub{impl: impl.(CartService), tracer: tracer, addItemMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/cartservice/CartService", Method: "AddItem", Remote: false, Generated: true}), emptyCartMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/cartservice/CartService", Method: "EmptyCart", Remote: false, Generated: true}), getCartMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/cartservice/CartService", Method: "GetCart", Remote: false, Generated: true})}
 		},
 		ClientStubFn: func(stub codegen.Stub, caller string) any {
-			return cartService_client_stub{stub: stub, addItemMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/ServiceWeaver/onlineboutique/cartservice/CartService", Method: "AddItem", Remote: true, Generated: true}), emptyCartMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/ServiceWeaver/onlineboutique/cartservice/CartService", Method: "EmptyCart", Remote: true, Generated: true}), getCartMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/ServiceWeaver/onlineboutique/cartservice/CartService", Method: "GetCart", Remote: true, Generated: true})}
+			return cartService_client_stub{stub: stub, addItemMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/cartservice/CartService", Method: "AddItem", Remote: true, Generated: true}), emptyCartMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/cartservice/CartService", Method: "EmptyCart", Remote: true, Generated: true}), getCartMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/cartservice/CartService", Method: "GetCart", Remote: true, Generated: true})}
 		},
 		ServerStubFn: func(impl any, addLoad func(uint64, float64)) codegen.Server {
 			return cartService_server_stub{impl: impl.(CartService), addLoad: addLoad}
@@ -31,24 +31,30 @@ func init() {
 		ReflectStubFn: func(caller func(string, context.Context, []any, []any) error) any {
 			return cartService_reflect_stub{caller: caller}
 		},
-		RefData: "⟦dccb8147:wEaVeReDgE:github.com/ServiceWeaver/onlineboutique/cartservice/CartService→github.com/ServiceWeaver/onlineboutique/cartservice/cartCache⟧\n",
+		RoutedLocalStubFn: func(impl any, stub codegen.Stub, caller string, tracer trace.Tracer, isLocal func(shardKey uint64) bool) any {
+			return cartService_routed_local_stub{impl: impl.(CartService), stub: stub, tracer: tracer, isLocal: isLocal, addItemMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/cartservice/CartService", Method: "AddItem", Remote: true, Generated: true}), emptyCartMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/cartservice/CartService", Method: "EmptyCart", Remote: true, Generated: true}), getCartMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/cartservice/CartService", Method: "GetCart", Remote: true, Generated: true})}
+		},
+		RefData: "⟦0aa0e781:wEaVeReDgE:github.com/eBerkley/Weaver-OB-Bench/cartservice/CartService→github.com/eBerkley/Weaver-OB-Bench/cartservice/cartCache⟧\n",
 	})
 	codegen.Register(codegen.Registration{
-		Name:   "github.com/ServiceWeaver/onlineboutique/cartservice/cartCache",
+		Name:   "github.com/eBerkley/Weaver-OB-Bench/cartservice/cartCache",
 		Iface:  reflect.TypeOf((*cartCache)(nil)).Elem(),
 		Impl:   reflect.TypeOf(cartCacheImpl{}),
 		Routed: true,
 		LocalStubFn: func(impl any, caller string, tracer trace.Tracer) any {
-			return cartCache_local_stub{impl: impl.(cartCache), tracer: tracer, addMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/ServiceWeaver/onlineboutique/cartservice/cartCache", Method: "Add", Remote: false, Generated: true}), getMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/ServiceWeaver/onlineboutique/cartservice/cartCache", Method: "Get", Remote: false, Generated: true}), removeMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/ServiceWeaver/onlineboutique/cartservice/cartCache", Method: "Remove", Remote: false, Generated: true})}
+			return cartCache_local_stub{impl: impl.(cartCache), tracer: tracer, addMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/cartservice/cartCache", Method: "Add", Remote: false, Generated: true}), getMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/cartservice/cartCache", Method: "Get", Remote: false, Generated: true}), removeMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/cartservice/cartCache", Method: "Remove", Remote: false, Generated: true})}
 		},
 		ClientStubFn: func(stub codegen.Stub, caller string) any {
-			return cartCache_client_stub{stub: stub, addMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/ServiceWeaver/onlineboutique/cartservice/cartCache", Method: "Add", Remote: true, Generated: true}), getMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/ServiceWeaver/onlineboutique/cartservice/cartCache", Method: "Get", Remote: true, Generated: true}), removeMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/ServiceWeaver/onlineboutique/cartservice/cartCache", Method: "Remove", Remote: true, Generated: true})}
+			return cartCache_client_stub{stub: stub, addMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/cartservice/cartCache", Method: "Add", Remote: true, Generated: true}), getMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/cartservice/cartCache", Method: "Get", Remote: true, Generated: true}), removeMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/cartservice/cartCache", Method: "Remove", Remote: true, Generated: true})}
 		},
 		ServerStubFn: func(impl any, addLoad func(uint64, float64)) codegen.Server {
 			return cartCache_server_stub{impl: impl.(cartCache), addLoad: addLoad}
 		},
 		ReflectStubFn: func(caller func(string, context.Context, []any, []any) error) any {
 			return cartCache_reflect_stub{caller: caller}
+		},
+		RoutedLocalStubFn: func(impl any, stub codegen.Stub, caller string, tracer trace.Tracer, isLocal func(shardKey uint64) bool) any {
+			return cartCache_routed_local_stub{impl: impl.(cartCache), stub: stub, tracer: tracer, isLocal: isLocal, addMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/cartservice/cartCache", Method: "Add", Remote: true, Generated: true}), getMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/cartservice/cartCache", Method: "Get", Remote: true, Generated: true}), removeMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/cartservice/cartCache", Method: "Remove", Remote: true, Generated: true})}
 		},
 		RefData: "",
 	})
@@ -255,7 +261,7 @@ func (s cartService_client_stub) AddItem(ctx context.Context, a0 string, a1 Cart
 	// Preallocate a buffer of the right size.
 	size := 0
 	size += (4 + len(a0))
-	size += serviceweaver_size_CartItem_5836939b(&a1)
+	size += serviceweaver_size_CartItem_2c5f3d90(&a1)
 	enc := codegen.NewEncoder()
 	enc.Reset(size)
 
@@ -386,7 +392,7 @@ func (s cartService_client_stub) GetCart(ctx context.Context, a0 string) (r0 []C
 
 	// Decode the results.
 	dec := codegen.NewDecoder(results)
-	r0 = serviceweaver_dec_slice_CartItem_7164ef85(dec)
+	r0 = serviceweaver_dec_slice_CartItem_2f1b43d4(dec)
 	err = dec.Error()
 	return
 }
@@ -433,7 +439,7 @@ func (s cartCache_client_stub) Add(ctx context.Context, a0 string, a1 []CartItem
 	// Encode arguments.
 	enc := codegen.NewEncoder()
 	enc.String(a0)
-	serviceweaver_enc_slice_CartItem_7164ef85(enc, a1)
+	serviceweaver_enc_slice_CartItem_2f1b43d4(enc, a1)
 
 	// Set the shardKey.
 	var r cartCacheRouter
@@ -509,7 +515,7 @@ func (s cartCache_client_stub) Get(ctx context.Context, a0 string) (r0 []CartIte
 
 	// Decode the results.
 	dec := codegen.NewDecoder(results)
-	r0 = serviceweaver_dec_slice_CartItem_7164ef85(dec)
+	r0 = serviceweaver_dec_slice_CartItem_2f1b43d4(dec)
 	err = dec.Error()
 	return
 }
@@ -573,26 +579,277 @@ func (s cartCache_client_stub) Remove(ctx context.Context, a0 string) (r0 bool, 
 	return
 }
 
+// Routed local stub implementations.
+
+type cartService_routed_local_stub struct {
+	impl             CartService
+	stub             codegen.Stub
+	tracer           trace.Tracer
+	isLocal          func(shardKey uint64) bool
+	addItemMetrics   *codegen.MethodMetrics
+	emptyCartMetrics *codegen.MethodMetrics
+	getCartMetrics   *codegen.MethodMetrics
+}
+
+// Check that cartService_routed_local_stub implements the CartService interface.
+var _ CartService = (*cartService_routed_local_stub)(nil)
+
+func (s cartService_routed_local_stub) AddItem(ctx context.Context, a0 string, a1 CartItem) (err error) {
+	err = errors.New("can not call routed local method on unrouted component")
+	err = errors.Join(weaver.RemoteCallError, err)
+	return
+}
+
+func (s cartService_routed_local_stub) EmptyCart(ctx context.Context, a0 string) (err error) {
+	err = errors.New("can not call routed local method on unrouted component")
+	err = errors.Join(weaver.RemoteCallError, err)
+	return
+}
+
+func (s cartService_routed_local_stub) GetCart(ctx context.Context, a0 string) (r0 []CartItem, err error) {
+	err = errors.New("can not call routed local method on unrouted component")
+	err = errors.Join(weaver.RemoteCallError, err)
+	return
+}
+
+type cartCache_routed_local_stub struct {
+	impl          cartCache
+	stub          codegen.Stub
+	tracer        trace.Tracer
+	isLocal       func(shardKey uint64) bool
+	addMetrics    *codegen.MethodMetrics
+	getMetrics    *codegen.MethodMetrics
+	removeMetrics *codegen.MethodMetrics
+}
+
+// Check that cartCache_routed_local_stub implements the cartCache interface.
+var _ cartCache = (*cartCache_routed_local_stub)(nil)
+
+func (s cartCache_routed_local_stub) Add(ctx context.Context, a0 string, a1 []CartItem) (err error) {
+	// Update metrics.
+	var requestBytes, replyBytes int
+	begin := s.addMetrics.Begin()
+	defer func() { s.addMetrics.End(begin, err != nil, requestBytes, replyBytes) }()
+
+	span := trace.SpanFromContext(ctx)
+	if span.SpanContext().IsValid() {
+		// Create a child span for this method.
+		ctx, span = s.stub.Tracer().Start(ctx, "cartservice.cartCache.Add", trace.WithSpanKind(trace.SpanKindClient))
+		defer func() {
+			if err != nil {
+				span.RecordError(err)
+				span.SetStatus(codes.Error, err.Error())
+			}
+			span.End()
+		}()
+	}
+
+	// Set the shardKey.
+	var r cartCacheRouter
+	shardKey := _hashCartCache(r.Add(ctx, a0, a1))
+	if s.isLocal(shardKey) {
+		err = s.impl.Add(ctx, a0, a1)
+		return
+	}
+
+	defer func() {
+		// Catch and return any panics detected during encoding/decoding/rpc.
+		if err == nil {
+			err = codegen.CatchPanics(recover())
+			if err != nil {
+				err = errors.Join(weaver.RemoteCallError, err)
+			}
+		}
+
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+		}
+		span.End()
+
+	}()
+
+	// Encode arguments.
+	enc := codegen.NewEncoder()
+	enc.String(a0)
+	serviceweaver_enc_slice_CartItem_2f1b43d4(enc, a1)
+
+	// Call the remote method.
+	requestBytes = len(enc.Data())
+	var results []byte
+	results, err = s.stub.Run(ctx, 0, enc.Data(), shardKey)
+	replyBytes = len(results)
+	if err != nil {
+		err = errors.Join(weaver.RemoteCallError, err)
+		return
+	}
+
+	// Decode the results.
+	dec := codegen.NewDecoder(results)
+	err = dec.Error()
+	return
+}
+
+func (s cartCache_routed_local_stub) Get(ctx context.Context, a0 string) (r0 []CartItem, err error) {
+	// Update metrics.
+	var requestBytes, replyBytes int
+	begin := s.getMetrics.Begin()
+	defer func() { s.getMetrics.End(begin, err != nil, requestBytes, replyBytes) }()
+
+	span := trace.SpanFromContext(ctx)
+	if span.SpanContext().IsValid() {
+		// Create a child span for this method.
+		ctx, span = s.stub.Tracer().Start(ctx, "cartservice.cartCache.Get", trace.WithSpanKind(trace.SpanKindClient))
+		defer func() {
+			if err != nil {
+				span.RecordError(err)
+				span.SetStatus(codes.Error, err.Error())
+			}
+			span.End()
+		}()
+	}
+
+	// Set the shardKey.
+	var r cartCacheRouter
+	shardKey := _hashCartCache(r.Get(ctx, a0))
+	if s.isLocal(shardKey) {
+		r0, err = s.impl.Get(ctx, a0)
+		return
+	}
+
+	defer func() {
+		// Catch and return any panics detected during encoding/decoding/rpc.
+		if err == nil {
+			err = codegen.CatchPanics(recover())
+			if err != nil {
+				err = errors.Join(weaver.RemoteCallError, err)
+			}
+		}
+
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+		}
+		span.End()
+
+	}()
+
+	// Preallocate a buffer of the right size.
+	size := 0
+	size += (4 + len(a0))
+	enc := codegen.NewEncoder()
+	enc.Reset(size)
+
+	// Encode arguments.
+	enc.String(a0)
+
+	// Call the remote method.
+	requestBytes = len(enc.Data())
+	var results []byte
+	results, err = s.stub.Run(ctx, 1, enc.Data(), shardKey)
+	replyBytes = len(results)
+	if err != nil {
+		err = errors.Join(weaver.RemoteCallError, err)
+		return
+	}
+
+	// Decode the results.
+	dec := codegen.NewDecoder(results)
+	r0 = serviceweaver_dec_slice_CartItem_2f1b43d4(dec)
+	err = dec.Error()
+	return
+}
+
+func (s cartCache_routed_local_stub) Remove(ctx context.Context, a0 string) (r0 bool, err error) {
+	// Update metrics.
+	var requestBytes, replyBytes int
+	begin := s.removeMetrics.Begin()
+	defer func() { s.removeMetrics.End(begin, err != nil, requestBytes, replyBytes) }()
+
+	span := trace.SpanFromContext(ctx)
+	if span.SpanContext().IsValid() {
+		// Create a child span for this method.
+		ctx, span = s.stub.Tracer().Start(ctx, "cartservice.cartCache.Remove", trace.WithSpanKind(trace.SpanKindClient))
+		defer func() {
+			if err != nil {
+				span.RecordError(err)
+				span.SetStatus(codes.Error, err.Error())
+			}
+			span.End()
+		}()
+	}
+
+	// Set the shardKey.
+	var r cartCacheRouter
+	shardKey := _hashCartCache(r.Remove(ctx, a0))
+	if s.isLocal(shardKey) {
+		r0, err = s.impl.Remove(ctx, a0)
+		return
+	}
+
+	defer func() {
+		// Catch and return any panics detected during encoding/decoding/rpc.
+		if err == nil {
+			err = codegen.CatchPanics(recover())
+			if err != nil {
+				err = errors.Join(weaver.RemoteCallError, err)
+			}
+		}
+
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, err.Error())
+		}
+		span.End()
+
+	}()
+
+	// Preallocate a buffer of the right size.
+	size := 0
+	size += (4 + len(a0))
+	enc := codegen.NewEncoder()
+	enc.Reset(size)
+
+	// Encode arguments.
+	enc.String(a0)
+
+	// Call the remote method.
+	requestBytes = len(enc.Data())
+	var results []byte
+	results, err = s.stub.Run(ctx, 2, enc.Data(), shardKey)
+	replyBytes = len(results)
+	if err != nil {
+		err = errors.Join(weaver.RemoteCallError, err)
+		return
+	}
+
+	// Decode the results.
+	dec := codegen.NewDecoder(results)
+	r0 = dec.Bool()
+	err = dec.Error()
+	return
+}
+
 // Note that "weaver generate" will always generate the error message below.
 // Everything is okay. The error message is only relevant if you see it when
 // you run "go build" or "go run".
 var _ codegen.LatestVersion = codegen.Version[[0][24]struct{}](`
 
-ERROR: You generated this file with 'weaver generate' v0.24.6 (codegen
+ERROR: You generated this file with 'weaver generate' (devel) (codegen
 version v0.24.0). The generated code is incompatible with the version of the
-github.com/ServiceWeaver/weaver module that you're using. The weaver module
+github.com/eberkley/weaver module that you're using. The weaver module
 version can be found in your go.mod file or by running the following command.
 
-    go list -m github.com/ServiceWeaver/weaver
+    go list -m github.com/eberkley/weaver
 
 We recommend updating the weaver module and the 'weaver generate' command by
 running the following.
 
-    go get github.com/ServiceWeaver/weaver@latest
-    go install github.com/ServiceWeaver/weaver/cmd/weaver@latest
+    go get github.com/eberkley/weaver@latest
+    go install github.com/eberkley/weaver/cmd/weaver@latest
 
 Then, re-run 'weaver generate' and re-build your code. If the problem persists,
-please file an issue at https://github.com/ServiceWeaver/weaver/issues.
+please file an issue at https://github.com/eberkley/weaver/issues.
 
 `)
 
@@ -690,7 +947,7 @@ func (s cartService_server_stub) getCart(ctx context.Context, args []byte) (res 
 
 	// Encode the results.
 	enc := codegen.NewEncoder()
-	serviceweaver_enc_slice_CartItem_7164ef85(enc, r0)
+	serviceweaver_enc_slice_CartItem_2f1b43d4(enc, r0)
 	enc.Error(appErr)
 	return enc.Data(), nil
 }
@@ -730,7 +987,7 @@ func (s cartCache_server_stub) add(ctx context.Context, args []byte) (res []byte
 	var a0 string
 	a0 = dec.String()
 	var a1 []CartItem
-	a1 = serviceweaver_dec_slice_CartItem_7164ef85(dec)
+	a1 = serviceweaver_dec_slice_CartItem_2f1b43d4(dec)
 	var r cartCacheRouter
 	s.addLoad(_hashCartCache(r.Add(ctx, a0, a1)), 1.0)
 
@@ -767,7 +1024,7 @@ func (s cartCache_server_stub) get(ctx context.Context, args []byte) (res []byte
 
 	// Encode the results.
 	enc := codegen.NewEncoder()
-	serviceweaver_enc_slice_CartItem_7164ef85(enc, r0)
+	serviceweaver_enc_slice_CartItem_2f1b43d4(enc, r0)
 	enc.Error(appErr)
 	return enc.Data(), nil
 }
@@ -891,7 +1148,7 @@ func _orderedCodeCartCache(r string) codegen.OrderedCode {
 
 // Encoding/decoding implementations.
 
-func serviceweaver_enc_slice_CartItem_7164ef85(enc *codegen.Encoder, arg []CartItem) {
+func serviceweaver_enc_slice_CartItem_2f1b43d4(enc *codegen.Encoder, arg []CartItem) {
 	if arg == nil {
 		enc.Len(-1)
 		return
@@ -902,7 +1159,7 @@ func serviceweaver_enc_slice_CartItem_7164ef85(enc *codegen.Encoder, arg []CartI
 	}
 }
 
-func serviceweaver_dec_slice_CartItem_7164ef85(dec *codegen.Decoder) []CartItem {
+func serviceweaver_dec_slice_CartItem_2f1b43d4(dec *codegen.Decoder) []CartItem {
 	n := dec.Len()
 	if n == -1 {
 		return nil
@@ -916,9 +1173,9 @@ func serviceweaver_dec_slice_CartItem_7164ef85(dec *codegen.Decoder) []CartItem 
 
 // Size implementations.
 
-// serviceweaver_size_CartItem_5836939b returns the size (in bytes) of the serialization
+// serviceweaver_size_CartItem_2c5f3d90 returns the size (in bytes) of the serialization
 // of the provided type.
-func serviceweaver_size_CartItem_5836939b(x *CartItem) int {
+func serviceweaver_size_CartItem_2c5f3d90(x *CartItem) int {
 	size := 0
 	size += 0
 	size += (4 + len(x.ProductID))

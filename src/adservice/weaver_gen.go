@@ -7,8 +7,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/ServiceWeaver/weaver"
-	"github.com/ServiceWeaver/weaver/runtime/codegen"
+	"github.com/eberkley/weaver"
+	"github.com/eberkley/weaver/runtime/codegen"
 	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/trace"
 	"reflect"
@@ -16,20 +16,23 @@ import (
 
 func init() {
 	codegen.Register(codegen.Registration{
-		Name:  "github.com/ServiceWeaver/onlineboutique/adservice/AdService",
+		Name:  "github.com/eBerkley/Weaver-OB-Bench/adservice/AdService",
 		Iface: reflect.TypeOf((*AdService)(nil)).Elem(),
 		Impl:  reflect.TypeOf(impl{}),
 		LocalStubFn: func(impl any, caller string, tracer trace.Tracer) any {
-			return adService_local_stub{impl: impl.(AdService), tracer: tracer, getAdsMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/ServiceWeaver/onlineboutique/adservice/AdService", Method: "GetAds", Remote: false, Generated: true})}
+			return adService_local_stub{impl: impl.(AdService), tracer: tracer, getAdsMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/adservice/AdService", Method: "GetAds", Remote: false, Generated: true})}
 		},
 		ClientStubFn: func(stub codegen.Stub, caller string) any {
-			return adService_client_stub{stub: stub, getAdsMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/ServiceWeaver/onlineboutique/adservice/AdService", Method: "GetAds", Remote: true, Generated: true})}
+			return adService_client_stub{stub: stub, getAdsMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/adservice/AdService", Method: "GetAds", Remote: true, Generated: true})}
 		},
 		ServerStubFn: func(impl any, addLoad func(uint64, float64)) codegen.Server {
 			return adService_server_stub{impl: impl.(AdService), addLoad: addLoad}
 		},
 		ReflectStubFn: func(caller func(string, context.Context, []any, []any) error) any {
 			return adService_reflect_stub{caller: caller}
+		},
+		RoutedLocalStubFn: func(impl any, stub codegen.Stub, caller string, tracer trace.Tracer, isLocal func(shardKey uint64) bool) any {
+			return adService_routed_local_stub{impl: impl.(AdService), stub: stub, tracer: tracer, isLocal: isLocal, getAdsMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/adservice/AdService", Method: "GetAds", Remote: true, Generated: true})}
 		},
 		RefData: "",
 	})
@@ -128,8 +131,27 @@ func (s adService_client_stub) GetAds(ctx context.Context, a0 []string) (r0 []Ad
 
 	// Decode the results.
 	dec := codegen.NewDecoder(results)
-	r0 = serviceweaver_dec_slice_Ad_ce85bfa7(dec)
+	r0 = serviceweaver_dec_slice_Ad_6e273d15(dec)
 	err = dec.Error()
+	return
+}
+
+// Routed local stub implementations.
+
+type adService_routed_local_stub struct {
+	impl          AdService
+	stub          codegen.Stub
+	tracer        trace.Tracer
+	isLocal       func(shardKey uint64) bool
+	getAdsMetrics *codegen.MethodMetrics
+}
+
+// Check that adService_routed_local_stub implements the AdService interface.
+var _ AdService = (*adService_routed_local_stub)(nil)
+
+func (s adService_routed_local_stub) GetAds(ctx context.Context, a0 []string) (r0 []Ad, err error) {
+	err = errors.New("can not call routed local method on unrouted component")
+	err = errors.Join(weaver.RemoteCallError, err)
 	return
 }
 
@@ -138,21 +160,21 @@ func (s adService_client_stub) GetAds(ctx context.Context, a0 []string) (r0 []Ad
 // you run "go build" or "go run".
 var _ codegen.LatestVersion = codegen.Version[[0][24]struct{}](`
 
-ERROR: You generated this file with 'weaver generate' v0.24.6 (codegen
+ERROR: You generated this file with 'weaver generate' (devel) (codegen
 version v0.24.0). The generated code is incompatible with the version of the
-github.com/ServiceWeaver/weaver module that you're using. The weaver module
+github.com/eberkley/weaver module that you're using. The weaver module
 version can be found in your go.mod file or by running the following command.
 
-    go list -m github.com/ServiceWeaver/weaver
+    go list -m github.com/eberkley/weaver
 
 We recommend updating the weaver module and the 'weaver generate' command by
 running the following.
 
-    go get github.com/ServiceWeaver/weaver@latest
-    go install github.com/ServiceWeaver/weaver/cmd/weaver@latest
+    go get github.com/eberkley/weaver@latest
+    go install github.com/eberkley/weaver/cmd/weaver@latest
 
 Then, re-run 'weaver generate' and re-build your code. If the problem persists,
-please file an issue at https://github.com/ServiceWeaver/weaver/issues.
+please file an issue at https://github.com/eberkley/weaver/issues.
 
 `)
 
@@ -196,7 +218,7 @@ func (s adService_server_stub) getAds(ctx context.Context, args []byte) (res []b
 
 	// Encode the results.
 	enc := codegen.NewEncoder()
-	serviceweaver_enc_slice_Ad_ce85bfa7(enc, r0)
+	serviceweaver_enc_slice_Ad_6e273d15(enc, r0)
 	enc.Error(appErr)
 	return enc.Data(), nil
 }
@@ -268,7 +290,7 @@ func serviceweaver_dec_slice_string_4af10117(dec *codegen.Decoder) []string {
 	return res
 }
 
-func serviceweaver_enc_slice_Ad_ce85bfa7(enc *codegen.Encoder, arg []Ad) {
+func serviceweaver_enc_slice_Ad_6e273d15(enc *codegen.Encoder, arg []Ad) {
 	if arg == nil {
 		enc.Len(-1)
 		return
@@ -279,7 +301,7 @@ func serviceweaver_enc_slice_Ad_ce85bfa7(enc *codegen.Encoder, arg []Ad) {
 	}
 }
 
-func serviceweaver_dec_slice_Ad_ce85bfa7(dec *codegen.Decoder) []Ad {
+func serviceweaver_dec_slice_Ad_6e273d15(dec *codegen.Decoder) []Ad {
 	n := dec.Len()
 	if n == -1 {
 		return nil

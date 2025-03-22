@@ -16,29 +16,29 @@ package productcatalogservice
 
 import (
 	"context"
-	_ "embed"
 	"encoding/json"
+	"math/rand"
+	"path"
+
+	"embed"
 	"fmt"
 	"os"
-	"os/signal"
+	"strconv"
 	"strings"
-	"sync"
-	"syscall"
-	"time"
 
-	"github.com/ServiceWeaver/onlineboutique/types/money"
-	"github.com/ServiceWeaver/weaver"
+	"github.com/eBerkley/Weaver-OB-Bench/types/money"
+	"github.com/eberkley/weaver"
 	_ "go.uber.org/automaxprocs"
 )
 
-var (
-	//go:embed products.json
-	catalogFileData []byte
+const (
+	maxProducts = 10
 )
 
-type NotFoundError struct{}
-
-func (e NotFoundError) Error() string { return "product not found" }
+var (
+	//go:embed products/*
+	catalogFileData embed.FS
+)
 
 type Product struct {
 	weaver.AutoMarshal
@@ -54,112 +54,142 @@ type Product struct {
 }
 
 type ProductCatalogService interface {
-	ListProducts(ctx context.Context) ([]Product, error)
-	GetProduct(ctx context.Context, productID string) (Product, error)
-	SearchProducts(ctx context.Context, query string) ([]Product, error)
+	ListProducts(ctx context.Context, routingKey int) ([]Product, error)
+	GetProduct(ctx context.Context, productID string, routingKey int) (Product, error)
+	GetProducts(ctx context.Context, productIDs []string, routingKey int) ([]Product, error)
+	SearchProducts(ctx context.Context, query string, routingKey int) ([]Product, error)
+	GetIndex(ctx context.Context, shard int) (int, error)
 }
+
+type ProductCatalogRouter struct{}
+
+func (r *ProductCatalogRouter) ListProducts(_ context.Context, shard int) int         { return shard }
+func (r *ProductCatalogRouter) GetProduct(_ context.Context, _ string, shard int) int { return shard }
+func (r *ProductCatalogRouter) GetProducts(_ context.Context, _ []string, shard int) int {
+	return shard
+}
+func (r *ProductCatalogRouter) SearchProducts(_ context.Context, _ string, shard int) int {
+	return shard
+}
+func (r *ProductCatalogRouter) GetIndex(_ context.Context, shard int) int { return shard }
 
 type impl struct {
 	weaver.Implements[ProductCatalogService]
+	weaver.WithRouter[ProductCatalogRouter]
 
-	extraLatency time.Duration
-
-	mu            sync.RWMutex
-	cat           []Product
-	reloadCatalog bool
+	// mu      sync.RWMutex
+	db      map[string]Product
+	myIndex int
 }
 
+var _ ProductCatalogService = (*impl)(nil)
+
 func (s *impl) Init(ctx context.Context) error {
-	var extraLatency time.Duration
-	if extra := os.Getenv("EXTRA_LATENCY"); extra != "" {
-		v, err := time.ParseDuration(extra)
-		if err != nil {
-			return fmt.Errorf("failed to parse EXTRA_LATENCY (%s) as time.Duration: %+v", v, err)
-		}
-		extraLatency = v
-		s.Logger(ctx).Info("extra latency enabled", "duration", extraLatency)
+	var err error
+	indexStr := os.Getenv("MY_INDEX")
+	s.myIndex, err = strconv.Atoi(indexStr)
+	s.db = make(map[string]Product)
+	if err != nil {
+		s.myIndex = rand.Intn(2)
+		s.Logger(ctx).Warn("Envvar MY_INDEX is non-int value. Randomly setting to either 0 or 1:", "value", s.myIndex)
 	}
-	s.extraLatency = extraLatency
-	_, err := s.refreshCatalogFile()
+	s.Logger(ctx).Info(fmt.Sprintf("myIndex: %v", s.myIndex))
+	err = s.refreshCatalogFile()
 	if err != nil {
 		return fmt.Errorf("could not parse product catalog: %w", err)
 	}
 
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, syscall.SIGUSR1, syscall.SIGUSR2)
-	go func() {
-		for {
-			sig := <-sigs
-			s.Logger(ctx).Info("Received signal", "signal", sig)
-			reload := false
-			if sig == syscall.SIGUSR1 {
-				reload = true
-				s.Logger(ctx).Info("Enable catalog reloading")
-			} else {
-				s.Logger(ctx).Info("Disable catalog reloading")
-			}
-			s.mu.Lock()
-			s.reloadCatalog = reload
-			s.mu.Unlock()
-		}
-	}()
-
 	return nil
 }
 
-func (s *impl) refreshCatalogFile() ([]Product, error) {
-	var products []Product
-	if err := json.Unmarshal(catalogFileData, &products); err != nil {
-		return nil, err
+func (s *impl) fillDB(agg []Product) {
+	for _, p := range agg {
+		if HashProductID(p.ID) == s.myIndex {
+			s.db[p.ID] = p
+		}
 	}
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	s.cat = products
+}
+
+func (s *impl) refreshCatalogFile() error {
+
+	dir, err := catalogFileData.ReadDir("products")
+	if err != nil {
+		return err
+	}
+
+	for _, entry := range dir {
+
+		data, err := catalogFileData.ReadFile(path.Join("products", entry.Name()))
+
+		if err != nil {
+			return err
+		}
+
+		var products []Product
+
+		if err := json.Unmarshal(data, &products); err != nil {
+			return err
+		}
+
+		s.fillDB(products)
+	}
+
+	return nil
+
+}
+
+func (s *impl) ListProducts(ctx context.Context, _ int) ([]Product, error) {
+	ls := make([]Product, maxProducts)
+	i := 0
+	for _, p := range s.db {
+		ls[i] = p
+		i++
+		if i >= maxProducts {
+			break
+		}
+	}
+	return ls, nil
+}
+
+func (s *impl) GetProduct(ctx context.Context, productID string, _ int) (Product, error) {
+	p, ok := s.db[productID]
+	if !ok {
+		idx := s.myIndex
+		needed := HashProductID(productID)
+		return Product{}, fmt.Errorf("request for productID %v made to shard %v, but needed to be %v", productID, idx, needed)
+	}
+	return p, nil
+}
+
+func (s *impl) GetProducts(ctx context.Context, productIDs []string, _ int) ([]Product, error) {
+	products := make([]Product, len(productIDs))
+	for i, pid := range productIDs {
+		p, ok := s.db[pid]
+		if !ok {
+			idx := s.myIndex
+			needed := HashProductID(pid)
+			return nil, fmt.Errorf("request for productID %v made to shard %v, but needed to be %v", pid, idx, needed)
+		}
+		products[i] = p
+	}
 	return products, nil
 }
 
-func (s *impl) getCatalogState() (bool, []Product) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	return s.reloadCatalog, s.cat
-}
-
-func (s *impl) parseCatalog() []Product {
-	reload, products := s.getCatalogState()
-	if reload || len(products) == 0 {
-		var err error
-		if products, err = s.refreshCatalogFile(); err != nil {
-			products = nil
-		}
-	}
-	return products
-}
-
-func (s *impl) ListProducts(ctx context.Context) ([]Product, error) {
-	time.Sleep(s.extraLatency)
-	return s.parseCatalog(), nil
-}
-
-func (s *impl) GetProduct(ctx context.Context, productID string) (Product, error) {
-	time.Sleep(s.extraLatency)
-	for _, p := range s.parseCatalog() {
-		if p.ID == productID {
-			return p, nil
-		}
-	}
-	return Product{}, NotFoundError{}
-}
-
-func (s *impl) SearchProducts(ctx context.Context, query string) ([]Product, error) {
-	time.Sleep(s.extraLatency)
-
+func (s *impl) SearchProducts(ctx context.Context, query string, _ int) ([]Product, error) {
 	// Interpret query as a substring match in name or description.
 	var ps []Product
-	for _, p := range s.parseCatalog() {
-		if strings.Contains(strings.ToLower(p.Name), strings.ToLower(query)) ||
-			strings.Contains(strings.ToLower(p.Description), strings.ToLower(query)) {
+	i := 0
+	q := strings.ToLower(query)
+	for _, p := range s.db {
+		if strings.Contains(strings.ToLower(p.Name), q) {
 			ps = append(ps, p)
+			i++
+			if i >= maxProducts {
+				break
+			}
 		}
 	}
 	return ps, nil
 }
+
+func (s *impl) GetIndex(_ context.Context, _ int) (int, error) { return s.myIndex, nil }

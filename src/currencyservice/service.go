@@ -22,8 +22,8 @@ import (
 	"math"
 	"strconv"
 
-	"github.com/ServiceWeaver/onlineboutique/types/money"
-	"github.com/ServiceWeaver/weaver"
+	"github.com/eBerkley/Weaver-OB-Bench/types/money"
+	"github.com/eberkley/weaver"
 	"github.com/iancoleman/orderedmap"
 	_ "go.uber.org/automaxprocs"
 )
@@ -70,10 +70,10 @@ func (s *impl) Convert(ctx context.Context, from money.T, toCode string) (money.
 	// Convert: from --> EUR
 	// fromRate, ok := s.conversionMap[from.CurrencyCode]
 	intf, ok := s.conversionOM.Get(from.CurrencyCode)
-	fromRate := intf.(float64)
 	if !ok {
 		return unsupportedErr(from.CurrencyCode)
 	}
+	fromRate := intf.(float64)
 	euros := carry(float64(from.Units)/fromRate, float64(from.Nanos)/fromRate)
 
 	// Convert: EUR -> toCode

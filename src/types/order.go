@@ -15,10 +15,10 @@
 package types
 
 import (
-	"github.com/ServiceWeaver/weaver"
-	"github.com/ServiceWeaver/onlineboutique/cartservice"
-	"github.com/ServiceWeaver/onlineboutique/shippingservice"
-	"github.com/ServiceWeaver/onlineboutique/types/money"
+	"github.com/eBerkley/Weaver-OB-Bench/cartservice"
+	"github.com/eBerkley/Weaver-OB-Bench/shippingservice"
+	"github.com/eBerkley/Weaver-OB-Bench/types/money"
+	"github.com/eberkley/weaver"
 )
 
 // Order represents a user order.

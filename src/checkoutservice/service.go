@@ -18,15 +18,15 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/ServiceWeaver/onlineboutique/cartservice"
-	"github.com/ServiceWeaver/onlineboutique/currencyservice"
-	"github.com/ServiceWeaver/onlineboutique/emailservice"
-	"github.com/ServiceWeaver/onlineboutique/paymentservice"
-	"github.com/ServiceWeaver/onlineboutique/productcatalogservice"
-	"github.com/ServiceWeaver/onlineboutique/shippingservice"
-	"github.com/ServiceWeaver/onlineboutique/types"
-	"github.com/ServiceWeaver/onlineboutique/types/money"
-	"github.com/ServiceWeaver/weaver"
+	"github.com/eBerkley/Weaver-OB-Bench/cartservice"
+	"github.com/eBerkley/Weaver-OB-Bench/currencyservice"
+	"github.com/eBerkley/Weaver-OB-Bench/emailservice"
+	"github.com/eBerkley/Weaver-OB-Bench/paymentservice"
+	"github.com/eBerkley/Weaver-OB-Bench/productcatalogservice"
+	"github.com/eBerkley/Weaver-OB-Bench/shippingservice"
+	"github.com/eBerkley/Weaver-OB-Bench/types"
+	"github.com/eBerkley/Weaver-OB-Bench/types/money"
+	"github.com/eberkley/weaver"
 	"github.com/google/uuid"
 
 	_ "go.uber.org/automaxprocs"
@@ -54,6 +54,13 @@ type impl struct {
 	shippingService weaver.Ref[shippingservice.ShippingService]
 	emailService    weaver.Ref[emailservice.EmailService]
 	paymentService  weaver.Ref[paymentservice.PaymentService]
+
+	catalogRoutingTable productcatalogservice.ProductRoutingTable
+}
+
+func (s *impl) Init(ctx context.Context) error {
+	s.catalogRoutingTable = productcatalogservice.GetRoutingTable(&s.catalogService)
+	return nil
 }
 
 func (s *impl) PlaceOrder(ctx context.Context, req PlaceOrderRequest) (types.Order, error) {
@@ -138,7 +145,8 @@ func (s *impl) prepareOrderItemsAndShippingQuoteFromCart(ctx context.Context, us
 func (s *impl) prepOrderItems(ctx context.Context, items []cartservice.CartItem, userCurrency string) ([]types.OrderItem, error) {
 	out := make([]types.OrderItem, len(items))
 	for i, item := range items {
-		product, err := s.catalogService.Get().GetProduct(ctx, item.ProductID)
+		key := s.catalogRoutingTable[productcatalogservice.HashProductID(item.ProductID)]
+		product, err := s.catalogService.Get().GetProduct(ctx, item.ProductID, key)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get product #%q: %w", item.ProductID, err)
 		}

@@ -11,9 +11,9 @@ else
   echo env vars appear to be properly set.
 fi
 
-if [[ $BENCH_STATIC = 1 ]]; then
+if [[ $BENCH_TYPE = 'STATIC' ]]; then
   if [[ -z $ALLOC_FILE ]]; then
-    echo Error: BENCH_STATIC=1, but ALLOC_FILE is not defined. >&2
+    echo Error: BENCH_TYPE=STATIC, but ALLOC_FILE is not defined. >&2
     exit 1
   else
     echo Running a static benchmark.
@@ -22,7 +22,7 @@ else
   if [[ -z $ALLOC_FILE ]]; then
     echo Running a non-static scheme.
   else 
-    echo Error: BENCH_STATIC=0, but ALLOC_FILE is set to $ALLOC_FILE >&2
+    echo Error: BENCH_TYPE != STATIC, but ALLOC_FILE is set to $ALLOC_FILE >&2
     exit 1
   fi
 fi

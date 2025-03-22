@@ -20,7 +20,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ServiceWeaver/onlineboutique/types/money"
+	"github.com/eBerkley/Weaver-OB-Bench/types/money"
 	"github.com/google/uuid"
 )
 
