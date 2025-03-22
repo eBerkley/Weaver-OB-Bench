@@ -26,7 +26,17 @@ loop_body () {
   start_time=$(date)
 
   # run the benchmark
-  make bench_once
+  if [ "$TRACE_ENABLE" = "true" ]; then
+    echo "Benchmarking with Traces Collection..."
+    make bench_trace
+  elif [ "$METRIC_ENABLE" = "true" ]; then
+    echo "Metrics-based benchmarking"
+    make bench_metric
+  else
+    echo "CPU Time-based benchmarking..."
+    # run the benchmark
+    make bench_once
+  fi
 
   end_time=$(date)
 
@@ -45,6 +55,11 @@ loop_body () {
   # Create the dir results will be stored in
   mkdir -p benchmark/out/$cfg
   
+  if [ "$TRACE_ENABLE" = "true" ]; then
+    mv jaeger_traces benchmark/out/$cfg/jaeger_traces
+  elif [ "$METRICS_PROFILE" = "true" ]; then
+    mv metrics_collection benchmark/out/$cfg/metrics
+  fi
   # Move the stats dir into the dir created above
   mv benchmark/stats benchmark/out/$cfg/stats
 
@@ -52,7 +67,8 @@ loop_body () {
   echo "Timestamp,User Count,Type,Name,Requests/s,Failures/s,50%,66%,75%,80%,90%,95%,98%,99%,99.9%,99.99%,100%,Total Request Count,Total Failure Count,Total Median Response Time,Total Average Response Time,Total Min Response Time,Total Max Response Time,Total Average Content Size" > benchmark/out/$cfg/stats/aggregated.csv
   
   cat benchmark/out/$cfg/stats/lat_stats_history.csv | grep "Aggregated" >> benchmark/out/$cfg/stats/aggregated.csv
-
+  
+  
   # Append logs from this run into tmp
   cat $LOGS_FILE >> $TMP_LOGS
   # Save logs from this run into out dir

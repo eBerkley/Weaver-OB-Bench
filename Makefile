@@ -4,6 +4,8 @@ include auto/paths.mk
 
 WEAVER_KUBE ?= ./weaver-kube/cmd/weaver-kube/weaver-kube # weaver-kube
 WEAVER ?= ./weaver/cmd/weaver/weaver # weaver
+TELEMETRY_TRACES ?= ./weaver-kube/examples/telemetry-traces/telemetry-traces
+TELEMETRY_METRICS ?=./weaver-kube/examples/telemetry-metrics/telemetry-metrics
 
 SHELL := /bin/bash
 CONFIG_FILE ?= CONFIG.cfg
@@ -20,6 +22,8 @@ else
 	DEBUG_OUTPUT := /dev/null
 endif
 
+TRACE_ENABLE := false
+METRIC_ENABLE := false
 
 .PHONY: all clean minikube_start minikube_restart check_smt toggle_smt deploy bench bench_all stop clear_logs check_docker check_loadgen pre_deploy bench_once 
 
@@ -72,6 +76,18 @@ deploy: minikube_start pre_deploy
 	@echo deploying onlineboutique, loadgenerator...| tee -a $(LOGS_FILE)
 	@# Remove any old deployment.
 	@-kubectl delete all --all >>$(LOGS_FILE) 2>&1
+	@if [ "$(TRACE_ENABLE)" = "true" ]; then \
+		echo "Jaeger is enabled, starting to collect trace" ; \
+	    kubectl apply -f $(JAEGER_TRACE_YAML) >> $(DEBUG_OUTPUT) 2>&1; \
+	else \
+	    echo "Skipping Jaeger deployment." >> $(DEBUG_OUTPUT); \
+	fi
+	@if [ "$(METRIC_ENABLE)" = "true" ]; then \
+		echo "prometheus is enabled, starting to collect metrics" ; \
+	    kubectl apply -f $(PROMETHEUS_METRIC_YAML) >> $(DEBUG_OUTPUT) 2>&1; \
+	else \
+	    echo "Skipping prometheus deployment." >> $(DEBUG_OUTPUT); \
+	fi
 	@echo creating loadgenerator... >> $(LOGS_FILE)
 	@kubectl apply -f $(LOAD_GEN_YAML) >> $(LOGS_FILE) 2>&1
 	@echo creating OB ... >> $(LOGS_FILE)
@@ -92,17 +108,39 @@ bench: deploy
 bench_once: deploy
 	./scripts/pull_stats.sh
 
+bench_trace: deploy
+	./scripts/traces_stats.sh
+	@echo deleting deployment...
+
+bench_metric: deploy
+	./scripts/metrics_stats.sh
+	@echo deleting deployment...
+
 # ./bench_all changes $(WEAVER_GEN_YAML) every time it runs, 
 # 	new images built each time.
 bench_all: clear_logs
 	@echo 
 	./make_scripts/bench_all.sh
+# make bench_all with traces collection turn on
+bench_trace_all: $(TELEMETRY_TRACES)
+	$(MAKE) bench_all TRACE_ENABLE=true
+# make bench_all with metrics collection turn on
+bench_metric_all: $(TELEMETRY_METRICS)
+	$(MAKE) bench_all METRIC_ENABLE=true
 
 $(WEAVER):
 	go build -C weaver/cmd/weaver
 
 $(WEAVER_KUBE): 
 	go build -C weaver-kube/cmd/weaver-kube
+
+$(TELEMETRY_TRACES): $(WEAVER_KUBE)
+	(cd weaver-kube/examples/telemetry-traces && go build -o telemetry-traces .)
+	mv ./weaver-kube/examples/telemetry-traces/telemetry-traces $(WEAVER_BIN_PATH)
+
+$(TELEMETRY_METRICS):$(WEAVER_KUBE)
+	(cd weaver-kube/examples/telemetry-metrics && go build -o telemetry-metrics .)
+	mv ./weaver-kube/examples/telemetry-metrics/telemetry-metrics $(WEAVER_BIN_PATH)
 
 # if deployment specifications or src code was modified,
 # 	Update Weaver kubernetes yaml
@@ -117,7 +155,15 @@ $(WEAVER_GEN_YAML): $(KUBE_BASE_YAML) $(BIN) $(CONFIG_FILE) .env
 		./make_scripts/set_pod_replicas.sh; \
 	fi
 	@./make_scripts/set_pod_resources.sh
-	@./make_scripts/weaver_gen_yaml.sh 
+	@if [ "$(TRACE_ENABLE)" = "true" ]; then \
+	    echo "Jaeger is employed to collect trace, telemetry-traces is running"; \
+	    ./make_scripts/weaver_gen_yaml.sh telemetry-traces; \
+	elif [ "$(METRIC_ENABLE)" = "true" ]; then \
+	    echo "Prometheus is employed to collect metrics, telemetry-metrics is running"; \
+	    ./make_scripts/weaver_gen_yaml.sh telemetry-metrics; \
+	else \
+	    ./make_scripts/weaver_gen_yaml.sh weaver-kube; \
+	fi
 
 # if deployment specifications or loadgen code was modified, 
 #	Update Load Generator

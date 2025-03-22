@@ -5,6 +5,7 @@ SRC := $(TOP)/src
 BENCH := $(TOP)/benchmark
 BASE := $(RELEASE)/base
 GENERATED := $(RELEASE)/generated
+TELEMETRY := $(RELEASE)/telemetry
 
 STATS := $(BENCH)/stats
 
@@ -18,6 +19,10 @@ KUBE_GEN_YAML := $(GENERATED)/kube.yaml
 WEAVER_GEN_YAML := $(GENERATED)/gen.yaml
 # also passed to `kubectl apply -f`
 LOAD_GEN_YAML := $(GENERATED)/loadgen.yaml
+
+#The files passed to `kubectl apply -f`, export telemetry
+JAEGER_TRACE_YAML := $(TELEMETRY)/jaeger.yaml
+PROMETHEUS_METRIC_YAML := $(TELEMETRY)/prometheus.yaml
 
 SCHEME_DIR := $(BASE)/colocation
 
@@ -40,3 +45,4 @@ VERSION_FILE := $(GENERATED)/version.txt
 LOGS_FILE := $(TOP)/logs.txt
 TMP_LOGS := $(TOP)/tmp_logs.txt
 
+WEAVER_BIN_PATH := $(shell dirname $(shell which weaver-kube))
