@@ -1,10 +1,16 @@
 #!/bin/bash
 
+# This script is used to fill in the <podname_RESOURCE_SPEC> lines.
+# This determines each deployment's cpu cores.
+# It is used for fixed bench types, but modifies the functionality so as to not use cschemes.
+
 # This script MODIFIES groups.yaml. It does NOT reset it from the template. 
 # Therefore, set_pod_[replicas|scaling].sh must be called first.
 
 SCHEME=${SCHEME:-$1}
 C_SCHEME=${C_SCHEME:-$2}
+BENCH_TYPE=${BENCH_TYPE:-$3}
+
 GROUPS_FILE=${GROUPS_FILE:-"release/generated/groups.yaml"}
 SCHEME_DIR=${SCHEME_DIR:-'release/base/colocation'}
 RESOURCE_SPEC_FILE=${RESOURCE_SPEC_FILE:-'release/base/resourceSpec.yaml'}
@@ -14,6 +20,7 @@ SCHEME_PATH=$SCHEME_DIR/$SCHEME
 SCHEME_FILE=$SCHEME_PATH/spec.yaml
 CSCHEME_FILE=$SCHEME_PATH/$C_SCHEME.cfg
 
+echo set_pod_resources.sh: >> $DEBUG_OUTPUT
 
 get_group_names () {
   local pattern="- name: ([a-z_\-]+)"
@@ -24,15 +31,27 @@ get_group_names () {
   done
 }
 
+cscheme_pattern="^$name=([0-9]+)"
+
 for name in $(get_group_names); do
-  pattern="^$name=([0-9]+)"
   cores=1
-  for def in $(cat $CSCHEME_FILE); do
-    if [[ $def =~ $pattern ]]; then
-      cores=${BASH_REMATCH[1]}
-      break
-    fi
-  done
+  if [[ $BENCH_TYPE = 'FIXED' ]]; then  # : We don't read from cscheme file
+    if [[ $name = $FIXED]]; then
+      echo fixing $name to height $cores >> $DEBUG_OUTPUT
+      cores=$FIXED_HEIGHT
+    fi # if name != fixed, the fallback of 1 is what we want anyways.
+  
+  else # BENCH_TYPE != FIXED  : Read from cscheme file
+  
+    for def in $(cat $CSCHEME_FILE); do
+      if [[ $def =~ $cscheme_pattern ]]; then
+        cores=${BASH_REMATCH[1]}
+        echo $name: $cores >> $DEBUG_OUTPUT
+        break
+      fi
+    done
+  fi
+
   
   resource_spec=$(sed -z -e s#\<CORES\>#$cores#g $RESOURCE_SPEC_FILE)
 

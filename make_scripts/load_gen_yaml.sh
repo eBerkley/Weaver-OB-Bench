@@ -56,9 +56,9 @@ sed -i "s#<LOCUST_SLOWLOAD_RAMP>#\"$LOCUST_SLOWLOAD_RAMP\"#g" $LOAD_GEN_YAML
 
 # If we are going to be adding replicas, 
 # ensure connections are periodically reset to route traffic to new main components.
-if [[ $BENCH_STATIC = "1" ]]; then
+if [[ $BENCH_TYPE = "STATIC" ]]; then
   sed -i "s#<LOCUST_RESET_CONN>#\"0\"#g" $LOAD_GEN_YAML
-else # $BENCH_STATIC = "0"
+else # $BENCH_TYPE != "STATIC"
   sed -i "s#<LOCUST_RESET_CONN>#\"1\"#g" $LOAD_GEN_YAML
 fi
 

@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# This script is used to fill in the <podname_SCALING_SPEC> lines.
+# This determines each deployment's initial replicas, and required util to scale out.
+# It is used for the static bench type.
+
 SCALING_SPEC_FILE=${SCALING_SPEC_FILE:-'release/base/scalingSpec.yaml'}
 GROUPS_FILE=${GROUPS_FILE:-'release/generated/groups.yaml'}
 
@@ -34,7 +38,7 @@ for l in $alloc_lines; do
     str=s/\<"$podname"_SCALING_SPEC\>/$scaling_spec
     str2=$(echo "$str" | awk '{printf "%s\\n", $0}')
     sed -i "$str2/g" $GROUPS_FILE
-    # echo $str2\g
+
     # Now we do the stuff for statefulSpec attributes.
     stateful_spec="
     statefulSpec:
@@ -42,7 +46,7 @@ for l in $alloc_lines; do
 
     str=s/\<"$podname"_STATEFUL_SPEC\>/$stateful_spec
     str2=$(echo "$str" | awk '{printf "%s\\n", $0}')
-    # echo "$str2/g"
+
     sed -i "$str2/g" $GROUPS_FILE
   fi
 done

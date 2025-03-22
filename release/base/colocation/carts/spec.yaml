@@ -46,7 +46,7 @@ groups:
     components:
     - "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService"
 <productcatalogservice_RESOURCE_SPEC>
-<productcatalogservice_SCALING_SPEC>
+<productcatalogservice_STATEFUL_SPEC>
 
   - name: recservice
     components:

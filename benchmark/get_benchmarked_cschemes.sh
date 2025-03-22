@@ -29,7 +29,7 @@ for s in $fscheme_path/*; do
       continue
     fi
 
-    if [[ $(grep BENCH_STATIC "$out_path/$fullname/info.txt") = "BENCH_STATIC=0" ]]; then
+    if [[ $(grep BENCH_TYPE "$out_path/$fullname/info.txt") != "BENCH_TYPE=STATIC" ]]; then
       NOT_STATIC+="$fullname, "
       continue
     fi

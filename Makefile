@@ -54,6 +54,7 @@ pre_deploy: check_docker check_loadgen $(WEAVER_GEN_YAML) $(LOAD_GEN_YAML)
 	@./scripts/checks/check_numa_balance.sh
 	
 	@echo 																															| tee -a $(LOGS_FILE)
+	@echo "bench type:                    $$BENCH_TYPE"									| tee -a $(LOGS_FILE)
 	@echo "scheme:                        $$SCHEME"											| tee -a $(LOGS_FILE)
 	@echo "cscheme:                       $$C_SCHEME"										| tee -a $(LOGS_FILE)
 	@echo "loadshape:                     $$LOCUST_SHAPE"								| tee -a $(LOGS_FILE)

@@ -13,7 +13,7 @@ minikube_start:
 	if [ $$lines -le 5 ]; then\
 		echo Starting minikube;\
 		./scripts/minikube_start.sh;\
-		if [[ $$BENCH_STATIC = 1 ]]; then \
+		if [[ $$BENCH_TYPE = "STATIC" ]]; then \
 			echo Using static bench config.; \
 			./scripts/pin_system.sh; \
 		fi \
