@@ -1,8 +1,9 @@
 from locust import LoadTestShape
 
-import logging
+from os import getenv
 
-class ConstLoad(LoadTestShape):
+CONST_USERS = int(getenv("LOCUST_CONST_USERS", "5000"))
+class TestLoad(LoadTestShape):
     """
     A load generator shape that will increase user count until a constant value is hit, and then it will end the test.
     
@@ -13,7 +14,7 @@ class ConstLoad(LoadTestShape):
         ramp_speed    -- How fast (in ups) should it get there?
     
     """
-    max_users = 5000 # users
+    max_users = CONST_USERS # users
 
     ramp_speed = 50 # users per second
 

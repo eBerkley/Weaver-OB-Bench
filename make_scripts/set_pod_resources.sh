@@ -20,7 +20,7 @@ SCHEME_PATH=$SCHEME_DIR/$SCHEME
 SCHEME_FILE=$SCHEME_PATH/spec.yaml
 CSCHEME_FILE=$SCHEME_PATH/$C_SCHEME.cfg
 
-echo set_pod_resources.sh: >> $DEBUG_OUTPUT
+echo set_pod_resources.sh >> $DEBUG_OUTPUT
 
 get_group_names () {
   local pattern="- name: ([a-z_\-]+)"
@@ -36,7 +36,7 @@ cscheme_pattern="^$name=([0-9]+)"
 for name in $(get_group_names); do
   cores=1
   if [[ $BENCH_TYPE = 'FIXED' ]]; then  # : We don't read from cscheme file
-    if [[ $name = $FIXED]]; then
+    if [[ $name = $FIXED ]]; then
       echo fixing $name to height $cores >> $DEBUG_OUTPUT
       cores=$FIXED_HEIGHT
     fi # if name != fixed, the fallback of 1 is what we want anyways.

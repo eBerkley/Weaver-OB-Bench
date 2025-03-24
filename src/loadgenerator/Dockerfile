@@ -26,7 +26,6 @@ COPY --from=builder /install /usr/local
 COPY locustfile.py .
 COPY entrypoint.sh .
 
-COPY load_shapes/multiload.py .
 COPY load_shapes/rampload.py .
 COPY load_shapes/dummyload.py .
 COPY load_shapes/constload.py .

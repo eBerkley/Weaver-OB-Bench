@@ -10,8 +10,9 @@ TELEMETRY_METRICS ?=./weaver-kube/examples/telemetry-metrics/telemetry-metrics
 SHELL := /bin/bash
 CONFIG_FILE ?= CONFIG.cfg
 
-# sets DOCKER, KUBE_CORES, LOCUST_SHAPE, SCHEME
 include .env 
+include locust.env
+include docker.env
 
 # sets LOADGEN_REPLICAS, OB_CORES, OB_REPLICAS, and optionally SCHEME.
 include $(CONFIG_FILE)
@@ -23,7 +24,7 @@ else
 endif
 
 TRACE_ENABLE := false
-METRIC_ENABLE := false
+METRIC_ENABLE := true
 
 .PHONY: all clean minikube_start minikube_restart check_smt toggle_smt deploy bench bench_all stop clear_logs check_docker check_loadgen pre_deploy bench_once 
 
@@ -112,41 +113,51 @@ bench_trace: deploy
 	./scripts/traces_stats.sh
 	@echo deleting deployment...
 
-bench_metric: deploy
+bench_metric: $(TELEMETRY_METRICS) deploy
 	./scripts/metrics_stats.sh
 	@echo deleting deployment...
+	@-kubectl delete all --all >> $(DEBUG_OUTPUT)  2>&1
+
 
 # ./bench_all changes $(WEAVER_GEN_YAML) every time it runs, 
 # 	new images built each time.
 bench_all: clear_logs
 	@echo 
 	./make_scripts/bench_all.sh
+
 # make bench_all with traces collection turn on
 bench_trace_all: $(TELEMETRY_TRACES)
 	$(MAKE) bench_all TRACE_ENABLE=true
+
 # make bench_all with metrics collection turn on
 bench_metric_all: $(TELEMETRY_METRICS)
 	$(MAKE) bench_all METRIC_ENABLE=true
 
-$(WEAVER):
+WEAVER_DIR := $(TOP)/weaver
+WEAVER_SRC := $(shell find $(WEAVER_DIR) -type f -name '*.go')
+$(WEAVER): $(WEAVER_SRC)
 	go build -C weaver/cmd/weaver
 
-$(WEAVER_KUBE): 
+KUBE_DIR := $(TOP)/weaver-kube
+KUBE_SRC := $(shell find $(KUBE_DIR) -type f -name '*.go')
+$(WEAVER_KUBE): $(KUBE_SRC)
 	go build -C weaver-kube/cmd/weaver-kube
+	cp ./weaver-kube/cmd/weaver-kube/weaver-kube $(WEAVER_BIN_PATH)
 
-$(TELEMETRY_TRACES): $(WEAVER_KUBE)
+$(TELEMETRY_TRACES): $(WEAVER_KUBE) weaver-kube/examples/telemetry-traces/main.go
 	(cd weaver-kube/examples/telemetry-traces && go build -o telemetry-traces .)
-	mv ./weaver-kube/examples/telemetry-traces/telemetry-traces $(WEAVER_BIN_PATH)
+	cp ./weaver-kube/examples/telemetry-traces/telemetry-traces $(WEAVER_BIN_PATH)
 
-$(TELEMETRY_METRICS):$(WEAVER_KUBE)
+$(TELEMETRY_METRICS): $(WEAVER_KUBE) weaver-kube/examples/telemetry-metrics/main.go
 	(cd weaver-kube/examples/telemetry-metrics && go build -o telemetry-metrics .)
-	mv ./weaver-kube/examples/telemetry-metrics/telemetry-metrics $(WEAVER_BIN_PATH)
+	cp ./weaver-kube/examples/telemetry-metrics/telemetry-metrics $(WEAVER_BIN_PATH)
 
 # if deployment specifications or src code was modified,
 # 	Update Weaver kubernetes yaml
 # 	modifies version file, which should trigger LOAD_GEN_YAML
 $(WEAVER_GEN_YAML): $(KUBE_BASE_YAML) $(BIN) $(CONFIG_FILE) .env
 	@echo rebuilding onlineboutique container...
+	
 	@if [ -z $$ALLOC_FILE ]; then \
 		echo "pods=dynamic"; \
 		./make_scripts/set_pod_scaling.sh; \

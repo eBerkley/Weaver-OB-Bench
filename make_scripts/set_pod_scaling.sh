@@ -15,7 +15,7 @@ BENCH_TYPE=${BENCH_TYPE:-$3}
 
 cp $SCHEME_FILE $GROUPS_FILE
 
-
+echo set_pod_scaling.sh >> $DEBUG_OUTPUT
 get_group_names () {
   local pattern="- name: ([a-z_\-]+)"
   IFS=$'\n'
@@ -72,13 +72,14 @@ for name in $(get_group_names); do
   # Now we do the stuff for statefulSpec attributes.
   replicas=1 # !!!!!!!!!! PLACEHOLDER !!!!!!!!!!!
   stateful_spec="
-  statefulSpec:
-    replicas: $replicas"
+    statefulSpec:
+      replicas: $replicas"
 
-  str=s/\<"$podname"_STATEFUL_SPEC\>/$stateful_spec
+  str=s/\<"$name"_STATEFUL_SPEC\>/$stateful_spec
   str2=$(echo "$str" | awk '{printf "%s\\n", $0}')
 
   sed -i "$str2/g" $GROUPS_FILE
+  
   
 done
 

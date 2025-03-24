@@ -6,7 +6,7 @@ cat $LOGS_FILE > $TMP_LOGS
 # We delete at start, just in case.
 minikube delete
 
-if [[ $BENCH_STAIC = 1 ]]; then
+if [[ $BENCH_TYPE = "STATIC" ]]; then
   echo We will be pinning kube-system processes to their own cores before running any benchmark.
   echo This requires sudo.
   sudo echo

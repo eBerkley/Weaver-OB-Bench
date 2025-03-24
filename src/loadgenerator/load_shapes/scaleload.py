@@ -7,13 +7,11 @@ from os import getenv
 
 from statistics import variance
 
-WAIT_TIME = int(getenv("LOCUST_WAIT_TIME", "30")) # seconds
 RAMP_DURATION = float(getenv("LOCUST_RAMP_DURATION", "5.0")) # seconds
-STABLE_TAIL = int(getenv("LOCUST_STABLE_P99", "25")) # ms
 VARIANCE_WINDOW = int(getenv("LOCUST_VARIANCE_WINDOW", "30"))
 MAX_VARIANCE = float(getenv("LOCUST_MAX_VARIANCE", "0.3"))
 
-class SlowLoad(LoadTestShape):
+class ScaleLoad(LoadTestShape):
     init_users: Final = 1000 # users
     """What is the first target to hit?"""
 

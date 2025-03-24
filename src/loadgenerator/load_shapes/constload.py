@@ -1,6 +1,8 @@
 from locust import LoadTestShape
+from os import getenv
 
 import logging
+CONST_USERS = int(getenv("LOCUST_CONST_USERS", "5000"))
 
 class ConstLoad(LoadTestShape):
     """
@@ -13,7 +15,7 @@ class ConstLoad(LoadTestShape):
         ramp_speed    -- How fast (in ups) should it get there?
     
     """
-    max_users = 5000 # users
+    max_users = CONST_USERS # users
 
     ramp_speed = 50 # users per second
 

@@ -37,20 +37,10 @@ type impl struct {
 }
 
 func (s *impl) Init(ctx context.Context) error {
-	// s.catalogRoutingTable = &productcatalogservice.ProductCatalogDialer{Ref: &s.catalogService}
 	s.Logger(ctx).Info("in rec init")
-	// _, err := s.catalogDialer.Get()
-	// if err != nil {
-
-	// 	return err
-	// }
 	s.catalogRoutingTable = productcatalogservice.GetRoutingTable(&s.catalogService)
 	s.Logger(ctx).Info("out of rec init!!")
 	s.Logger(ctx).Info(fmt.Sprintf("routing table: %v", s.catalogRoutingTable))
-	// if s.catalogRoutingTable == nil {
-	// 	return fmt.Errorf("failed to construct routing table for product catalog service")
-	// }
-
 	return nil
 }
 

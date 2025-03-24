@@ -36,6 +36,7 @@ echo                                                          | tee -a $logfile
 
 # Start port-forwarding Prometheus service 
 echo "Starting port-forward to Prometheus..."
+# kubectl wait --timeout=1h --for=condition=Ready svc/prometheus
 kubectl port-forward svc/prometheus 9090:80 &
 PF_PID=$!
 
@@ -83,7 +84,8 @@ str=$(get_lines)
 size=${#str}
 echo $str
 last_str=""
-while [ $size -le 5 ] || [ $size -ge 20 ]; do
+# while [ $size -le 5 ] || [ $size -ge 20 ]; do
+while [ $SECONDS -le $INITIAL_RUNTIME ]; do
   write_cpu_util
   
   sleep 10
@@ -114,18 +116,17 @@ while [ $size -le 5 ] || [ $size -ge 20 ]; do
   
 done
 
-
-
-
 # Wait a few seconds for port-forward to be established.
 sleep 30
 
 # List of metrics to query.
 metrics=(
   "serviceweaver_http_request_count"
-  "serviceweaver_method_bytes_reply_sum"
-  "serviceweaver_method_bytes_request_sum"
+  "serviceweaver_http_request_latency_micros"
   "serviceweaver_method_count"
+  "serviceweaver_method_bytes_reply"
+  "serviceweaver_method_bytes_request"
+  "serviceweaver_method_latency_micros"  
 )
 
 # Create an output directory for JSON files.

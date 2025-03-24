@@ -12,6 +12,7 @@ RAMP_DURATION = float(getenv("LOCUST_RAMP_DURATION", "5.0")) # seconds
 STABLE_TAIL = int(getenv("LOCUST_STABLE_P99", "25")) # ms
 VARIANCE_WINDOW = int(getenv("LOCUST_VARIANCE_WINDOW", "30"))
 MAX_VARIANCE = float(getenv("LOCUST_MAX_VARIANCE", "0.3"))
+MAX_TAIL = float(getenv("LOCUST_MAX_TAIL", "150")) # ms
 
 class StableRampLoad(LoadTestShape):
     """
@@ -42,7 +43,7 @@ class StableRampLoad(LoadTestShape):
     init_time: Final = 30 # seconds
     """How long should it take to hit init_users? """
 
-    max_tail: Final = 175 # ms
+    max_tail: Final = MAX_TAIL # ms
     """When p99 latency >= this value, consider it violating."""
 
     ramp_duration: Final = RAMP_DURATION
