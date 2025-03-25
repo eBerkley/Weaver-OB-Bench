@@ -122,11 +122,11 @@ sleep 30
 # List of metrics to query.
 metrics=(
   "serviceweaver_http_request_count"
-  "serviceweaver_http_request_latency_micros"
+  "serviceweaver_http_request_latency_micros_bucket"
   "serviceweaver_method_count"
-  "serviceweaver_method_bytes_reply"
-  "serviceweaver_method_bytes_request"
-  "serviceweaver_method_latency_micros"  
+  "serviceweaver_method_bytes_request_bucket"
+  "serviceweaver_method_bytes_reply_bucket"
+  "serviceweaver_method_latency_micros_bucket"
 )
 
 # Create an output directory for JSON files.

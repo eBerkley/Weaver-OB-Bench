@@ -38,7 +38,8 @@ sed -i "s#<FALLBACK_MIN_REPLICAS>#$FALLBACK_MIN_REPLICAS#g" $KUBE_GEN_YAML
 # Determine deployer command based on the first argument.
 # Default to "telemetry-local" if no argument is provided.
 DEPLOYER_CMD=${1:-weaver-kube}
-echo "Using deployer command: $DEPLOYER_CMD"
+
+echo "Using deployer command: $DEPLOYER_CMD" | tee -a $DEBUG_OUTPUT
 
 # Generate kubernetes yaml from weaver kube specification yaml
 # `yaml` := the generated file location (something like /tmp/kube_[0-9a-z]{6}.yaml)

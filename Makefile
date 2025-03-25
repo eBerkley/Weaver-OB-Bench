@@ -24,7 +24,7 @@ else
 endif
 
 TRACE_ENABLE := false
-METRIC_ENABLE := false
+METRIC_ENABLE := true
 INSTFP_ENABLE := false
 CPU_UTIL_ENABLE := false
 
@@ -127,7 +127,7 @@ bench_instfp: deploy
 	./scripts/instfp_stats.sh $(TOP)
 	@echo deleting deployment...
 
-bench_util: eploy
+bench_util: deploy
 	./scripts/cpu_util_stats.sh
 	@echo deleting deployment..
 
