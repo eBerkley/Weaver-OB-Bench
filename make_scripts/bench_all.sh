@@ -32,8 +32,14 @@ loop_body () {
   elif [ "$METRIC_ENABLE" = "true" ]; then
     echo "Metrics-based benchmarking"
     make bench_metric
+  elif [ "$INSTFP_ENABLE" = "true" ]; then
+    echo "Instruction Footprint-based benchmarking"
+    make bench_instfp
+  elif [ "$INSTFP_ENABLE" = "true" ]; then
+     echo "CPU Time-based benchmarking..."
+    make bench_util
   else
-    echo "CPU Time-based benchmarking..."
+    echo "Regular benchmarking..."
     # run the benchmark
     make bench_once
   fi
@@ -59,6 +65,8 @@ loop_body () {
     mv jaeger_traces benchmark/out/$cfg/jaeger_traces
   elif [ "$METRICS_PROFILE" = "true" ]; then
     mv metrics_collection benchmark/out/$cfg/metrics
+  elif [ "$INSTFP_ENABLE" = "true" ]; then
+    mv inst_fp_collection benchmark/out/$cfg/instfp_collection
   fi
   # Move the stats dir into the dir created above
   mv benchmark/stats benchmark/out/$cfg/stats

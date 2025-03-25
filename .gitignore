@@ -22,3 +22,4 @@ cfgs_archive
 src/productcatalogservice/product_gen/product_gen
 docker.env
 metrics_collection
+inst_fp_collection
