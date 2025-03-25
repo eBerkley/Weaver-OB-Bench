@@ -162,5 +162,10 @@ if [[ $SECONDS -lt 150 ]]; then
   sleep 1000
 fi
 
+Echo "Post-processing jaeger traces..."
+python3 ../benchmark/jaeger_trace.py "${OUTPUT_DIR}"
+
+rm -rf "${OUTPUT_DIR}"/*.json
+
 echo "Done."
 

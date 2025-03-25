@@ -24,7 +24,9 @@ else
 endif
 
 TRACE_ENABLE := false
-METRIC_ENABLE := true
+METRIC_ENABLE := false
+INSTFP_ENABLE := false
+CPU_UTIL_ENABLE := false
 
 .PHONY: all clean minikube_start minikube_restart check_smt toggle_smt deploy bench bench_all stop clear_logs check_docker check_loadgen pre_deploy bench_once 
 
@@ -121,6 +123,13 @@ bench_metric: $(TELEMETRY_METRICS) deploy
 	@echo deleting deployment...
 	@-kubectl delete all --all >> $(DEBUG_OUTPUT)  2>&1
 
+bench_instfp: deploy
+	./scripts/instfp_stats.sh $(TOP)
+	@echo deleting deployment...
+
+bench_util: eploy
+	./scripts/cpu_util_stats.sh
+	@echo deleting deployment..
 
 # ./bench_all changes $(WEAVER_GEN_YAML) every time it runs, 
 # 	new images built each time.
@@ -135,6 +144,12 @@ bench_trace_all: $(TELEMETRY_TRACES)
 # make bench_all with metrics collection turn on
 bench_metric_all: $(TELEMETRY_METRICS)
 	$(MAKE) bench_all METRIC_ENABLE=true
+
+bench_instfp_all: $(WEAVER_KUBE)
+	$(MAKE) bench_all INSTFP_ENABLE=true
+
+bench_util_all: $(WEAVER_KUBE)
+	$(MAKE) bench_all CPU_UTIL_ENABLE=true
 
 WEAVER_DIR := $(TOP)/weaver
 WEAVER_SRC := $(shell find $(WEAVER_DIR) -type f -name '*.go')
