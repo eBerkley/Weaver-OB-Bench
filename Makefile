@@ -77,6 +77,12 @@ deploy: minikube_start pre_deploy
 	@echo deploying onlineboutique, loadgenerator...| tee -a $(LOGS_FILE)
 	@# Remove any old deployment.
 	@-kubectl delete all --all >>$(LOGS_FILE) 2>&1
+	@echo creating loadgenerator... >> $(LOGS_FILE)
+	@kubectl apply -f $(LOAD_GEN_YAML) >> $(LOGS_FILE) 2>&1
+	@echo creating OB ... >> $(LOGS_FILE)
+	@kubectl apply -f $(WEAVER_GEN_YAML) >> $(LOGS_FILE) 2>&1
+	sleep 20
+	
 	@if [ "$(TRACE_ENABLE)" = "true" ]; then \
 		echo "Jaeger is enabled, starting to collect trace" ; \
 	    kubectl apply -f $(JAEGER_TRACE_YAML) >> $(DEBUG_OUTPUT) 2>&1; \
@@ -89,10 +95,7 @@ deploy: minikube_start pre_deploy
 	else \
 	    echo "Skipping prometheus deployment." >> $(DEBUG_OUTPUT); \
 	fi
-	@echo creating loadgenerator... >> $(LOGS_FILE)
-	@kubectl apply -f $(LOAD_GEN_YAML) >> $(LOGS_FILE) 2>&1
-	@echo creating OB ... >> $(LOGS_FILE)
-	@kubectl apply -f $(WEAVER_GEN_YAML) >> $(LOGS_FILE) 2>&1
+
 	@# If we need to pin, we wait a while because it takes a min to start up.
 	@if [[ -n $$ALLOC_FILE ]]; then sleep 25; ./scripts/pin_pods.sh | tee -a $(LOGS_FILE); fi
 
