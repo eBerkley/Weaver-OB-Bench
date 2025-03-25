@@ -27,3 +27,7 @@ scalingSpec:
           type: Utilization
           averageUtilization: <FALLBACK_SCALE_UTIL>
 
+telemetry:
+  metrics:
+    generated: true
+    exportInterval: 15s
