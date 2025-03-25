@@ -1,8 +1,6 @@
 #!/bin/bash
 
 # Get CPU usage from all pods and format into a readable or CSV format
-# Usage: ./get_replicas.sh         # tabular output
-#        ./get_replicas.sh 1       # CSV output
 
 pod_list=$(kubectl top po 2>/dev/null)
 if [[ ${#pod_list} -lt 10 ]]; then 

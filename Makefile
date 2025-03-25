@@ -27,6 +27,7 @@ TRACE_ENABLE := false
 METRIC_ENABLE := false
 INSTFP_ENABLE := false
 CPU_UTIL_ENABLE := false
+VERTICAL_PROF := false
 
 .PHONY: all clean minikube_start minikube_restart check_smt toggle_smt deploy bench bench_all stop clear_logs check_docker check_loadgen pre_deploy bench_once 
 
@@ -127,9 +128,14 @@ bench_instfp: deploy
 	./scripts/instfp_stats.sh $(TOP)
 	@echo deleting deployment...
 
-bench_util: eploy
+bench_util: deploy
 	./scripts/cpu_util_stats.sh
 	@echo deleting deployment..
+
+#usage is ./vertical_profiling.sh component, see comment in the script for config.
+bench_vertical_prof: deploy
+	./scripts/vertical_profiling.sh main
+	@echo deleting deployment...
 
 # ./bench_all changes $(WEAVER_GEN_YAML) every time it runs, 
 # 	new images built each time.
@@ -150,6 +156,10 @@ bench_instfp_all: $(WEAVER_KUBE)
 
 bench_util_all: $(WEAVER_KUBE)
 	$(MAKE) bench_all CPU_UTIL_ENABLE=true
+
+bench_vertical_prof_all:$(TELEMETRY_METRICS)
+	$(MAKE) bench_all VERTICAL_PROF=true
+
 
 WEAVER_DIR := $(TOP)/weaver
 WEAVER_SRC := $(shell find $(WEAVER_DIR) -type f -name '*.go')

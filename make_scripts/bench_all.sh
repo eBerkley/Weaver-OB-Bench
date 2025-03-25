@@ -30,14 +30,17 @@ loop_body () {
     echo "Benchmarking with Traces Collection..."
     make bench_trace
   elif [ "$METRIC_ENABLE" = "true" ]; then
-    echo "Metrics-based benchmarking"
+    echo "Metrics-based profiling"
     make bench_metric
   elif [ "$INSTFP_ENABLE" = "true" ]; then
-    echo "Instruction Footprint-based benchmarking"
+    echo "Instruction Footprint-based profiling"
     make bench_instfp
   elif [ "$INSTFP_ENABLE" = "true" ]; then
-     echo "CPU Time-based benchmarking..."
+     echo "CPU Time-based profiling..."
     make bench_util
+  elif [ "$VERTICAL_PROF" = "true" ]; then
+     echo "Vertical Profiling..."
+    make bench_vertical_prof
   else
     echo "Regular benchmarking..."
     # run the benchmark
