@@ -95,6 +95,12 @@ spec:
         - name: LOCUST_SLOWLOAD_RAMP
           value: <LOCUST_SLOWLOAD_RAMP>
 
+        - name: LOCUST_STABLE_P99
+          value: <LOCUST_STABLE_P99>
+
+        - name: LOCUST_CONST_USERS
+          value: <LOCUST_CONST_USERS>
+
         resources:
           requests:
             cpu: 1
@@ -188,6 +194,12 @@ spec:
         - name: LOCUST_SLOWLOAD_RAMP
           value: <LOCUST_SLOWLOAD_RAMP>
 
+        - name: LOCUST_STABLE_P99
+          value: <LOCUST_STABLE_P99>
+
+        - name: LOCUST_CONST_USERS
+          value: <LOCUST_CONST_USERS>
+
         resources:
           requests: 
             cpu: "1"
@@ -195,4 +207,3 @@ spec:
           limits:
             cpu: "1"
             memory: "1024Mi"
-

@@ -33,26 +33,30 @@ sed -i "s/<LOADGEN_REPLICAS_ENV>/\"$LOADGEN_REPLICAS\"/g" $LOAD_GEN_YAML
 # Tell the locust instances which of the loadshapes to run.
 sed -i "s/<LOCUST_SHAPE>/$LOCUST_SHAPE/g" $LOAD_GEN_YAML
 
+sed -i "s/<LOCUST_CONST_USERS>/\"$LOCUST_CONST_USERS\"/g" $LOAD_GEN_YAML
+
 # Set the wait time for the rampload shape
 sed -i "s#<LOCUST_WAIT_TIME>#\"$LOCUST_WAIT_TIME\"#g" $LOAD_GEN_YAML
 
 # Set the ramp duration for the rampload shape
 sed -i "s#<LOCUST_RAMP_DURATION>#\"$LOCUST_RAMP_DURATION\"#g" $LOAD_GEN_YAML
 
-# Set the latency stat export frequency
-sed -i "s#<LOCUST_CSV_INTERVAL>#\"$LOCUST_CSV_INTERVAL\"#g" $LOAD_GEN_YAML
-
 # Set how many values to use when calculating variance for stable_rampload shape
 sed -i "s#<LOCUST_VARIANCE_WINDOW>#\"$LOCUST_VARIANCE_WINDOW\"#g" $LOAD_GEN_YAML
 
 # Set max variance before ramping up for stable_rampload shape
-sed -i "s#<LOCUST_MAX_VARIANCE>#\"$LOCUST_MAX_VARIANCE\"#g" $LOAD_GEN_YAML          
+sed -i "s#<LOCUST_MAX_VARIANCE>#\"$LOCUST_MAX_VARIANCE\"#g" $LOAD_GEN_YAML     
+
+sed -i "s#<LOCUST_STABLE_P99>#\"$LOCUST_STABLE_P99\"#g" $LOAD_GEN_YAML
 
 # set max tail latency for terminating tests.
 sed -i "s#<LOCUST_MAX_TAIL>#\"$LOCUST_MAX_TAIL\"#g" $LOAD_GEN_YAML
 
 # set number of users to add for low load
 sed -i "s#<LOCUST_SLOWLOAD_RAMP>#\"$LOCUST_SLOWLOAD_RAMP\"#g" $LOAD_GEN_YAML
+
+# Set the latency stat export frequency
+sed -i "s#<LOCUST_CSV_INTERVAL>#\"$LOCUST_CSV_INTERVAL\"#g" $LOAD_GEN_YAML
 
 # If we are going to be adding replicas, 
 # ensure connections are periodically reset to route traffic to new main components.

@@ -514,15 +514,31 @@ func (fe *Server) getRecommendations(ctx context.Context, userID string, product
 	if err != nil {
 		return nil, err
 	}
-	out := make([]productcatalogservice.Product, len(recommendationIDs))
-	for i, id := range recommendationIDs {
+
+	out := make([]productcatalogservice.Product, 0, len(recommendationIDs))
+	productShardMap := make([][]string, productcatalogservice.ProductCatalogReplicas)
+
+	for _, id := range recommendationIDs {
 		shard := productcatalogservice.HashProductID(id)
-		p, err := fe.catalogService.Get().GetProduct(ctx, id, fe.catalogRoutingTable[shard])
+		productShardMap[shard] = append(productShardMap[shard], id)
+	}
+
+	// Because of the large number of goroutines active in main, we send an RPC to each replica serially, rather than concurrently.
+	for shard := 0; shard < productcatalogservice.ProductCatalogReplicas; shard++ {
+
+		if len(productShardMap[shard]) == 0 {
+			continue
+		}
+
+		key := fe.catalogRoutingTable[shard]
+
+		prods, err := fe.catalogService.Get().
+			GetProducts(ctx, productShardMap[shard], key)
 
 		if err != nil {
-			return nil, fmt.Errorf("failed to get recommended product info (#%s) at shard %v: %w", id, shard, err)
+			return nil, fmt.Errorf("failed to get recommended product info at shard %v: %w", shard, err)
 		}
-		out[i] = p
+		out = append(out, prods...)
 	}
 	if len(out) > 4 {
 		out = out[:4] // take only first four to fit the UI
