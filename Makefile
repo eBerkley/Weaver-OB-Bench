@@ -133,8 +133,13 @@ bench_util: deploy
 	@echo deleting deployment..
 
 #usage is ./vertical_profiling.sh component, see comment in the script for config.
+# bench_vertical_prof: deploy
+# 	./scripts/vertical_profiling.sh main
+# 	@echo deleting deployment...
+
+#Collect per component stats along with service stats
 bench_vertical_prof: deploy
-	./scripts/vertical_profiling.sh main
+	./scripts/vertical_pull_stats.sh main
 	@echo deleting deployment...
 
 # ./bench_all changes $(WEAVER_GEN_YAML) every time it runs, 
