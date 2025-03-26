@@ -79,6 +79,18 @@ log_debug_info() {
 iterations=0
 #----------------------------------
 
+echo "Checking if Prometheus port-forward is already established by other script..."
+if ! lsof -i :9090 >/dev/null; then
+    echo "Starting port-forward to Prometheus..."
+    kubectl port-forward svc/prometheus 9090:80 &
+    PF_PID=$!
+    export PF_PID_STARTED_BY_SCRIPT=true
+else
+    echo "Port 9090 already in use. Assuming Prometheus is already being forwarded."
+    PF_PID=
+    export PF_PID_STARTED_BY_SCRIPT=false
+fi
+
 METRIC_URL="http://localhost:9090"
 INTERVAL=20
 SLO_FACTOR=20.0
@@ -88,8 +100,8 @@ STABILITY_COUNT=3
 
 declare -A COMPONENT_MAP=(
     [main]=""
-    [cartCache]="github.com/eBerkley/Weaver-OB-Bench/cartservice/CartService"
-    [ProductCatalogService]="github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService"
+    [cartcache]="github.com/eBerkley/Weaver-OB-Bench/cartservice/CartService"
+    [productcatalogservice]="github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService"
     [adservice]="github.com/eBerkley/Weaver-OB-Bench/adservice/AdService"
     [cartservice]="github.com/eBerkley/Weaver-OB-Bench/cartservice/CartService"
     [checkoutservice]="github.com/eBerkley/Weaver-OB-Bench/checkoutservice/CheckoutService"
@@ -184,6 +196,11 @@ while [[ "$COUNTER" -gt 0 ]]; do
 
     sleep $INTERVAL
 done
+
+if [ "$PF_PID_STARTED_BY_SCRIPT" = true ] && [ -n "$PF_PID" ]; then
+    echo "Killing port-forward process..."
+    kill $PF_PID
+fi
 
 echo "Profiling terminated"
 

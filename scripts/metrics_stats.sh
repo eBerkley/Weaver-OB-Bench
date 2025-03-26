@@ -124,8 +124,8 @@ metrics=(
   "serviceweaver_http_request_count"
   "serviceweaver_http_request_latency_micros_bucket"
   "serviceweaver_method_count"
-  "serviceweaver_method_bytes_request_bucket"
-  "serviceweaver_method_bytes_reply_bucket"
+  "serviceweaver_method_bytes_request_sum"
+  "serviceweaver_method_bytes_reply_sum"
   "serviceweaver_method_latency_micros_bucket"
 )
 
