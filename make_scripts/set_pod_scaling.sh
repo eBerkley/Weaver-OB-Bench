@@ -58,7 +58,6 @@ for name in $(get_group_names); do
       -e s#\<MAX_REPLICAS\>#\<OB_REPLICAS\>#g \
       -e s#\<AVERAGE_UTILIZATION\>#\<"$type"_SCALE_UTIL\>#g \
       $SCALING_SPEC_FILE )
-
   fi
   
   # sed seems to have issues replacing a search pattern with a string that has multiple lines and tab indents. 
@@ -70,7 +69,7 @@ for name in $(get_group_names); do
 
 
   # Now we do the stuff for statefulSpec attributes.
-  replicas=1 # !!!!!!!!!! PLACEHOLDER !!!!!!!!!!!
+  replicas=$PRODUCT_CATALOG_REPLICAS
   stateful_spec="
     statefulSpec:
       replicas: $replicas"

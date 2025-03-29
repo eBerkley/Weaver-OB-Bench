@@ -49,6 +49,10 @@ sed -i "s#<LOCUST_MAX_VARIANCE>#\"$LOCUST_MAX_VARIANCE\"#g" $LOAD_GEN_YAML
 
 sed -i "s#<LOCUST_STABLE_P99>#\"$LOCUST_STABLE_P99\"#g" $LOAD_GEN_YAML
 
+sed -i "s#<LOCUST_LOW_LOAD_USERS>#\"$LOCUST_LOW_LOAD_USERS\"#g" $LOAD_GEN_YAML
+
+sed -i "s#<LOCUST_SLO_RATIO>#\"$LOCUST_SLO_RATIO\"#g" $LOAD_GEN_YAML
+
 # set max tail latency for terminating tests.
 sed -i "s#<LOCUST_MAX_TAIL>#\"$LOCUST_MAX_TAIL\"#g" $LOAD_GEN_YAML
 

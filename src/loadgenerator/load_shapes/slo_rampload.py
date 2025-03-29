@@ -7,39 +7,20 @@ from os import getenv
 
 WAIT_TIME = int(getenv("LOCUST_WAIT_TIME", "30"))
 RAMP_DURATION = float(getenv("LOCUST_RAMP_DURATION", "5.0")) # seconds
-MAX_TAIL = float(getenv("LOCUST_MAX_TAIL", "150")) # ms
+LOW_LOAD_USERS = float(getenv("LOCUST_LOW_LOAD_USERS", "1500"))
+SLO_RATIO = float(getenv("LOCUST_SLO_RATIO", "15"))
 
 class RampLoad(LoadTestShape):
-    """
-    
-    A load generator shape that will ramp up user generation speed to lower test duration, as well as respond to high latency by ending the test early.
 
-    Keyword arguments:
+    init_time: Final = 60 # seconds
+    """How long should it take to hit low_load_users? """
 
-        init_users      --  What is the first target to hit? Required since otherwise 
-                            ramp_change will always initialize to 0.
+    low_load_users: Final = LOW_LOAD_USERS
+    """What is the first target to hit, which is later used 
+    for SLO calculation?"""
 
-        init_time       --  How long should it take to hit init_users? 
-                            Note, will not be honored if it would require more than 100
-                            users to be generated per second.
-
-        max_tail        --  When p99 latency >= this value, consider it violating.
-
-        ramp_pause      --  When we reach a user count we were ramping to, 
-                            how long do we wait before resuming?
-
-        ramp_duration   --  How much time do we spend reaching the new user count?
-                            Affects users spawned per second, but not overall users spawned per ramp.
-    """
-
-    init_users: Final = 50 # users
-    """What is the first target to hit?"""
-
-    init_time: Final = 45 # seconds
-    """How long should it take to hit init_users? """
-
-    max_tail: Final = MAX_TAIL # ms
-    """When p99 latency >= this value, consider it violating."""
+    slo_ratio: Final = SLO_RATIO
+    """`current p99 / low load p50 > slo ratio`: VIOLATION"""
 
     ramp_pause: Final = 10 # seconds
     """When we reach a user count we were ramping to, how long do we wait before resuming?"""
@@ -69,6 +50,8 @@ class RampLoad(LoadTestShape):
         self._p99: int = 0
         """tail latency"""
 
+        self._low_load_p50: float = 0.0
+
         super().__init__(*args, **kwargs)
     
     
@@ -78,22 +61,26 @@ class RampLoad(LoadTestShape):
         self._p50 = self.runner.stats.total.get_current_response_time_percentile(0.50)
         self._p99 = self.runner.stats.total.get_current_response_time_percentile(0.99)
 
-        if cur_users < self.init_users:
-            return self.init_users, self.init_time
+        if cur_users < self.low_load_users:
+            return self.low_load_users, self.init_time
 
         if self._p99 == None:
             self._p99 = 0
         
-        if self._p99 < self.max_tail:
+        ratio = float(self._p99) / self._low_load_p50 
+        if ratio < self.slo_ratio:
             self._slo_timer = WAIT_TIME
 
         elif self._slo_timer < 0:
             return None
 
-        log_string += f"SLO Timer: {self._slo_timer} \t P50: {self._p50} \t P99: {self._p99}\t self._transition: {self._transition} \t users: {cur_users} \t "
+        log_string += f"P50: {self._p50} \t P99: {self._p99} \t users: {cur_users} \t slo ratio: {ratio})\t "
 
         if self._transition <= 0: #transition now
-            log_string += "RampLoad: Checking.\t"
+            # log_string += "RampLoad: Checking.\t"
+
+            if cur_users == self.low_load_users:
+                self._low_load_p50 = float(self._p50)
 
             # Violating SLO while paused for 30 seconds
             if self._pausing and self._slo_timer <= 0: # WAIT_TIME/2:
@@ -110,16 +97,16 @@ class RampLoad(LoadTestShape):
                 self._ramp_speed = 10.0 #must be greater than 0
 
             else:
-                if self._p99 < 40 and not self._ever_paused:
+                if self._p99 < 25 and not self._ever_paused:
                     rate = 1.2
-                elif self._p99 < 60:
-                    rate = 1.125
-                elif self._p99 < 80:
-                    rate = 1.08
-                elif self._p99 < 110:
+                elif self._p99 < 40 and not self._ever_paused:
+                    rate = 1.1
+                elif self._p99 < 75:
                     rate = 1.05
+                elif self._p99 < 90:
+                    rate = 1.02
                 else:
-                    rate = 1.025
+                    rate = 1.01
 
                 log_string += f"Rate: {rate}\t"
                 self._transition = self.ramp_pause

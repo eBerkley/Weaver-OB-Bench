@@ -2,10 +2,9 @@
 cd $(dirname "$0") || exit
 sleep 15
 
-logfile="../logs.txt"
+source stats_utils/all_stats.sh
 
-full_podname=$(kubectl get pod -o name --selector app=loadgenerator )
-podname="${full_podname#*/}"
+
 echo load generator podname = $podname
 
 rm -f 'pod_stats.csv'
@@ -17,37 +16,12 @@ finish () {
 
 trap finish EXIT
 
-
-mainpod=$(kubectl get deploy | grep '[mM]ain' | head -1 | awk '{print $1}')
-if [[ -z "$mainpod" ]]; then
-  mainpod=$(kubectl get deploy | grep 'all' | head -1 | awk '{print $1}')
-  if [[ -z "$mainpod" ]]; then
-    mainpod=$(kubectl get deploy | grep 'front' | head -1 | awk '{print $1}')
-  fi
-fi
+loadgen_wait
 
 SECONDS=0
-DEBUG_FREQUENCY=5 # 20% of time
-
-echo waiting for loadgenerator to be ready...                 | tee -a $logfile
-kubectl wait --timeout=1h --for=condition=Ready pod/$podname
-sleep 1
-echo loadgenerator ready. Time elapsed = $SECONDS seconds.    | tee -a $logfile
-echo                                                          | tee -a $logfile
-
-SECONDS=0
-
-# usage: get_lines [num lines = 1]
-get_lines () {
-  kubectl logs --tail ${1:-1} $podname
-}
 
 echo Seconds,CPU Cores > ../benchmark/stats/cpu.csv
 
-write_cpu_util () {
-  cores=$(./get_cores.sh)
-  echo $SECONDS,$cores >> ../benchmark/stats/cpu.csv
-}
 
 log_debug_info() {  
   local val=$1
@@ -55,12 +29,9 @@ log_debug_info() {
   if [ $(( val % $DEBUG_FREQUENCY )) -eq 0 ]; then
 
     # echo "=*=*=*=*=*=*=*=*= DEBUG INFO =*=*=*=*=*=*=*=*="
-  
-    # kubectl logs -l="serviceweaver/name=$mainpod"
-    # echo
+    
     date -d@$SECONDS -u +%H:%M:%S
-    # kubectl top pod
-    # echo
+    
     ./get_replicas.sh
     code=$?
     if [[ $code = 0 ]]; then
@@ -75,20 +46,16 @@ log_debug_info() {
   fi
 }
 
-timestamp="[$(date +'%a %h %d %T %Y')] "
-reprint="\e[1A\e[K"
-
 iterations=0
 
-str=$(get_lines)
+strs=$(get_lines $timestamp_file 3)
+str=$(echo "$strs" | tail -1)
 size=${#str}
-echo $str
-last_str=""
+echo $strs
 
 # usage: loop_continue SIZE
 #   we should terminate => echo 0
 #   else => echo 1
-
 if [[ $LOCUST_SHAPE = 'scaleload' ]]; then
   loop_continue () {
     local size=$1
@@ -127,27 +94,11 @@ while [[ $continue_result = 1 ]]; do
   write_cpu_util
   
   sleep 10
-  strs=$(get_lines 2)
+  strs=$(get_lines $timestamp_file 3)
   str=$(echo "$strs" | tail -1)
-  strPrev=$(echo "$strs" | head -1)
   size=${#str}
+  if [[ $size != 0 ]]; then echo "$strs" | tee -a $logfile; fi
   
-  if [[ $strPrev != $last_str ]]; then
-    echo -e $timestamp$strPrev
-    echo $strPrev >> $logfile   
-
-    if [[ $str != $last_str ]]; then
-      echo $str
-      echo $str >> $logfile
-    fi
-
-  elif [[ $str != $last_str ]]; then
-    echo -e  $timestamp$str
-    echo $str >> $logfile
-  fi
-
-
-  last_str=$str
   
   (( iterations+=1 ))
   log_debug_info $iterations >> $logfile
@@ -164,8 +115,6 @@ if [[ $SECONDS -lt 150 ]]; then
   
   sleep 1000
 fi
-
-
 
 echo done.
 

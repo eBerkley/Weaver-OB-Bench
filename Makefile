@@ -23,11 +23,62 @@ else
 	DEBUG_OUTPUT := /dev/null
 endif
 
-TRACE_ENABLE := false
-METRIC_ENABLE := true
-INSTFP_ENABLE := false
-CPU_UTIL_ENABLE := false
-VERTICAL_PROF := false
+# Override env variables
+
+ifeq ($(BENCH_TYPE), STATIC)
+	METRIC_ENABLE   := false
+	TRACE_ENABLE    := false
+	INSTFP_ENABLE   := false
+	CPU_UTIL_ENABLE := false
+	VERTICAL_PROF   := false
+
+	LOCUST_SHAPE          := slo_rampload
+	LOCUST_LOW_LOAD_USERS := $(STATIC_LOW_LOAD_USERS)
+
+else ifeq ($(BENCH_TYPE), INITIAL)
+	METRIC_ENABLE   := true
+	TRACE_ENABLE    := false
+	INSTFP_ENABLE   := false
+	CPU_UTIL_ENABLE := false
+	VERTICAL_PROF   := false
+
+	LOCUST_SHAPE 			 := constload
+	LOCUST_CONST_USERS := $(INITIAL_USERS)
+
+else ifeq ($(BENCH_TYPE), FIXED)
+	METRIC_ENABLE   := true
+	TRACE_ENABLE    := false
+	INSTFP_ENABLE   := false
+	CPU_UTIL_ENABLE := false
+	VERTICAL_PROF   := true
+
+	LOCUST_SHAPE := slowload
+	LOCUST_SLOWLOAD_RAMP := $(FIXED_USERS_RAMP)
+
+else ifeq ($(BENCH_TYPE), INST_FP)
+	METRIC_ENABLE   := false
+	TRACE_ENABLE    := false
+	INSTFP_ENABLE   := true
+	CPU_UTIL_ENABLE := false
+	VERTICAL_PROF   := false
+
+	LOCUST_SHAPE 			 := constload
+	LOCUST_CONST_USERS := $(INST_FP_USERS)
+
+else ifeq ($(BENCH_TYPE), CPU_UTIL)
+	METRIC_ENABLE   := false
+	TRACE_ENABLE    := false
+	INSTFP_ENABLE   := false
+	CPU_UTIL_ENABLE := true
+	VERTICAL_PROF   := false
+
+	LOCUST_SHAPE       := constload
+	LOCUST_CONST_USERS := $(CPU_UTIL_USERS)
+
+else # ifeq ($(BENCH_TYPE), CUSTOM)
+# ...
+endif
+
 
 .PHONY: all clean minikube_start minikube_restart check_smt toggle_smt deploy bench bench_all stop clear_logs check_docker check_loadgen pre_deploy bench_once 
 
@@ -46,6 +97,15 @@ all:
 
 include auto/scripts.mk
 
+test_envvars:
+	@echo "BENCH_TYPE         : $$BENCH_TYPE"
+	@echo "METRIC_ENABLE      : $$METRIC_ENABLE"
+	@echo "TRACE_ENABLE       : $$TRACE_ENABLE"
+	@echo "INSTFP_ENABLE      : $$INSTFP_ENABLE"
+	@echo "CPU_UTIL_ENABLE    : $$CPU_UTIL_ENABLE"
+	@echo "VERTICAL_PROF      : $$VERTICAL_PROF"
+	@echo "LOCUST_SHAPE       : $$LOCUST_SHAPE"
+	@echo "LOCUST_CONST_USERS : $$LOCUST_CONST_USERS"
 
 check_loadgen: $(LOAD_SRC_PY)
 	@python3 -m py_compile $(LOAD_SRC_PY)
@@ -92,6 +152,7 @@ deploy: minikube_start pre_deploy
 	else \
 	    echo "Skipping Jaeger deployment." >> $(DEBUG_OUTPUT); \
 	fi
+
 	@if [ "$(METRIC_ENABLE)" = "true" ]; then \
 		echo "prometheus is enabled, starting to collect metrics" ; \
 	    kubectl apply -f $(PROMETHEUS_METRIC_YAML) >> $(DEBUG_OUTPUT) 2>&1; \
@@ -106,7 +167,20 @@ deploy: minikube_start pre_deploy
 # Can be run by user 
 # Used to benchmark app under environment specified by env vars
 bench: deploy	
-	./scripts/pull_stats.sh 
+	@if [[ $$TRACE_ENABLE = "true" ]]; then     \
+		./scripts/trace_stats.sh;                 \
+	elif [[ $$INSTFP_ENABLE = "true" ]]; then   \
+		./scripts/instfp_stats.sh $(TOP);         \
+	elif [[ $$CPU_UTIL_ENABLE = "true" ]]; then \
+		./scripts/cpu_util_stats.sh;              \
+	elif [[ $$VERTICAL_PROF = "true" ]]; then   \
+		./scripts/vertical_pull_stats.sh;         \
+	elif [[ $$METRIC_ENABLE = "true" ]]; then   \
+		./scripts/metrics_stats.sh;               \
+	else                                        \
+		./scripts/pull_stats.sh;                  \
+	fi
+
 	@echo deleting deployment...
 	@-kubectl delete all --all >> $(DEBUG_OUTPUT) 2>&1
 	@./make_scripts/post_bench.sh
@@ -115,56 +189,11 @@ bench: deploy
 bench_once: deploy
 	./scripts/pull_stats.sh
 
-bench_trace: deploy
-	./scripts/traces_stats.sh
-	@echo deleting deployment...
-
-bench_metric: $(TELEMETRY_METRICS) deploy
-	./scripts/metrics_stats.sh
-	@echo deleting deployment...
-	@-kubectl delete all --all >> $(DEBUG_OUTPUT)  2>&1
-
-bench_instfp: deploy
-	./scripts/instfp_stats.sh $(TOP)
-	@echo deleting deployment...
-
-bench_util: deploy
-	./scripts/cpu_util_stats.sh
-	@echo deleting deployment..
-
-#usage is ./vertical_profiling.sh component, see comment in the script for config.
-# bench_vertical_prof: deploy
-# 	./scripts/vertical_profiling.sh main
-# 	@echo deleting deployment...
-
-#Collect per component stats along with service stats
-bench_vertical_prof: deploy
-	./scripts/vertical_pull_stats.sh main
-	@echo deleting deployment...
-
 # ./bench_all changes $(WEAVER_GEN_YAML) every time it runs, 
 # 	new images built each time.
 bench_all: clear_logs
 	@echo 
 	./make_scripts/bench_all.sh
-
-# make bench_all with traces collection turn on
-bench_trace_all: $(TELEMETRY_TRACES)
-	$(MAKE) bench_all TRACE_ENABLE=true
-
-# make bench_all with metrics collection turn on
-bench_metric_all: $(TELEMETRY_METRICS)
-	$(MAKE) bench_all METRIC_ENABLE=true
-
-bench_instfp_all: $(WEAVER_KUBE)
-	$(MAKE) bench_all INSTFP_ENABLE=true
-
-bench_util_all: $(WEAVER_KUBE)
-	$(MAKE) bench_all CPU_UTIL_ENABLE=true
-
-bench_vertical_prof_all:$(TELEMETRY_METRICS)
-	$(MAKE) bench_all VERTICAL_PROF=true
-
 
 WEAVER_DIR := $(TOP)/weaver
 WEAVER_SRC := $(shell find $(WEAVER_DIR) -type f -name '*.go')
@@ -173,15 +202,16 @@ $(WEAVER): $(WEAVER_SRC)
 
 KUBE_DIR := $(TOP)/weaver-kube
 KUBE_SRC := $(shell find $(KUBE_DIR) -type f -name '*.go')
-$(WEAVER_KUBE): $(KUBE_SRC)
+
+$(WEAVER_KUBE): $(KUBE_SRC) $(TELEMETRY_TRACES) $(TELEMETRY_METRICS)
 	go build -C weaver-kube/cmd/weaver-kube
 	cp ./weaver-kube/cmd/weaver-kube/weaver-kube $(WEAVER_BIN_PATH)
 
-$(TELEMETRY_TRACES): $(WEAVER_KUBE) weaver-kube/examples/telemetry-traces/main.go
+$(TELEMETRY_TRACES): weaver-kube/examples/telemetry-traces/main.go
 	(cd weaver-kube/examples/telemetry-traces && go build -o telemetry-traces .)
 	cp ./weaver-kube/examples/telemetry-traces/telemetry-traces $(WEAVER_BIN_PATH)
 
-$(TELEMETRY_METRICS): $(WEAVER_KUBE) weaver-kube/examples/telemetry-metrics/main.go
+$(TELEMETRY_METRICS): weaver-kube/examples/telemetry-metrics/main.go
 	(cd weaver-kube/examples/telemetry-metrics && go build -o telemetry-metrics .)
 	cp ./weaver-kube/examples/telemetry-metrics/telemetry-metrics $(WEAVER_BIN_PATH)
 

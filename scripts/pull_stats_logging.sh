@@ -56,10 +56,6 @@ get_lines () {
 
 echo Seconds,CPU Cores > ../benchmark/stats/cpu.csv
 
-write_cpu_util () {
-  local cores=$(./get_cores.sh)
-  echo $SECONDS,$cores >> ../benchmark/stats/cpu.csv
-}
 
 log_debug_info() {  
   local val=$1

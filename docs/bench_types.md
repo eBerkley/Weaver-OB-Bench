@@ -1,22 +1,36 @@
 # Bench Types
 
+For the sake of not having to swap out env vars repeatedly, BENCH_TYPE can be used to programmatically set the necessary env variables to achieve the needed functionality.
+
+typically, you will be calling either bench or bench_all.
+
+In addition to setting the variable in .env, one can also invoke make with the var set, i.e.
+```bash
+make BENCH_TYPE=INITIAL bench
+```
+
+## Custom
+
+Prevent any env variables from being overloaded. 
+
+```conf
+BENCH_TYPE=CUSTOM
+```
+
 ## Initial
 
 Create a fully distributed deployment, each component gets one replica, each replica gets one core.
 
-We provide a light, constant load to determine a SLO target based on each component's max p50 latency. 
+We provide a light, constant load to determine a SLO target based on each component's p50 service latency. 
 
 These values are then saved for later benchmark types.
 
-```bash
+```conf
 BENCH_TYPE=INITIAL
 LOCUST_SHAPE=constload
 
-# .cfg
-OB_REPLICAS=1
-
 INITIAL_RUNTIME=<seconds>
-LOCUST_CONST_USERS=<number_of_users>
+INITIAL_USERS=<number_of_users>
 ```
 
 ## Fixed
@@ -28,7 +42,7 @@ The fixed component is given one replica, and it's horizontal pod autoscaler is 
 All other components are given one replica with the HPA enabled. Each replica gets one core. 
 
 
-```bash
+```conf
 BENCH_TYPE=FIXED
 
 # .cfg
@@ -37,4 +51,11 @@ FIXED_HEIGHT=<cores_allocated>
 
 ```
 
+## Instruction Footprint Profiling
 
+All components are profiled by perf to extract their instruction footprint.
+
+```conf
+BENCH_TYPE=INST_FP
+
+```

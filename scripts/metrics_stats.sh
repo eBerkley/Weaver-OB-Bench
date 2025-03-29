@@ -1,12 +1,18 @@
 #!/bin/bash
+
+# Runs for INITIAL_RUNTIME seconds, and then collects the following metrics:
+# p99/p50 service latency for all components
+# p99/p50 request latency (not from load generator)
+# 
+
 cd $(dirname "$0") || exit
 sleep 15
 
-logfile="../logs.txt"
+FINAL_METRICS_DURATION=${FINAL_METRICS_DURATION:-60s}
 
-# podname=$(kubectl get pod | grep 'loadgenerator-[a-z0-9]\+-[a-z0-9]\+ ' | awk '{print $1}')
-full_podname=$(kubectl get pod -o name --selector app=loadgenerator )
-podname="${full_podname#*/}"
+# Get vars / fns for all stat collecters
+source stats_utils/all_stats.sh
+
 echo load generator podname = $podname
 
 rm -f 'pod_stats.csv'
@@ -17,23 +23,11 @@ finish () {
 
 trap finish EXIT
 
-mainpod=$(kubectl get deploy | grep '[mM]ain' | head -1 | awk '{print $1}')
-if [[ -z "$mainpod" ]]; then
-  mainpod=$(kubectl get deploy | grep 'all' | head -1 | awk '{print $1}')
-  if [[ -z "$mainpod" ]]; then
-    mainpod=$(kubectl get deploy | grep 'front' | head -1 | awk '{print $1}')
-  fi
-fi
+SECONDS=0
+
+loadgen_wait
 
 SECONDS=0
-DEBUG_FREQUENCY=5 # 20% of time
-
-echo waiting for loadgenerator to be ready...                 | tee -a $logfile
-kubectl wait --timeout=1h --for=condition=Ready pod/$podname
-sleep 1
-echo loadgenerator ready. Time elapsed = $SECONDS seconds.    | tee -a $logfile
-echo                                                          | tee -a $logfile
-
 # Start port-forwarding Prometheus service 
 echo "Starting port-forward to Prometheus..."
 # kubectl wait --timeout=1h --for=condition=Ready svc/prometheus
@@ -42,17 +36,7 @@ PF_PID=$!
 
 SECONDS=0
 
-# usage: get_lines [num lines = 1]
-get_lines () {
-  kubectl logs --tail ${1:-1} $podname
-}
-
 echo Seconds,CPU Cores > ../benchmark/stats/cpu.csv
-
-write_cpu_util () {
-  cores=$(./get_cores.sh)
-  echo $SECONDS,$cores >> ../benchmark/stats/cpu.csv
-}
 
 log_debug_info() {  
   local val=$1
@@ -75,41 +59,21 @@ log_debug_info() {
   fi
 }
 
-timestamp="[$(date +'%a %h %d %T %Y')] "
-reprint="\e[1A\e[K"
-
 iterations=0
 
-str=$(get_lines)
+str=$(get_lines $timestamp_file)
 size=${#str}
 echo $str
-last_str=""
-# while [ $size -le 5 ] || [ $size -ge 20 ]; do
+
 while [ $SECONDS -le $INITIAL_RUNTIME ]; do
+
   write_cpu_util
   
   sleep 10
-  strs=$(get_lines 2)
+  strs=$(get_lines $timestamp_file 3)
   str=$(echo "$strs" | tail -1)
-  strPrev=$(echo "$strs" | head -1)
   size=${#str}
-
-  if [[ $strPrev != $last_str ]]; then
-    echo -e $timestamp$strPrev
-    echo $strPrev >> $logfile   
-
-    if [[ $str != $last_str ]]; then
-      echo $str
-      echo $str >> $logfile
-    fi
-
-  elif [[ $str != $last_str ]]; then
-    echo -e  $timestamp$str
-    echo $str >> $logfile
-  fi
-
-
-  last_str=$str
+  if [[ $size != 0 ]]; then echo "$strs" | tee -a $logfile; fi
   
   (( iterations+=1 ))
   log_debug_info $iterations >> $logfile
@@ -120,34 +84,72 @@ done
 sleep 30
 
 # List of metrics to query.
-metrics=(
-  "serviceweaver_http_request_count"
-  "serviceweaver_http_request_latency_micros_bucket"
-  "serviceweaver_method_count"
-  "serviceweaver_method_bytes_request_sum"
-  "serviceweaver_method_bytes_reply_sum"
-  "serviceweaver_method_latency_micros_bucket"
-)
+metric_no_sys () {
+  local metric=$1
+  new_metric="rate($metric{component!=\"github.com/eberkley/weaver/weaveletControl\",component!=\"github.com/eberkley/weaver/deployerControl\"}[$FINAL_METRICS_DURATION])"
+  jq -rn --arg q "$new_metric" '$q|@uri'
+}
+
+get_service_percentile () {
+  local percentile=$1
+  metric="histogram_quantile($percentile, sum(rate(serviceweaver_method_latency_micros_bucket{component!=\"github.com/eberkley/weaver/weaveletControl\",component!=\"github.com/eberkley/weaver/deployerControl\"}[$FINAL_METRICS_DURATION])) by (component, le))"
+  jq -rn --arg q "$metric" '$q|@uri'
+}
+
+get_http_percentile () {
+  local percentile=$1
+  metric="histogram_quantile($percentile, sum(rate(serviceweaver_http_request_latency_micros_bucket[$FINAL_METRICS_DURATION])) by (label, le))"
+  jq -rn --arg q "$metric" '$q|@uri'
+}
+
+
+# "serviceweaver_http_request_count_bucket"
+# "serviceweaver_http_request_latency_micros_bucket"
+# "serviceweaver_method_latency_micros_bucket"
 
 # Create an output directory for JSON files.
 output_dir="../metrics_collection"
 mkdir -p "${output_dir}"
 
+query_metric () {
+  local name=$1
+  local metric=$2
+  curl -s "http://localhost:9090/api/v1/query?query=${metric}" -o "${output_dir}/${name}.json"
+}
+
 # Query each metric and save the output into separate JSON files.
-for metric in "${metrics[@]}"; do
-  echo "Querying metric: ${metric}"
-  curl -s "http://localhost:9090/api/v1/query?query=${metric}" -o "${output_dir}/${metric}.json"
-done
+
+query_metric "request_counts" $(jq -rn --arg q "sum(rate(serviceweaver_http_request_count[$FINAL_METRICS_DURATION])) by (label)" '$q|@uri')
+query_metric "serviceweaver_method_count" $(metric_no_sys "serviceweaver_method_count")
+query_metric "serviceweaver_method_bytes_request_sum" $(metric_no_sys "serviceweaver_method_bytes_request_sum")
+query_metric "serviceweaver_method_bytes_reply_sum" $(metric_no_sys "serviceweaver_method_bytes_reply_sum")  
+
+
+p99_service_latency="$(get_service_percentile 0.99)"
+p50_service_latency="$(get_service_percentile 0.50)"
+p99_request_latency="$(get_http_percentile 0.99)"
+p50_request_latency="$(get_http_percentile 0.50)"
+
+query_metric "p99_service_latency" $p99_service_latency
+query_metric "p50_service_latency" $p50_service_latency
+query_metric "p99_request_latency" $p99_request_latency
+query_metric "p50_request_latency" $p50_request_latency
+
 
 # Terminate the port-forward process.
 echo "Terminating port-forward..."
 kill "${PF_PID}"
 
 python3 ../benchmark/prometheus_metrics.py \
-  "${output_dir}/serviceweaver_http_request_count.json" \
+  "${output_dir}/request_counts.json" \
   "${output_dir}/serviceweaver_method_bytes_reply_sum.json" \
   "${output_dir}/serviceweaver_method_bytes_request_sum.json" \
-  "${output_dir}/serviceweaver_method_count.json"
+  "${output_dir}/serviceweaver_method_count.json"\
+  "${output_dir}/p50_service_latency.json"\
+  "${output_dir}/p99_service_latency.json"\
+  "${output_dir}/p50_request_latency.json"\
+  "${output_dir}/p99_request_latency.json"
+  
 
 
 echo "All metric data collected and compiled in the '${output_dir}' directory."

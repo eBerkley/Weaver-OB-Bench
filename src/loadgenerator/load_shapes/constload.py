@@ -17,7 +17,7 @@ class ConstLoad(LoadTestShape):
     """
     max_users = CONST_USERS # users
 
-    ramp_speed = 50 # users per second
+    ramp_speed = 1 # users per second
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

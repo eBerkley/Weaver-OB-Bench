@@ -101,6 +101,12 @@ spec:
         - name: LOCUST_CONST_USERS
           value: <LOCUST_CONST_USERS>
 
+        - name: LOCUST_LOW_LOAD_USERS
+          value: <LOCUST_LOW_LOAD_USERS>
+
+        - name: LOCUST_SLO_RATIO
+          value: <LOCUST_SLO_RATIO>
+
         resources:
           requests:
             cpu: 1
@@ -199,6 +205,12 @@ spec:
 
         - name: LOCUST_CONST_USERS
           value: <LOCUST_CONST_USERS>
+
+        - name: LOCUST_LOW_LOAD_USERS
+          value: <LOCUST_LOW_LOAD_USERS>
+
+        - name: LOCUST_SLO_RATIO
+          value: <LOCUST_SLO_RATIO>
 
         resources:
           requests: 

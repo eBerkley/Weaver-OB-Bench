@@ -15,10 +15,10 @@ MAX_TAIL = int(getenv("LOCUST_MAX_TAIL", 200))
 USERS_ADDED = int(getenv("LOCUST_SLOWLOAD_RAMP", 750))
 
 class SlowLoad(LoadTestShape):
-    init_users: Final = 1000 # users
+    init_users: Final = USERS_ADDED*15 # users
     """What is the first target to hit?"""
 
-    init_time: Final = 30 # seconds
+    init_time: Final = RAMP_DURATION*200 # seconds
     """How long should it take to hit init_users? """
 
     max_tail: Final = MAX_TAIL # ms
@@ -34,7 +34,7 @@ class SlowLoad(LoadTestShape):
     max_variance: Final = MAX_VARIANCE
     """What is the 30-second window's max variance to be considered stabilized?"""
 
-    stable_alt: Final = 90
+    stable_alt: Final = 35
     """If we have been at this user count for this long, say we are stabilized anyways."""
 
     def __init__(self, *args, **kwargs):
@@ -108,7 +108,7 @@ class SlowLoad(LoadTestShape):
 
 
         if cur_users < self.init_users:
-            return self.init_users, self.init_time
+            return self.init_users, float(self.init_users) / self.init_time
 
         if self._p99 == None:
             self._p99 = 0
