@@ -56,6 +56,17 @@ else ifeq ($(BENCH_TYPE), FIXED)
 	LOCUST_SLOWLOAD_RAMP := $(FIXED_USERS_RAMP)
 	LOCUST_RAMP_RATE := $(FIXED_USERS_RAMP_RATE)
 
+else ifeq ($(BENCH_TYPE), HETERO_HT)
+	METRIC_ENABLE   := true
+	TRACE_ENABLE    := false
+	INSTFP_ENABLE   := false
+	CPU_UTIL_ENABLE := false
+	VERTICAL_PROF   := false
+
+	LOCUST_SHAPE := slowerload
+	LOCUST_SLOWLOAD_RAMP := $(FIXED_USERS_RAMP)
+	LOCUST_RAMP_RATE := $(FIXED_USERS_RAMP_RATE)
+
 else ifeq ($(BENCH_TYPE), INST_FP)
 	METRIC_ENABLE   := false
 	TRACE_ENABLE    := false
@@ -183,7 +194,6 @@ bench: deploy
 
 	@echo deleting deployment...
 	@-kubectl delete all --all >> $(DEBUG_OUTPUT) 2>&1
-	@./make_scripts/post_bench.sh
 
 # Shouldn't be ran by user, used by bench_all.
 bench_once: deploy
