@@ -37,9 +37,9 @@ for name in $(get_group_names); do
   cores=1
   if [[ $BENCH_TYPE = 'FIXED' ]]; then  # : We don't read from cscheme file
     if [[ $name = $FIXED ]]; then
-      echo fixing $name to height $cores >> $DEBUG_OUTPUT
       cores=$FIXED_HEIGHT
-    fi # if name != fixed, the fallback of 1 is what we want anyways.
+      echo fixing $name to height $cores >> $DEBUG_OUTPUT
+    fi # if name != fixed || fixed direction = OUT, the fallback of 1 is what we want anyways.
   
   else # BENCH_TYPE != FIXED  : Read from cscheme file
   

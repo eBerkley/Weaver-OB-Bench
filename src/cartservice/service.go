@@ -16,9 +16,12 @@ package cartservice
 
 import (
 	"context"
+	"time"
 
 	"github.com/eberkley/weaver"
 	_ "go.uber.org/automaxprocs"
+
+	imetrics "github.com/eberkley/weaver/runtime/codegen"
 )
 
 type CartItem struct {
@@ -47,15 +50,37 @@ func (s *impl) Init(ctx context.Context) error {
 
 // AddItem adds a given item to the user's cart.
 func (s *impl) AddItem(ctx context.Context, userID string, item CartItem) error {
-	return s.store.AddItem(ctx, userID, item.ProductID, item.Quantity)
+
+	initTime := time.Now()
+
+	duration, err := s.store.AddItem(ctx, userID, item.ProductID, item.Quantity)
+	internalLatency := time.Since(initTime) - duration
+
+	imetrics.InternalMetricsFor(imetrics.InternalMethodLabels{Component: "github.com/eBerkley/Weaver-OB-Bench/cartservice/CartService", Method: "AddItem"}).Put(float64(internalLatency.Microseconds()))
+	return err
 }
 
 // GetCart returns the items in the user's cart.
 func (s *impl) GetCart(ctx context.Context, userID string) ([]CartItem, error) {
-	return s.store.GetCart(ctx, userID)
+	initTime := time.Now()
+
+	items, duration, err := s.store.GetCart(ctx, userID)
+
+	internalLatency := time.Since(initTime) - duration
+	imetrics.InternalMetricsFor(imetrics.InternalMethodLabels{Component: "github.com/eBerkley/Weaver-OB-Bench/cartservice/CartService", Method: "GetCart"}).Put(float64(internalLatency.Microseconds()))
+
+	return items, err
 }
 
 // EmptyCart empties the user's cart.
 func (s *impl) EmptyCart(ctx context.Context, userID string) error {
-	return s.store.EmptyCart(ctx, userID)
+	initTime := time.Now()
+
+	duration, err := s.store.EmptyCart(ctx, userID)
+
+	internalLatency := time.Since(initTime) - duration
+	imetrics.InternalMetricsFor(imetrics.InternalMethodLabels{Component: "github.com/eBerkley/Weaver-OB-Bench/cartservice/CartService", Method: "EmptyCart"}).Put(float64(internalLatency.Microseconds()))
+
+	return err
+
 }

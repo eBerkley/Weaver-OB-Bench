@@ -76,8 +76,8 @@ products = [
     "128709e032",
     "3516b7513b",
 ]
-currencies = ['EUR', 'USD', 'JPY', 'CAD', 'GBP', 'TRY']
 
+currencies = ['EUR', 'USD', 'JPY', 'CAD', 'GBP', 'TRY']
 class WebsiteUser(FastHttpUser):
     wait_time = constant_pacing(2.5)
 

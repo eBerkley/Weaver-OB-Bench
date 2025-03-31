@@ -18,8 +18,10 @@ import (
 	"context"
 	"math/rand"
 	"strings"
+	"time"
 
 	"github.com/eberkley/weaver"
+	imetrics "github.com/eberkley/weaver/runtime/codegen"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	_ "go.uber.org/automaxprocs"
@@ -54,6 +56,8 @@ func (s *impl) Init(ctx context.Context) error {
 
 // GetAds returns a list of ads that best match the given context keywords.
 func (s *impl) GetAds(ctx context.Context, keywords []string) ([]Ad, error) {
+	initTime := time.Now()
+
 	s.Logger(ctx).Info("received ad request", "keywords", keywords)
 	span := trace.SpanFromContext(ctx)
 	var allAds []Ad
@@ -74,6 +78,9 @@ func (s *impl) GetAds(ctx context.Context, keywords []string) ([]Ad, error) {
 		span.AddEvent("No Context provided. Constructing random Ads.")
 		allAds = s.getRandomAds()
 	}
+
+	internalLatency := time.Since(initTime)
+	imetrics.InternalMetricsFor(imetrics.InternalMethodLabels{Component: "github.com/eBerkley/Weaver-OB-Bench/adservice/AdService", Method: "GetAds"}).Put(float64(internalLatency.Microseconds()))
 	return allAds, nil
 }
 

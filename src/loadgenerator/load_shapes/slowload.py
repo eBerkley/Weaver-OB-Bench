@@ -8,7 +8,7 @@ from os import getenv
 from statistics import variance
 
 WAIT_TIME = int(getenv("LOCUST_WAIT_TIME", "30")) # seconds
-RAMP_DURATION = float(getenv("LOCUST_RAMP_DURATION", "5.0")) # seconds
+RAMP_DURATION = float(getenv("LOCUST_RAMP_DURATION", "10.0")) # seconds
 VARIANCE_WINDOW = int(getenv("LOCUST_VARIANCE_WINDOW", "30"))
 MAX_VARIANCE = float(getenv("LOCUST_MAX_VARIANCE", "0.3"))
 MAX_TAIL = int(getenv("LOCUST_MAX_TAIL", 200))
@@ -18,7 +18,7 @@ class SlowLoad(LoadTestShape):
     init_users: Final = USERS_ADDED*15 # users
     """What is the first target to hit?"""
 
-    init_time: Final = RAMP_DURATION*200 # seconds
+    init_time: Final = RAMP_DURATION*25 # seconds
     """How long should it take to hit init_users? """
 
     max_tail: Final = MAX_TAIL # ms
@@ -34,7 +34,7 @@ class SlowLoad(LoadTestShape):
     max_variance: Final = MAX_VARIANCE
     """What is the 30-second window's max variance to be considered stabilized?"""
 
-    stable_alt: Final = 35
+    stable_alt: Final = 45
     """If we have been at this user count for this long, say we are stabilized anyways."""
 
     def __init__(self, *args, **kwargs):

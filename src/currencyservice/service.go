@@ -21,11 +21,14 @@ import (
 	"fmt"
 	"math"
 	"strconv"
+	"time"
 
 	"github.com/eBerkley/Weaver-OB-Bench/types/money"
 	"github.com/eberkley/weaver"
 	"github.com/iancoleman/orderedmap"
 	_ "go.uber.org/automaxprocs"
+
+	imetrics "github.com/eberkley/weaver/runtime/codegen"
 )
 
 var (
@@ -56,13 +59,19 @@ func (s *impl) Init(context.Context) error {
 
 // GetSupportedCurrencies returns the list of supported currencies.
 func (s *impl) GetSupportedCurrencies(ctx context.Context) ([]string, error) {
+	initTime := time.Now()
 	s.Logger(ctx).Info("Getting supported currencies...")
-	// return maps.Keys(s.conversionMap), nil
-	return s.conversionOM.Keys(), nil
+
+	currencies := s.conversionOM.Keys()
+
+	imetrics.InternalMetricsFor(imetrics.InternalMethodLabels{Component: "github.com/eBerkley/Weaver-OB-Bench/currencyservice/CurrencyService", Method: "GetSupportedCurrencies"}).Put(float64(time.Since(initTime).Microseconds()))
+
+	return currencies, nil
 }
 
 // Convert converts between currencies.
 func (s *impl) Convert(ctx context.Context, from money.T, toCode string) (money.T, error) {
+	initTime := time.Now()
 	unsupportedErr := func(code string) (money.T, error) {
 		return money.T{}, fmt.Errorf("unsupported currency code %q", from.CurrencyCode)
 	}
@@ -81,10 +90,14 @@ func (s *impl) Convert(ctx context.Context, from money.T, toCode string) (money.
 	intf, ok = s.conversionOM.Get(toCode)
 	toRate := intf.(float64)
 	if !ok {
+		imetrics.InternalMetricsFor(imetrics.InternalMethodLabels{Component: "github.com/eBerkley/Weaver-OB-Bench/currencyservice/CurrencyService", Method: "GetSupportedCurrencies"}).Put(float64(time.Since(initTime).Microseconds()))
 		return unsupportedErr(toCode)
 	}
+
 	to := carry(float64(euros.Units)*toRate, float64(euros.Nanos)*toRate)
 	to.CurrencyCode = toCode
+
+	imetrics.InternalMetricsFor(imetrics.InternalMethodLabels{Component: "github.com/eBerkley/Weaver-OB-Bench/currencyservice/CurrencyService", Method: "Convert"}).Put(float64(time.Since(initTime).Microseconds()))
 	return to, nil
 }
 

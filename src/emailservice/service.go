@@ -20,9 +20,11 @@ import (
 	_ "embed"
 	"fmt"
 	"html/template"
+	"time"
 
 	"github.com/eBerkley/Weaver-OB-Bench/types"
 	"github.com/eberkley/weaver"
+	imetrics "github.com/eberkley/weaver/runtime/codegen"
 	_ "go.uber.org/automaxprocs"
 )
 
@@ -48,6 +50,12 @@ type impl struct {
 // SendOrderConfirmation sends the confirmation email for the order to the
 // given email address.
 func (s *impl) SendOrderConfirmation(ctx context.Context, email string, order types.Order) error {
+	initTime := time.Now()
+
+	defer func() {
+		imetrics.InternalMetricsFor(imetrics.InternalMethodLabels{Component: "github.com/eBerkley/Weaver-OB-Bench/emailservice/EmailService", Method: "SendOrderConfirmation"}).Put(float64(time.Since(initTime).Microseconds()))
+	}()
+
 	var buf bytes.Buffer
 	if err := tmpl.Execute(&buf, order); err != nil {
 		return err

@@ -17,10 +17,12 @@ package shippingservice
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/eBerkley/Weaver-OB-Bench/cartservice"
 	"github.com/eBerkley/Weaver-OB-Bench/types/money"
 	"github.com/eberkley/weaver"
+	imetrics "github.com/eberkley/weaver/runtime/codegen"
 	_ "go.uber.org/automaxprocs"
 )
 
@@ -48,6 +50,11 @@ func (s *impl) Init(_ context.Context) error {
 
 // GetQuote produces a shipping quote (cost) in USD.
 func (s *impl) GetQuote(ctx context.Context, addr Address, items []cartservice.CartItem) (money.T, error) {
+	initTime := time.Now()
+
+	defer func() {
+		imetrics.InternalMetricsFor(imetrics.InternalMethodLabels{Component: "github.com/eBerkley/Weaver-OB-Bench/shippingservice/ShippingService", Method: "GetQuote"}).Put(float64(time.Since(initTime).Microseconds()))
+	}()
 	s.Logger(ctx).Info("[GetQuote] received request")
 	defer s.Logger(ctx).Info("[GetQuote] completed request")
 
@@ -65,6 +72,12 @@ func (s *impl) GetQuote(ctx context.Context, addr Address, items []cartservice.C
 // ShipOrder mocks that the requested items will be shipped.
 // It supplies a tracking ID for notional lookup of shipment delivery status.
 func (s *impl) ShipOrder(ctx context.Context, addr Address, items []cartservice.CartItem) (string, error) {
+	initTime := time.Now()
+
+	defer func() {
+		imetrics.InternalMetricsFor(imetrics.InternalMethodLabels{Component: "github.com/eBerkley/Weaver-OB-Bench/shippingservice/ShippingService", Method: "ShipOrder"}).Put(float64(time.Since(initTime).Microseconds()))
+	}()
+
 	s.Logger(ctx).Info("[ShipOrder] received request")
 	defer s.Logger(ctx).Info("[ShipOrder] completed request")
 

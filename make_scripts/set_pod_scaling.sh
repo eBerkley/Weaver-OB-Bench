@@ -45,9 +45,13 @@ for name in $(get_group_names); do
   # 2: define MAX_REPLICAS to be the default for scaling benchmarks, OB_REPLICAS
   # 3: define AVERAGE_UTILIZATION to be that of the scaling type
   if [[ $type = 'FIXED' ]]; then
+    width=$FIXED_WIDTH
+    
+    echo setting width = $width for fixed component. >> $DEBUG_OUTPUT
+
     scaling_spec=$(\
-      sed -z -e s#\<MIN_REPLICAS\>#1#g \
-      -e s#\<MAX_REPLICAS\>#1#g \
+      sed -z -e s#\<MIN_REPLICAS\>#$width#g \
+      -e s#\<MAX_REPLICAS\>#$width#g \
       -e s#\<AVERAGE_UTILIZATION\>#100#g \
       $SCALING_SPEC_FILE )
 

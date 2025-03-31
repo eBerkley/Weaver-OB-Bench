@@ -53,6 +53,23 @@ def get_service_latencies(msg_svc):
 
     return component_latencies_dict
 
+def get_internal_latencies(msg_svc, msg_agg):
+    component_latencies_dict: dict[tuple[str, str], float]={}
+
+    for result in msg_svc["data"]["result"]:
+        component=result["metric"]["component"]
+        method=result["metric"]["method"]
+        value=float(result["value"][1])
+        component_latencies_dict[(component, method)] = value
+
+    for result in msg_agg["data"]["result"]:
+        component=result["metric"]["component"]
+        method="*"
+        value=float(result["value"][1])
+        component_latencies_dict[(component, method)] = value
+
+    return component_latencies_dict
+
 def get_request_latencies(msg_req, msg_req_sums) -> float:
     
     count_dict: dict[str, int] = {}
@@ -97,6 +114,20 @@ def save_to_csv_comp_only(filepath, metric_dict1, metric_dict2, title, column_na
             writer.writerow([shorten_str(component), value, metric_dict2[component]])
     print(f"{title} saved to: {filepath}")
 
+def save_to_csv_internal(filepath:str, metric_dict1:dict[tuple[str, str], float], metric_dict2:dict[tuple[str, str], float], colname1:str, colname2:str):
+    def sort_func(x):
+        if x[0][1] == '*':
+            return x[1]*1000000
+        return x[1]
+    
+    os.makedirs(os.path.dirname(filepath), exist_ok=True)
+    with open(filepath, 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(['Component', 'Method', colname1, colname2])
+        for component_method, value in sorted(metric_dict1.items(), key=sort_func, reverse=True):
+            writer.writerow([shorten_str(component_method[0]), component_method[1], value, metric_dict2[component_method]])
+            
+
 def main():
     parser = argparse.ArgumentParser(description="Compile Service Weaver metrics into CSV format.")
     parser.add_argument('request_count', help="JSON file with total number of every request type")
@@ -109,6 +140,11 @@ def main():
     parser.add_argument('p50_request_latency', help="JSON file with p50 request latency")
     parser.add_argument('p99_request_latency', help="JSON file with p99 request latency")
 
+    parser.add_argument('p50_internal_latency')
+    parser.add_argument('p99_internal_latency')
+
+    parser.add_argument('p50_internal_aggregate_latency')
+    parser.add_argument('p99_internal_aggregate_latency')
 
     args = parser.parse_args()
 
@@ -116,15 +152,15 @@ def main():
     msg_reply_bytes_sum = msg_count(load_json(args.msg_reply_bytes))
     msg_request_bytes_sum = msg_count(load_json(args.msg_request_bytes))
     msg_count_sum = msg_count(load_json(args.method_count))
-    
-    # for i in msg_count_sum.items():
-    #     print(i)
 
     p50_service_latencies = get_service_latencies(load_json(args.p50_service_latency))
     p50_request_latency = get_request_latencies(load_json(args.p50_request_latency), load_json(args.request_count))
 
     p99_service_latencies = get_service_latencies(load_json(args.p99_service_latency))
     p99_request_latency = get_request_latencies(load_json(args.p99_request_latency), load_json(args.request_count))
+
+    p50_internal_latency=get_internal_latencies(load_json(args.p50_internal_latency), load_json(args.p50_internal_aggregate_latency))
+    p99_internal_latency=get_internal_latencies(load_json(args.p99_internal_latency), load_json(args.p99_internal_aggregate_latency))
 
     p50_service_latencies["github.com/eberkley/weaver/Main"] = p50_request_latency
     p99_service_latencies["github.com/eberkley/weaver/Main"] = p99_request_latency
@@ -150,6 +186,7 @@ def main():
                 "Normalized Message Counts", "NormalizedCount")
     save_to_csv_comp_only(os.path.join(output_dir, "svc_latency.csv"), p50_service_latencies, p99_service_latencies, "P50 Service Latency", "P50 Latency", "P99 Latency")
 
+    save_to_csv_internal(os.path.join(output_dir, "internal_latency.csv"), p50_internal_latency, p99_internal_latency, "P50 Latency", "P99 Latency")
 if __name__ == "__main__":
     main()
 

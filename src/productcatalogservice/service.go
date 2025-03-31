@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"math/rand"
 	"path"
+	"time"
 
 	"embed"
 	"fmt"
@@ -28,6 +29,7 @@ import (
 
 	"github.com/eBerkley/Weaver-OB-Bench/types/money"
 	"github.com/eberkley/weaver"
+	imetrics "github.com/eberkley/weaver/runtime/codegen"
 	_ "go.uber.org/automaxprocs"
 )
 
@@ -139,6 +141,11 @@ func (s *impl) refreshCatalogFile() error {
 }
 
 func (s *impl) ListProducts(ctx context.Context, _ int) ([]Product, error) {
+	initTime := time.Now()
+	defer func() {
+		imetrics.InternalMetricsFor(imetrics.InternalMethodLabels{Component: "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService", Method: "ListProducts"}).Put(float64(time.Since(initTime).Microseconds()))
+	}()
+
 	ls := make([]Product, maxProducts)
 	i := 0
 	for _, p := range s.db {
@@ -152,6 +159,11 @@ func (s *impl) ListProducts(ctx context.Context, _ int) ([]Product, error) {
 }
 
 func (s *impl) GetProduct(ctx context.Context, productID string, _ int) (Product, error) {
+	initTime := time.Now()
+	defer func() {
+		imetrics.InternalMetricsFor(imetrics.InternalMethodLabels{Component: "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService", Method: "GetProduct"}).Put(float64(time.Since(initTime).Microseconds()))
+	}()
+
 	p, ok := s.db[productID]
 	if !ok {
 		idx := s.myIndex
@@ -162,6 +174,11 @@ func (s *impl) GetProduct(ctx context.Context, productID string, _ int) (Product
 }
 
 func (s *impl) GetProducts(ctx context.Context, productIDs []string, _ int) ([]Product, error) {
+	initTime := time.Now()
+	defer func() {
+		imetrics.InternalMetricsFor(imetrics.InternalMethodLabels{Component: "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService", Method: "GetProducts"}).Put(float64(time.Since(initTime).Microseconds()))
+	}()
+
 	products := make([]Product, len(productIDs))
 	for i, pid := range productIDs {
 		p, ok := s.db[pid]
@@ -176,6 +193,10 @@ func (s *impl) GetProducts(ctx context.Context, productIDs []string, _ int) ([]P
 }
 
 func (s *impl) SearchProducts(ctx context.Context, query string, _ int) ([]Product, error) {
+	initTime := time.Now()
+	defer func() {
+		imetrics.InternalMetricsFor(imetrics.InternalMethodLabels{Component: "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService", Method: "SearchProducts"}).Put(float64(time.Since(initTime).Microseconds()))
+	}()
 	// Interpret query as a substring match in name or description.
 	var ps []Product
 	i := 0

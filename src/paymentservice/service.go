@@ -21,6 +21,8 @@ import (
 	"github.com/eBerkley/Weaver-OB-Bench/types/money"
 	"github.com/eberkley/weaver"
 	_ "go.uber.org/automaxprocs"
+
+	imetrics "github.com/eberkley/weaver/runtime/codegen"
 )
 
 type CreditCardInfo struct {
@@ -51,5 +53,10 @@ type impl struct {
 // Charge charges the given amount of money to the given credit card, returning
 // the transaction id.
 func (s *impl) Charge(ctx context.Context, amount money.T, card CreditCardInfo) (string, error) {
+	initTime := time.Now()
+
+	defer func() {
+		imetrics.InternalMetricsFor(imetrics.InternalMethodLabels{Component: "github.com/eBerkley/Weaver-OB-Bench/paymentservice/PaymentService", Method: "Charge"}).Put(float64(time.Since(initTime).Microseconds()))
+	}()
 	return charge(amount, card, s.Logger(ctx))
 }

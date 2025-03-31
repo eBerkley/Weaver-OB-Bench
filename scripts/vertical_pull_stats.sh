@@ -56,7 +56,25 @@ parse_svc_latency () {
   fi
 }
 
+parse_internal_latency () {
+  local component=$1
+  local path="../metrics_collection/internal_latency.csv"
+  local pattern="[^,]+,*,([0-9.]+)"
+  if [[ $component = "" ]]; then
+    component="github.com/eBerkley/weaver/Main"
+  fi
+
+  for line in $(grep -e $component $path); do
+    if [[ $line =~ $pattern ]]; then
+      val=${BASH_REMATCH[1]}
+      echo $(awk "BEGIN {printf \"%.3f\", $val}")
+      return 0
+    fi
+  done
+}
+
 LOWLOAD_SVC_P50=$(parse_svc_latency $COMPONENT_PATH)
+# LOWLOAD_SVC_P50=$(parse_internal_latency $COMPONENT_PATH)
 if [[ $? -eq 1 ]]; then
   echo ERROR: $LOWLOAD_SVC_P50 | tee -a $logfile
   exit 1
@@ -81,6 +99,12 @@ else
     QUERY_BASE="serviceweaver_method_latency_micros_bucket{component=\"${COMPONENT_PATH}\"}"
 fi
 
+# if [[ "$COMPONENT_NAME" == "main" ]]; then
+#   QUERY_BASE="serviceweaver_internal_method_latency_micros_bucket{component=\"github.com/eBerkley/weaver/Main\"}"
+# else
+#   QUERY_BASE="serviceweaver_internal_method_latency_micros_bucket{component=\"$COMPONENT_PATH\"}"
+# fi
+
 QUERY_P99="histogram_quantile(0.99, sum by (le) (rate(${QUERY_BASE}[30s])))"
 QUERY_P50="histogram_quantile(0.50, sum by (le) (rate(${QUERY_BASE}[30s])))"
 
@@ -90,7 +114,7 @@ ENCODED_P50=$(jq -rn --arg q "$QUERY_P50" '$q|@uri' | sed 's/%28/(/g; s/%29/)/g'
 # CSV initialization
 csvdir=../vertical_profs/${COMPONENT_NAME}
 mkdir -p $csvdir
-CSV_FILE="${csvdir}/latency_MPS_${COMPONENT_NAME}_${FIXED_HEIGHT}.csv"
+CSV_FILE="${csvdir}/latency_MPS_${COMPONENT_NAME}_${FIXED_WIDTH}_${FIXED_HEIGHT}.csv"
 echo "timestamp,p50_us,p99_us,MPS,util" > "$CSV_FILE"
 
 # Fetch Prometheus value helper
@@ -139,7 +163,6 @@ fetch_util() {
   else
     echo "NaN"
   fi
-
 }
 
 # Monitoring loop
@@ -246,5 +269,5 @@ while [ $COUNTER -gt 0 ] && ( [[ $size -lt 5 ]] || [[ $size -gt 28 ]] ); do
 done
 
 kill "${PF_PID}"
-# mv $CSV_FILE ../benchmark/stats/$CSV_FILE
+
 echo done.

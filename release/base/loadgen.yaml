@@ -107,10 +107,17 @@ spec:
         - name: LOCUST_SLO_RATIO
           value: <LOCUST_SLO_RATIO>
 
+        - name: LOCUST_SLOWER_PAUSE
+          value: <LOCUST_SLOWER_PAUSE>
+        
+        - name: LOCUST_RAMP_RATE
+          value: <LOCUST_RAMP_RATE>
+
         resources:
           requests:
             cpu: 1
             memory: 512Mi
+            ephemeral-storage: 2Gi
           limits:
             cpu: 1
             memory: 512Mi
@@ -125,7 +132,7 @@ spec:
       volumes:
       - name: load-logs
         emptyDir:
-          sizeLimit: 750Mi
+          sizeLimit: 1750Mi
 
 
 ---
@@ -211,6 +218,12 @@ spec:
 
         - name: LOCUST_SLO_RATIO
           value: <LOCUST_SLO_RATIO>
+
+        - name: LOCUST_SLOWER_PAUSE
+          value: <LOCUST_SLOWER_PAUSE>
+
+        - name: LOCUST_RAMP_RATE
+          value: <LOCUST_RAMP_RATE>
 
         resources:
           requests: 

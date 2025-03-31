@@ -37,6 +37,7 @@ import (
 	"github.com/eBerkley/Weaver-OB-Bench/productcatalogservice"
 	"github.com/eBerkley/Weaver-OB-Bench/shippingservice"
 	"github.com/eBerkley/Weaver-OB-Bench/types/money"
+	imetrics "github.com/eberkley/weaver/runtime/codegen"
 )
 
 const (
@@ -76,11 +77,18 @@ var (
 )
 
 func (fe *Server) homeHandler(w http.ResponseWriter, r *http.Request) {
+	initTime := time.Now()
+	var duration time.Duration
+	defer func() {
+
+		imetrics.InternalMetricsFor(imetrics.InternalMethodLabels{Component: "github.com/eBerkley/weaver/Main", Method: "homeHandler"}).Put(float64((time.Since(initTime) - duration).Microseconds()))
+	}()
 
 	logger := r.Context().Value(ctxKeyLogger{}).(*slog.Logger)
 	logger.Info("home", "currency", currentCurrency(r))
 
-	currencies, err := fe.getCurrencies(r.Context())
+	currencies, d, err := fe.getCurrencies(r.Context())
+	duration += d
 	if err != nil {
 		fe.renderHTTPError(r, w, fmt.Errorf("could not retrieve currencies: %w", err), http.StatusInternalServerError)
 		return
@@ -93,11 +101,20 @@ func (fe *Server) homeHandler(w http.ResponseWriter, r *http.Request) {
 	wg := sync.WaitGroup{}
 	wg.Add(productcatalogservice.ProductCatalogReplicas)
 	errChan := make(chan error, productcatalogservice.ProductCatalogReplicas)
+
+	var durationMu sync.Mutex
+
 	for shard := 0; shard < productcatalogservice.ProductCatalogReplicas; shard++ {
 		go func(shard int) {
 			// Routing key that will route to the correct shard.
 			key := fe.catalogRoutingTable[shard]
+			listTime := time.Now()
 			prods, err := fe.catalogService.Get().ListProducts(r.Context(), key)
+			d := time.Since(listTime)
+			durationMu.Lock()
+			duration += d
+			durationMu.Unlock()
+
 			if err != nil {
 				errChan <- err
 			} else {
@@ -122,8 +139,10 @@ func (fe *Server) homeHandler(w http.ResponseWriter, r *http.Request) {
 	for _, s := range productShards {
 		products = append(products, s...)
 	}
-
+	getCartTime := time.Now()
 	cart, err := fe.cartService.Get().GetCart(r.Context(), sessionID(r))
+	duration += time.Since(getCartTime)
+
 	if err != nil {
 		fe.renderHTTPError(r, w, fmt.Errorf("could not retrieve cart: %w", err), http.StatusInternalServerError)
 		return
@@ -135,13 +154,18 @@ func (fe *Server) homeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	ps := make([]productView, len(products))
 	for i, p := range products {
+		convertTime := time.Now()
 		price, err := fe.currencyService.Get().Convert(r.Context(), p.PriceUSD, currentCurrency(r))
+		duration += time.Since(convertTime)
+
 		if err != nil {
 			fe.renderHTTPError(r, w, fmt.Errorf("failed to do currency conversion for product %s: %w", p.ID, err), http.StatusInternalServerError)
 			return
 		}
 		ps[i] = productView{p, price}
 	}
+	ad, d := fe.chooseAd(r.Context(), []string{}, logger)
+	duration += d
 
 	if err := templates.ExecuteTemplate(w, "home", map[string]interface{}{
 		"session_id":      sessionID(r),
@@ -153,7 +177,7 @@ func (fe *Server) homeHandler(w http.ResponseWriter, r *http.Request) {
 		"products":        ps,
 		"cart_size":       cartSize(cart),
 		"banner_color":    os.Getenv("BANNER_COLOR"),
-		"ad":              fe.chooseAd(r.Context(), []string{}, logger),
+		"ad":              ad,
 		"platform_css":    fe.platform.css,
 		"platform_name":   fe.platform.provider,
 		"is_cymbal_brand": isCymbalBrand,
@@ -163,6 +187,13 @@ func (fe *Server) homeHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (fe *Server) productHandler(w http.ResponseWriter, r *http.Request) {
+	initTime := time.Now()
+	var duration time.Duration
+	defer func() {
+
+		imetrics.InternalMetricsFor(imetrics.InternalMethodLabels{Component: "github.com/eBerkley/weaver/Main", Method: "productHandler"}).Put(float64((time.Since(initTime) - duration).Microseconds()))
+	}()
+
 	_, id := filepath.Split(r.URL.Path)
 	logger := r.Context().Value(ctxKeyLogger{}).(*slog.Logger)
 
@@ -173,31 +204,41 @@ func (fe *Server) productHandler(w http.ResponseWriter, r *http.Request) {
 
 	logger.Debug("serving product page", "id", id, "currency", currentCurrency(r))
 	shard := productcatalogservice.HashProductID(id)
+	getProductTime := time.Now()
 	p, err := fe.catalogService.Get().GetProduct(r.Context(), id, fe.catalogRoutingTable[shard])
+	duration += time.Since(getProductTime)
+
 	if err != nil {
 		fe.renderHTTPError(r, w, fmt.Errorf("could not retrieve product in shard %v: %w", shard, err), http.StatusInternalServerError)
 		return
 	}
 
-	currencies, err := fe.getCurrencies(r.Context())
+	currencies, d, err := fe.getCurrencies(r.Context())
+	duration += d
 	if err != nil {
 		fe.renderHTTPError(r, w, fmt.Errorf("could not retrieve currencies: %w", err), http.StatusInternalServerError)
 		return
 	}
-
+	getCartTime := time.Now()
 	cart, err := fe.cartService.Get().GetCart(r.Context(), sessionID(r))
+	duration += time.Since(getCartTime)
+
 	if err != nil {
 		fe.renderHTTPError(r, w, fmt.Errorf("could not retrieve cart: %w", err), http.StatusInternalServerError)
 		return
 	}
 
-	price, err := fe.convertCurrency(r.Context(), p.PriceUSD, currentCurrency(r))
+	price, d, err := fe.convertCurrency(r.Context(), p.PriceUSD, currentCurrency(r))
+	duration += d
+
 	if err != nil {
 		fe.renderHTTPError(r, w, fmt.Errorf("failed to convert currency: %w", err), http.StatusInternalServerError)
 		return
 	}
 
-	recommendations, err := fe.getRecommendations(r.Context(), sessionID(r), []string{id})
+	recommendations, d, err := fe.getRecommendations(r.Context(), sessionID(r), []string{id})
+	duration += d
+
 	if err != nil {
 		fe.renderHTTPError(r, w, fmt.Errorf("failed to get product recommendations: %w", err), http.StatusInternalServerError)
 		return
@@ -208,11 +249,14 @@ func (fe *Server) productHandler(w http.ResponseWriter, r *http.Request) {
 		Price money.T
 	}{p, price}
 
+	ad, d := fe.chooseAd(r.Context(), p.Categories, logger)
+	duration += d
+
 	if err := templates.ExecuteTemplate(w, "product", map[string]interface{}{
 		"session_id":      sessionID(r),
 		"request_id":      r.Context().Value(ctxKeyRequestID{}),
 		"hostname":        fe.hostname,
-		"ad":              fe.chooseAd(r.Context(), p.Categories, logger),
+		"ad":              ad,
 		"user_currency":   currentCurrency(r),
 		"show_currency":   true,
 		"currencies":      currencies,
@@ -242,6 +286,13 @@ func (fe *Server) cartHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (fe *Server) addToCartHandler(w http.ResponseWriter, r *http.Request) {
+	initTime := time.Now()
+	var duration time.Duration
+
+	defer func() {
+
+		imetrics.InternalMetricsFor(imetrics.InternalMethodLabels{Component: "github.com/eBerkley/weaver/Main", Method: "addToCartHandler"}).Put(float64((time.Since(initTime) - duration).Microseconds()))
+	}()
 	logger := r.Context().Value(ctxKeyLogger{}).(*slog.Logger)
 
 	quantity, _ := strconv.ParseUint(r.FormValue("quantity"), 10, 32)
@@ -252,16 +303,23 @@ func (fe *Server) addToCartHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	logger.Debug("adding to cart", "product", productID, "quantity", quantity)
 	shard := productcatalogservice.HashProductID(productID)
+
+	getProductTime := time.Now()
 	p, err := fe.catalogService.Get().GetProduct(r.Context(), productID, fe.catalogRoutingTable[shard])
+	duration += time.Since(getProductTime)
+
 	if err != nil {
 		fe.renderHTTPError(r, w, fmt.Errorf("could not retrieve product at shard %v: %w", shard, err), http.StatusInternalServerError)
 		return
 	}
-
-	if err := fe.cartService.Get().AddItem(r.Context(), sessionID(r), cartservice.CartItem{
+	addItemTime := time.Now()
+	err = fe.cartService.Get().AddItem(r.Context(), sessionID(r), cartservice.CartItem{
 		ProductID: p.ID,
 		Quantity:  int32(quantity),
-	}); err != nil {
+	})
+	duration += time.Since(addItemTime)
+
+	if err != nil {
 		fe.renderHTTPError(r, w, fmt.Errorf("failed to add to cart: %w", err), http.StatusInternalServerError)
 		return
 	}
@@ -270,10 +328,21 @@ func (fe *Server) addToCartHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (fe *Server) emptyCartHandler(w http.ResponseWriter, r *http.Request) {
+	initTime := time.Now()
+	var duration time.Duration
+	defer func() {
+
+		imetrics.InternalMetricsFor(imetrics.InternalMethodLabels{Component: "github.com/eBerkley/weaver/Main", Method: "emptyCartHandler"}).Put(float64((time.Since(initTime) - duration).Microseconds()))
+	}()
+
 	logger := r.Context().Value(ctxKeyLogger{}).(*slog.Logger)
 	logger.Debug("emptying cart")
 
-	if err := fe.cartService.Get().EmptyCart(r.Context(), sessionID(r)); err != nil {
+	emptyCartTime := time.Now()
+	err := fe.cartService.Get().EmptyCart(r.Context(), sessionID(r))
+	duration += time.Since(emptyCartTime)
+
+	if err != nil {
 		fe.renderHTTPError(r, w, fmt.Errorf("failed to empty cart: %w", err), http.StatusInternalServerError)
 		return
 	}
@@ -282,26 +351,42 @@ func (fe *Server) emptyCartHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (fe *Server) viewCartHandler(w http.ResponseWriter, r *http.Request) {
+	initTime := time.Now()
+	var duration time.Duration
+	defer func() {
+
+		imetrics.InternalMetricsFor(imetrics.InternalMethodLabels{Component: "github.com/eBerkley/weaver/Main", Method: "viewCartHandler"}).Put(float64((time.Since(initTime) - duration).Microseconds()))
+	}()
+
 	logger := r.Context().Value(ctxKeyLogger{}).(*slog.Logger)
 
-	currencies, err := fe.getCurrencies(r.Context())
+	currencies, d, err := fe.getCurrencies(r.Context())
+	duration += d
 	if err != nil {
 		fe.renderHTTPError(r, w, fmt.Errorf("could not retrieve currencies: %w", err), http.StatusInternalServerError)
 		return
 	}
+
+	getCartTime := time.Now()
 	cart, err := fe.cartService.Get().GetCart(r.Context(), sessionID(r))
+	duration += time.Since(getCartTime)
+
 	if err != nil {
 		fe.renderHTTPError(r, w, fmt.Errorf("could not retrieve cart: %w", err), http.StatusInternalServerError)
 		return
 	}
 
-	recommendations, err := fe.getRecommendations(r.Context(), sessionID(r), cartIDs(cart))
+	recommendations, d, err := fe.getRecommendations(r.Context(), sessionID(r), cartIDs(cart))
+	duration += d
+
 	if err != nil {
 		fe.renderHTTPError(r, w, fmt.Errorf("failed to get product recommendations: %w", err), http.StatusInternalServerError)
 		return
 	}
 
-	shippingCost, err := fe.getShippingQuote(r.Context(), cart, currentCurrency(r))
+	shippingCost, d, err := fe.getShippingQuote(r.Context(), cart, currentCurrency(r))
+	duration += d
+
 	if err != nil {
 		fe.renderHTTPError(r, w, fmt.Errorf("failed to get shipping quote: %w", err), http.StatusInternalServerError)
 		return
@@ -316,13 +401,18 @@ func (fe *Server) viewCartHandler(w http.ResponseWriter, r *http.Request) {
 	totalPrice := money.T{CurrencyCode: currentCurrency(r)}
 	for i, item := range cart {
 		shard := productcatalogservice.HashProductID(item.ProductID)
+
+		getProductTime := time.Now()
 		p, err := fe.catalogService.Get().GetProduct(r.Context(), item.ProductID, fe.catalogRoutingTable[shard])
+		duration += time.Since(getProductTime)
+
 		if err != nil {
 			fe.renderHTTPError(r, w, fmt.Errorf("could not retrieve product #%s at %v: %w", item.ProductID, shard, err), http.StatusInternalServerError)
 			return
 		}
 
-		price, err := fe.convertCurrency(r.Context(), p.PriceUSD, currentCurrency(r))
+		price, d, err := fe.convertCurrency(r.Context(), p.PriceUSD, currentCurrency(r))
+		duration += d
 		if err != nil {
 			fe.renderHTTPError(r, w, fmt.Errorf("could not convert currency for product #%s: %w", item.ProductID, err), http.StatusInternalServerError)
 			return
@@ -360,6 +450,12 @@ func (fe *Server) viewCartHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (fe *Server) placeOrderHandler(w http.ResponseWriter, r *http.Request) {
+	initTime := time.Now()
+	var duration time.Duration
+	defer func() {
+
+		imetrics.InternalMetricsFor(imetrics.InternalMethodLabels{Component: "github.com/eBerkley/weaver/Main", Method: "placeOrderHandler"}).Put(float64((time.Since(initTime) - duration).Microseconds()))
+	}()
 	logger := r.Context().Value(ctxKeyLogger{}).(*slog.Logger)
 	logger.Debug("placing order")
 
@@ -375,8 +471,7 @@ func (fe *Server) placeOrderHandler(w http.ResponseWriter, r *http.Request) {
 		ccYear, _     = strconv.ParseInt(r.FormValue("credit_card_expiration_year"), 10, 32)
 		ccCVV, _      = strconv.ParseInt(r.FormValue("credit_card_cvv"), 10, 32)
 	)
-
-	order, err := fe.checkoutService.Get().PlaceOrder(r.Context(), checkoutservice.PlaceOrderRequest{
+	ordReq := checkoutservice.PlaceOrderRequest{
 		Email: email,
 		CreditCard: paymentservice.CreditCardInfo{
 			Number:          ccNumber,
@@ -391,7 +486,12 @@ func (fe *Server) placeOrderHandler(w http.ResponseWriter, r *http.Request) {
 			State:         state,
 			ZipCode:       int32(zipCode),
 			Country:       country},
-	})
+	}
+
+	placeOrderTime := time.Now()
+	order, err := fe.checkoutService.Get().PlaceOrder(r.Context(), ordReq)
+	duration += time.Since(placeOrderTime)
+
 	if err != nil {
 		fe.renderHTTPError(r, w, fmt.Errorf("failed to complete the order: %w", err), http.StatusInternalServerError)
 		return
@@ -404,7 +504,8 @@ func (fe *Server) placeOrderHandler(w http.ResponseWriter, r *http.Request) {
 		totalPaid = money.Must(money.Sum(totalPaid, multPrice))
 	}
 
-	currencies, err := fe.getCurrencies(r.Context())
+	currencies, d, err := fe.getCurrencies(r.Context())
+	duration += d
 	if err != nil {
 		fe.renderHTTPError(r, w, fmt.Errorf("could not retrieve currencies: %w", err), http.StatusInternalServerError)
 		return
@@ -413,8 +514,8 @@ func (fe *Server) placeOrderHandler(w http.ResponseWriter, r *http.Request) {
 	for i, p := range order.Items {
 		productIDs[i] = p.Item.ProductID
 	}
-	recommendations, _ := fe.getRecommendations(r.Context(), sessionID(r), productIDs)
-
+	recommendations, d, _ := fe.getRecommendations(r.Context(), sessionID(r), productIDs)
+	duration += d
 	if err := templates.ExecuteTemplate(w, "order", map[string]interface{}{
 		"session_id":      sessionID(r),
 		"request_id":      r.Context().Value(ctxKeyRequestID{}),
@@ -434,6 +535,13 @@ func (fe *Server) placeOrderHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (fe *Server) logoutHandler(w http.ResponseWriter, r *http.Request) {
+	initTime := time.Now()
+	var duration time.Duration
+	defer func() {
+
+		imetrics.InternalMetricsFor(imetrics.InternalMethodLabels{Component: "github.com/eBerkley/weaver/Main", Method: "logoutHandler"}).Put(float64((time.Since(initTime) - duration).Microseconds()))
+	}()
+
 	logger := r.Context().Value(ctxKeyLogger{}).(*slog.Logger)
 	logger.Debug("logging out")
 	for _, c := range r.Cookies() {
@@ -446,6 +554,13 @@ func (fe *Server) logoutHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (fe *Server) setCurrencyHandler(w http.ResponseWriter, r *http.Request) {
+	initTime := time.Now()
+	var duration time.Duration
+	defer func() {
+
+		imetrics.InternalMetricsFor(imetrics.InternalMethodLabels{Component: "github.com/eBerkley/weaver/Main", Method: "setCurrencyHandler"}).Put(float64((time.Since(initTime) - duration).Microseconds()))
+	}()
+
 	logger := r.Context().Value(ctxKeyLogger{}).(*slog.Logger)
 	cur := r.FormValue("currency_code")
 	logger.Debug("setting currency", "curr.new", cur, "curr.old", currentCurrency(r))
@@ -467,22 +582,32 @@ func (fe *Server) setCurrencyHandler(w http.ResponseWriter, r *http.Request) {
 
 // chooseAd queries for advertisements available and randomly chooses one, if
 // available. It ignores the error retrieving the ad since it is not critical.
-func (fe *Server) chooseAd(ctx context.Context, ctxKeys []string, logger *slog.Logger) *adservice.Ad {
+func (fe *Server) chooseAd(ctx context.Context, ctxKeys []string, logger *slog.Logger) (*adservice.Ad, time.Duration) {
+	var duration time.Duration
+
 	ctx, cancel := context.WithTimeout(ctx, time.Millisecond*100)
 	defer cancel()
+	getAdsTime := time.Now()
 	ads, err := fe.adService.Get().GetAds(ctx, ctxKeys)
+	duration += time.Since(getAdsTime)
+
 	if err != nil {
 		logger.Error("failed to retrieve ads", "err", err)
-		return nil
+		return nil, duration
 	}
-	return &ads[0]
+	return &ads[0], duration
 	// return &ads[rand.Intn(len(ads))]
 }
 
-func (fe *Server) getCurrencies(ctx context.Context) ([]string, error) {
+func (fe *Server) getCurrencies(ctx context.Context) ([]string, time.Duration, error) {
+	var duration time.Duration
+
+	getSuppTime := time.Now()
 	codes, err := fe.currencyService.Get().GetSupportedCurrencies(ctx)
+	duration += time.Since(getSuppTime)
+
 	if err != nil {
-		return nil, err
+		return nil, duration, err
 	}
 	var out []string
 	for _, c := range codes {
@@ -490,29 +615,42 @@ func (fe *Server) getCurrencies(ctx context.Context) ([]string, error) {
 			out = append(out, c)
 		}
 	}
-	return out, nil
+	return out, duration, nil
 }
 
-func (fe *Server) convertCurrency(ctx context.Context, money money.T, currency string) (money.T, error) {
+func (fe *Server) convertCurrency(ctx context.Context, money money.T, currency string) (money.T, time.Duration, error) {
+	var duration time.Duration
 	if avoidNoopCurrencyConversionRPC && money.CurrencyCode == currency {
-		return money, nil
+		return money, duration, nil
 	}
-	return fe.currencyService.Get().Convert(ctx, money, currency)
+	convertTime := time.Now()
+	money, err := fe.currencyService.Get().Convert(ctx, money, currency)
+	duration += time.Since(convertTime)
+	return money, duration, err
 }
 
-func (fe *Server) getShippingQuote(ctx context.Context, items []cartservice.CartItem, currency string) (money.T, error) {
+func (fe *Server) getShippingQuote(ctx context.Context, items []cartservice.CartItem, currency string) (money.T, time.Duration, error) {
+	var duration time.Duration
+	getQuoteTime := time.Now()
 	quote, err := fe.shippingService.Get().GetQuote(ctx, shippingservice.Address{}, items)
+	duration += time.Since(getQuoteTime)
+
 	if err != nil {
-		return money.T{}, err
+		return money.T{}, duration, err
 	}
-	return fe.convertCurrency(ctx, quote, currency)
+	money, d, err := fe.convertCurrency(ctx, quote, currency)
+	duration += d
+	return money, duration, err
 }
 
-func (fe *Server) getRecommendations(ctx context.Context, userID string, productIDs []string) ([]productcatalogservice.Product, error) {
-
+func (fe *Server) getRecommendations(ctx context.Context, userID string, productIDs []string) ([]productcatalogservice.Product, time.Duration, error) {
+	var duration time.Duration
+	listRecsTime := time.Now()
 	recommendationIDs, err := fe.recommendationService.Get().ListRecommendations(ctx, userID, productIDs)
+	duration += time.Since(listRecsTime)
+
 	if err != nil {
-		return nil, err
+		return nil, duration, err
 	}
 
 	out := make([]productcatalogservice.Product, 0, len(recommendationIDs))
@@ -531,19 +669,20 @@ func (fe *Server) getRecommendations(ctx context.Context, userID string, product
 		}
 
 		key := fe.catalogRoutingTable[shard]
-
+		getProductsTime := time.Now()
 		prods, err := fe.catalogService.Get().
 			GetProducts(ctx, productShardMap[shard], key)
+		duration += time.Since(getProductsTime)
 
 		if err != nil {
-			return nil, fmt.Errorf("failed to get recommended product info at shard %v: %w", shard, err)
+			return nil, duration, fmt.Errorf("failed to get recommended product info at shard %v: %w", shard, err)
 		}
 		out = append(out, prods...)
 	}
 	if len(out) > 4 {
 		out = out[:4] // take only first four to fit the UI
 	}
-	return out, err
+	return out, duration, err
 }
 
 func (fe *Server) renderHTTPError(r *http.Request, w http.ResponseWriter, err error, code int) {

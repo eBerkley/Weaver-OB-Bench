@@ -62,6 +62,11 @@ sed -i "s#<LOCUST_SLOWLOAD_RAMP>#\"$LOCUST_SLOWLOAD_RAMP\"#g" $LOAD_GEN_YAML
 # Set the latency stat export frequency
 sed -i "s#<LOCUST_CSV_INTERVAL>#\"$LOCUST_CSV_INTERVAL\"#g" $LOAD_GEN_YAML
 
+sed -i "s#<LOCUST_SLOWER_PAUSE>#\"$LOCUST_SLOWER_PAUSE\"#g" $LOAD_GEN_YAML
+
+sed -i "s#<LOCUST_RAMP_RATE>#\"$LOCUST_RAMP_RATE\"#g" $LOAD_GEN_YAML
+
+
 # If we are going to be adding replicas, 
 # ensure connections are periodically reset to route traffic to new main components.
 if [[ $BENCH_TYPE = "STATIC" ]]; then

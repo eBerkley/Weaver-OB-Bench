@@ -52,8 +52,9 @@ else ifeq ($(BENCH_TYPE), FIXED)
 	CPU_UTIL_ENABLE := false
 	VERTICAL_PROF   := true
 
-	LOCUST_SHAPE := slowload
+	LOCUST_SHAPE := slowerload
 	LOCUST_SLOWLOAD_RAMP := $(FIXED_USERS_RAMP)
+	LOCUST_RAMP_RATE := $(FIXED_USERS_RAMP_RATE)
 
 else ifeq ($(BENCH_TYPE), INST_FP)
 	METRIC_ENABLE   := false
@@ -145,7 +146,6 @@ deploy: minikube_start pre_deploy
 	@echo creating OB ... >> $(LOGS_FILE)
 	@kubectl apply -f $(WEAVER_GEN_YAML) >> $(LOGS_FILE) 2>&1
 	sleep 20
-	
 	@if [ "$(TRACE_ENABLE)" = "true" ]; then \
 		echo "Jaeger is enabled, starting to collect trace" ; \
 	    kubectl apply -f $(JAEGER_TRACE_YAML) >> $(DEBUG_OUTPUT) 2>&1; \

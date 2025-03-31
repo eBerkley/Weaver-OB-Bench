@@ -18,6 +18,7 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"time"
 )
 
 type cartStore struct {
@@ -29,15 +30,17 @@ func newCartStore(logger *slog.Logger, cache cartCache) (*cartStore, error) {
 	return &cartStore{logger: logger, cache: cache}, nil
 }
 
-func (c *cartStore) AddItem(ctx context.Context, userID, productID string, quantity int32) error {
+func (c *cartStore) AddItem(ctx context.Context, userID, productID string, quantity int32) (duration time.Duration, err error) {
 	c.logger.Info("AddItem called", "userID", userID, "productID", productID, "quantity", quantity)
 	// Get the cart from the cache.
+	getTime := time.Now()
 	cart, err := c.cache.Get(ctx, userID)
+	duration += time.Since(getTime)
 	if err != nil {
 		if errors.Is(err, errNotFound{}) { // cache miss
 			cart = nil
 		} else {
-			return err
+			return
 		}
 	}
 
@@ -58,21 +61,27 @@ func (c *cartStore) AddItem(ctx context.Context, userID, productID string, quant
 			Quantity:  quantity,
 		})
 	}
-
-	return c.cache.Add(ctx, userID, copy)
+	addTime := time.Now()
+	err = c.cache.Add(ctx, userID, copy)
+	duration += time.Since(addTime)
+	return
 }
 
-func (c *cartStore) EmptyCart(ctx context.Context, userID string) error {
+func (c *cartStore) EmptyCart(ctx context.Context, userID string) (time.Duration, error) {
 	c.logger.Info("EmptyCart called", "userID", userID)
+	removeTime := time.Now()
 	_, err := c.cache.Remove(ctx, userID)
-	return err
+
+	return time.Since(removeTime), err
 }
 
-func (c *cartStore) GetCart(ctx context.Context, userID string) ([]CartItem, error) {
+func (c *cartStore) GetCart(ctx context.Context, userID string) ([]CartItem, time.Duration, error) {
 	c.logger.Info("GetCart called", "userID", userID)
+	getTime := time.Now()
 	cart, err := c.cache.Get(ctx, userID)
+	duration := time.Since(getTime)
 	if err != nil && errors.Is(err, errNotFound{}) {
-		return []CartItem{}, nil
+		return []CartItem{}, duration, nil
 	}
-	return cart, err
+	return cart, duration, err
 }

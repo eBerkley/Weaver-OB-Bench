@@ -17,6 +17,7 @@ package checkoutservice
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/eBerkley/Weaver-OB-Bench/cartservice"
 	"github.com/eBerkley/Weaver-OB-Bench/currencyservice"
@@ -27,6 +28,7 @@ import (
 	"github.com/eBerkley/Weaver-OB-Bench/types"
 	"github.com/eBerkley/Weaver-OB-Bench/types/money"
 	"github.com/eberkley/weaver"
+	imetrics "github.com/eberkley/weaver/runtime/codegen"
 	"github.com/google/uuid"
 
 	_ "go.uber.org/automaxprocs"
@@ -64,9 +66,11 @@ func (s *impl) Init(ctx context.Context) error {
 }
 
 func (s *impl) PlaceOrder(ctx context.Context, req PlaceOrderRequest) (types.Order, error) {
+	initTime := time.Now()
+
 	s.Logger(ctx).Info("[PlaceOrder]", "user_id", req.UserID, "user_currency", req.UserCurrency)
 
-	prep, err := s.prepareOrderItemsAndShippingQuoteFromCart(ctx, req.UserID, req.UserCurrency, req.Address)
+	prep, duration, err := s.prepareOrderItemsAndShippingQuoteFromCart(ctx, req.UserID, req.UserCurrency, req.Address)
 	if err != nil {
 		return types.Order{}, err
 	}
@@ -82,18 +86,26 @@ func (s *impl) PlaceOrder(ctx context.Context, req PlaceOrderRequest) (types.Ord
 		total = money.Must(money.Sum(total, multPrice))
 	}
 
+	chargeTime := time.Now()
 	txID, err := s.paymentService.Get().Charge(ctx, total, req.CreditCard)
+	duration += time.Since(chargeTime)
+
 	if err != nil {
 		return types.Order{}, fmt.Errorf("failed to charge card: %w", err)
 	}
 	s.Logger(ctx).Info("payment went through", "transaction_id", txID)
 
+	shipOrderTime := time.Now()
 	shippingTrackingID, err := s.shippingService.Get().ShipOrder(ctx, req.Address, prep.cartItems)
+	duration += time.Since(shipOrderTime)
+
 	if err != nil {
 		return types.Order{}, fmt.Errorf("shipping error: %w", err)
 	}
 
+	cartTime := time.Now()
 	_ = s.cartService.Get().EmptyCart(ctx, req.UserID)
+	duration += time.Since(cartTime)
 
 	order := types.Order{
 		OrderID:            uuid.New().String(),
@@ -103,11 +115,20 @@ func (s *impl) PlaceOrder(ctx context.Context, req PlaceOrderRequest) (types.Ord
 		Items:              prep.orderItems,
 	}
 
-	if err := s.emailService.Get().SendOrderConfirmation(ctx, req.Email, order); err != nil {
+	emailTime := time.Now()
+	err = s.emailService.Get().SendOrderConfirmation(ctx, req.Email, order)
+	duration += time.Since(emailTime)
+
+	if err != nil {
 		s.Logger(ctx).Error("failed to send order confirmation", "err", err, "email", req.Email)
 	} else {
 		s.Logger(ctx).Info("order confirmation email sent", "email", req.Email)
 	}
+
+	entireDuration := time.Since(initTime)
+	internalLatency := entireDuration - duration
+	imetrics.InternalMetricsFor(imetrics.InternalMethodLabels{Component: "github.com/eBerkley/Weaver-OB-Bench/checkoutservice/CheckoutService", Method: "PlaceOrder"}).Put(float64(internalLatency.Microseconds()))
+
 	return order, nil
 }
 
@@ -117,47 +138,79 @@ type orderPrep struct {
 	shippingCostLocalized money.T
 }
 
-func (s *impl) prepareOrderItemsAndShippingQuoteFromCart(ctx context.Context, userID, userCurrency string, address shippingservice.Address) (orderPrep, error) {
-	var out orderPrep
+func (s *impl) prepareOrderItemsAndShippingQuoteFromCart(ctx context.Context, userID, userCurrency string, address shippingservice.Address) (out orderPrep, duration time.Duration, err error) {
+
+	getCartTime := time.Now()
 	cartItems, err := s.cartService.Get().GetCart(ctx, userID)
+	duration += time.Since(getCartTime)
+
 	if err != nil {
-		return out, fmt.Errorf("failed to get user cart during checkout: %w", err)
+		err = fmt.Errorf("failed to get user cart during checkout: %w", err)
+		return
 	}
-	orderItems, err := s.prepOrderItems(ctx, cartItems, userCurrency)
+
+	var orderItems []types.OrderItem
+	var d time.Duration
+	orderItems, d, err = s.prepOrderItems(ctx, cartItems, userCurrency)
+	duration += d
+
 	if err != nil {
-		return out, fmt.Errorf("failed to prepare order: %w", err)
+		err = fmt.Errorf("failed to prepare order: %w", err)
+		return
 	}
+
+	getQuoteTime := time.Now()
 	shippingUSD, err := s.shippingService.Get().GetQuote(ctx, address, cartItems)
+	duration += time.Since(getQuoteTime)
+
 	if err != nil {
-		return out, fmt.Errorf("failed to get shipping quote: %w", err)
+		err = fmt.Errorf("failed to get shipping quote: %w", err)
+		return
 	}
+	convertTime := time.Now()
 	shippingPrice, err := s.currencyService.Get().Convert(ctx, shippingUSD, userCurrency)
+	duration += time.Since(convertTime)
+
 	if err != nil {
-		return out, fmt.Errorf("failed to convert shipping cost to currency: %w", err)
+		err = fmt.Errorf("failed to convert shipping cost to currency: %w", err)
+		return
 	}
 
 	out.shippingCostLocalized = shippingPrice
 	out.cartItems = cartItems
 	out.orderItems = orderItems
-	return out, nil
+	return
 }
 
-func (s *impl) prepOrderItems(ctx context.Context, items []cartservice.CartItem, userCurrency string) ([]types.OrderItem, error) {
-	out := make([]types.OrderItem, len(items))
+func (s *impl) prepOrderItems(ctx context.Context, items []cartservice.CartItem, userCurrency string) (out []types.OrderItem, duration time.Duration, err error) {
+	out = make([]types.OrderItem, len(items))
 	for i, item := range items {
+		var product productcatalogservice.Product
 		key := s.catalogRoutingTable[productcatalogservice.HashProductID(item.ProductID)]
-		product, err := s.catalogService.Get().GetProduct(ctx, item.ProductID, key)
+
+		getProductTime := time.Now()
+		product, err = s.catalogService.Get().GetProduct(ctx, item.ProductID, key)
+		duration += time.Since(getProductTime)
+
 		if err != nil {
-			return nil, fmt.Errorf("failed to get product #%q: %w", item.ProductID, err)
+			err = fmt.Errorf("failed to get product #%q: %w", item.ProductID, err)
+			return
 		}
-		price, err := s.currencyService.Get().Convert(ctx, product.PriceUSD, userCurrency)
+		var price money.T
+
+		convertTime := time.Now()
+		price, err = s.currencyService.Get().Convert(ctx, product.PriceUSD, userCurrency)
+		duration += time.Since(convertTime)
+
 		if err != nil {
-			return nil, fmt.Errorf("failed to convert price of %q to %s: %w", item.ProductID, userCurrency, err)
+			err = fmt.Errorf("failed to convert price of %q to %s: %w", item.ProductID, userCurrency, err)
+			return
 		}
 		out[i] = types.OrderItem{
 			Item: item,
 			Cost: price,
 		}
 	}
-	return out, nil
+
+	return
 }

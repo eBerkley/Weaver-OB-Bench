@@ -16,8 +16,10 @@ package cartservice
 
 import (
 	"context"
+	"time"
 
 	"github.com/eberkley/weaver"
+	imetrics "github.com/eberkley/weaver/runtime/codegen"
 	lru "github.com/hashicorp/golang-lru/v2"
 	_ "go.uber.org/automaxprocs"
 )
@@ -53,14 +55,20 @@ func (c *cartCacheImpl) Init(context.Context) error {
 
 // Add adds the given (key, val) pair to the cache.
 func (c *cartCacheImpl) Add(_ context.Context, key string, val []CartItem) error {
+	initTime := time.Now()
 	c.cache.Add(key, val)
+
+	imetrics.InternalMetricsFor(imetrics.InternalMethodLabels{Component: "github.com/eBerkley/Weaver-OB-Bench/cartservice/cartCache", Method: "Add"}).Put(float64(time.Since(initTime).Microseconds()))
 	return nil
 }
 
 // Get returns the value associated with the given key in the cache, or
 // ErrNotFound if there is no associated value.
 func (c *cartCacheImpl) Get(_ context.Context, key string) ([]CartItem, error) {
+	initTime := time.Now()
 	val, ok := c.cache.Get(key)
+
+	imetrics.InternalMetricsFor(imetrics.InternalMethodLabels{Component: "github.com/eBerkley/Weaver-OB-Bench/cartservice/cartCache", Method: "Get"}).Put(float64(time.Since(initTime).Microseconds()))
 	if !ok {
 		return nil, errNotFound{}
 	}
@@ -69,7 +77,13 @@ func (c *cartCacheImpl) Get(_ context.Context, key string) ([]CartItem, error) {
 
 // Remove removes an entry with the given key from the cache.
 func (c *cartCacheImpl) Remove(_ context.Context, key string) (bool, error) {
-	return c.cache.Remove(key), nil
+	initTime := time.Now()
+
+	ok := c.cache.Remove(key)
+
+	imetrics.InternalMetricsFor(imetrics.InternalMethodLabels{Component: "github.com/eBerkley/Weaver-OB-Bench/cartservice/cartCache", Method: "Remove"}).Put(float64(time.Since(initTime).Microseconds()))
+
+	return ok, nil
 }
 
 type cartCacheRouter struct{}

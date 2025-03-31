@@ -19,9 +19,11 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/eBerkley/Weaver-OB-Bench/productcatalogservice"
 	"github.com/eberkley/weaver"
+	imetrics "github.com/eberkley/weaver/runtime/codegen"
 	_ "go.uber.org/automaxprocs"
 )
 
@@ -45,6 +47,14 @@ func (s *impl) Init(ctx context.Context) error {
 }
 
 func (s *impl) ListRecommendations(ctx context.Context, userID string, userProductIDs []string) ([]string, error) {
+	initTime := time.Now()
+	var duration time.Duration
+
+	defer func() {
+		totalDuration := time.Since(initTime) - duration
+		imetrics.InternalMetricsFor(imetrics.InternalMethodLabels{Component: "github.com/eBerkley/Weaver-OB-Bench/recommendationservice/RecService", Method: "ListRecommendations"}).Put(float64(totalDuration.Microseconds()))
+	}()
+
 	// Get the shards for each productID
 	productShardMap := make([][]string, productcatalogservice.ProductCatalogReplicas)
 	for _, pid := range userProductIDs {
@@ -60,6 +70,8 @@ func (s *impl) ListRecommendations(ctx context.Context, userID string, userProdu
 	wg := sync.WaitGroup{}
 	wg.Add(productcatalogservice.ProductCatalogReplicas)
 	errChan := make(chan error, productcatalogservice.ProductCatalogReplicas)
+
+	concurrentGetProductsTime := time.Now()
 	for shard := 0; shard < productcatalogservice.ProductCatalogReplicas; shard++ {
 		go func(shard int) {
 			// Don't send RPC if we aren't requesting any products.
@@ -70,6 +82,7 @@ func (s *impl) ListRecommendations(ctx context.Context, userID string, userProdu
 			// Routing key that will route to the correct shard.
 			key := s.catalogRoutingTable[shard]
 			prods, err := s.catalogService.Get().GetProducts(ctx, productShardMap[shard], key)
+
 			if err != nil {
 				errChan <- err
 			} else {
@@ -82,6 +95,8 @@ func (s *impl) ListRecommendations(ctx context.Context, userID string, userProdu
 	// Halt thread until all requests have responses.
 	// If theres an error from one, return it. If not, continue on.
 	wg.Wait()
+	duration += time.Since(concurrentGetProductsTime)
+
 	select {
 	case err := <-errChan:
 		return nil, err
@@ -118,12 +133,14 @@ func (s *impl) ListRecommendations(ctx context.Context, userID string, userProdu
 	// If one returns an error, this function returns an error.
 	wg.Add(productcatalogservice.ProductCatalogReplicas)
 	errChan2 := make(chan error, productcatalogservice.ProductCatalogReplicas)
+	concurrentSearchProductsTime := time.Now()
 	for shard := 0; shard < productcatalogservice.ProductCatalogReplicas; shard++ {
 		go func(shard int) {
 			// Routing key that will route to the correct shard.
 			key := s.catalogRoutingTable[shard]
 			// Get all similar products
 			prods, err := s.catalogService.Get().SearchProducts(ctx, searchQuery, key)
+
 			if err != nil {
 				errChan2 <- err
 				wg.Done()
@@ -147,6 +164,7 @@ func (s *impl) ListRecommendations(ctx context.Context, userID string, userProdu
 	// Halt thread until all requests have responses.
 	// If theres an error from one, return it. If not, continue on.
 	wg.Wait()
+	duration += time.Since(concurrentSearchProductsTime)
 	select {
 	case err := <-errChan2:
 		return nil, err

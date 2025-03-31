@@ -80,10 +80,7 @@ while [ $SECONDS -le $INITIAL_RUNTIME ]; do
   
 done
 
-# Wait a few seconds for port-forward to be established.
-sleep 30
 
-# List of metrics to query.
 metric_no_sys () {
   local metric=$1
   new_metric="rate($metric{component!=\"github.com/eberkley/weaver/weaveletControl\",component!=\"github.com/eberkley/weaver/deployerControl\"}[$FINAL_METRICS_DURATION])"
@@ -99,6 +96,19 @@ get_service_percentile () {
 get_http_percentile () {
   local percentile=$1
   metric="histogram_quantile($percentile, sum(rate(serviceweaver_http_request_latency_micros_bucket[$FINAL_METRICS_DURATION])) by (label, le))"
+  jq -rn --arg q "$metric" '$q|@uri'
+}
+
+get_internal_percentile () {
+  local percentile=$1
+  local metric="histogram_quantile($percentile, sum(rate(serviceweaver_internal_method_latency_micros_bucket[$FINAL_METRICS_DURATION])) by (component, method, le))"
+  jq -rn --arg q "$metric" '$q|@uri'
+  
+}
+
+get_internal_aggregate_percentile () {
+  local percentile=$1
+  local metric="histogram_quantile($percentile, sum(rate(serviceweaver_internal_method_latency_micros_bucket[$FINAL_METRICS_DURATION])) by (component, le))"
   jq -rn --arg q "$metric" '$q|@uri'
 }
 
@@ -125,6 +135,10 @@ query_metric "serviceweaver_method_bytes_request_sum" $(metric_no_sys "servicewe
 query_metric "serviceweaver_method_bytes_reply_sum" $(metric_no_sys "serviceweaver_method_bytes_reply_sum")  
 
 
+
+
+
+
 p99_service_latency="$(get_service_percentile 0.99)"
 p50_service_latency="$(get_service_percentile 0.50)"
 p99_request_latency="$(get_http_percentile 0.99)"
@@ -135,6 +149,12 @@ query_metric "p50_service_latency" $p50_service_latency
 query_metric "p99_request_latency" $p99_request_latency
 query_metric "p50_request_latency" $p50_request_latency
 
+
+query_metric "p99_internal_latency" "$(get_internal_percentile 0.99)"
+query_metric "p50_internal_latency" "$(get_internal_percentile 0.50)"
+
+query_metric "p99_internal_aggregate_latency" "$(get_internal_aggregate_percentile 0.99)"
+query_metric "p50_internal_aggregate_latency" "$(get_internal_aggregate_percentile 0.50)"
 
 # Terminate the port-forward process.
 echo "Terminating port-forward..."
@@ -148,9 +168,11 @@ python3 ../benchmark/prometheus_metrics.py \
   "${output_dir}/p50_service_latency.json"\
   "${output_dir}/p99_service_latency.json"\
   "${output_dir}/p50_request_latency.json"\
-  "${output_dir}/p99_request_latency.json"
-  
-
+  "${output_dir}/p99_request_latency.json"\
+  "${output_dir}/p50_internal_latency.json"\
+  "${output_dir}/p99_internal_latency.json"\
+  "${output_dir}/p50_internal_aggregate_latency.json"\
+  "${output_dir}/p99_internal_aggregate_latency.json"
 
 echo "All metric data collected and compiled in the '${output_dir}' directory."
 
