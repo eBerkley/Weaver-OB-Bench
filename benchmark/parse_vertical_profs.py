@@ -63,6 +63,7 @@ def get_msg_freq(fname: str):
 BASE_P50, MAIN_P50=get_base_p50s(SVC_LATENCY_FILE)
 BASE_SLO_RATIO=25.0
 SLO_RATIO=BASE_SLO_RATIO*max(get_msg_freq(MSG_COUNTS_FILE), 1.0)
+print("SLO: ", SLO_RATIO * BASE_P50)
 # SLO_RATIO = BASE_SLO_RATIO * BASE_P50 * get_msg_freq(MSG_COUNTS_FILE) / MAIN_P50
 
 def is_violating(p99: float) -> bool:
@@ -95,6 +96,7 @@ class VProfDataList:
         self.width = width
         self.height = height
         self.data: list[VProfData] = []
+        self.max_slo: float = 0.0
 
     # VIOLATING DATA POINTS ARE IGNORED
     def add_data(self, data_point: VProfData):
@@ -109,6 +111,11 @@ vprof_ls_ls: list[VProfDataList] = []
 for fname in os.listdir(profdir):
     width=int(fname.split("_")[-2])
     height=int(fname.split("_")[-1].split(".")[0])
+    
+    if height != int(sys.argv[2]) and width != int(sys.argv[2]):
+        continue
+    print(width, height)
+
     vprof_ls = VProfDataList(width, height)
 
     with open(os.path.join(profdir, fname), "r") as f:
@@ -139,12 +146,14 @@ COLORS          = ["red", "orange", "turquoise", "springgreen", "yellow", "magen
 
 from statistics import mean
 
-plt_ls:list[tuple[int, list[float], list[float]]]=[]
-"[height=1: (1, [mps],[util]), ...]"
+plt_ls:list[tuple[int, int, list[float], list[float], float]]=[]
+"[width=1, height=2: (1, 2, [mps],[util], max_mps_under_slo), ...]"
+
 
 
 for vprof_ls in sorted(vprof_ls_ls, key=lambda x: x.height):
     height = vprof_ls.height
+    width = vprof_ls.width
     if len(vprof_ls.data) == 0:
         continue
     # if height > 2: continue
@@ -156,37 +165,31 @@ for vprof_ls in sorted(vprof_ls_ls, key=lambda x: x.height):
 
     print(f"{fname:{FNAME_LEN}} \t{vprof.p50:0{P50_LEN}.2f} \t{vprof.p99:0{P99_LEN}.2f} \t{vprof.mps:0{MPS_LEN}.2f} \t{vprof.util:0{UTIL_LEN}.1f}% \t{adj_util:0{UTIL_LEN}.1f}% \t{norm_mps:0{NORM_LEN}.2f} \t{norm_mps/adj_util:0{THING_LEN}.2f}")
 
-    X = [p.mps / float(height) for p in vprof_ls.data]
+    # X = [p.mps / float(height * width) for p in vprof_ls.data]
+    X = [p.mps for p in vprof_ls.data]
     
-    Y_UTIL = [p.util / height for p in vprof_ls.data]
+    Y_UTIL = [p.util / float(height) for p in vprof_ls.data]
+
+    for i in range(len(vprof_ls.data)):
+        if vprof_ls.data[i].p99 < SLO_RATIO * BASE_P50:
+            vprof_ls.max_slo = vprof_ls.data[i].mps
     
-    SMOOTH_P99=True
+    SMOOTH_P99=1
     if SMOOTH_P99:
         I=4
-        # idxls: list[int]=[]
-        # prev_mps=0
-        # FLAT=0
-
-        # for i in range(len(vprof_ls.data)):
-        #     if vprof_ls.data[i].mps < prev_mps:
-        #         idxls.append(i)
-
-            # prev_mps = vprof_ls.data[i].mps
-
-        # Y_P99 = [vprof_ls.data[i].p99 for i in idxls]
-
         Y_P99 = [min(p.p99 for p in vprof_ls.data[i-I:i+I]) \
             for i in range(I, len(vprof_ls.data) - I)]
 
         plt_l.scatter(X[I:-I], Y_P99, s=10, marker='.', 
-            c=COLORS[height-1], label=height)
+            c=COLORS[(height - 1) % len(COLORS)], label=f"(width: {width}, height: {height})")
 
         # plt_l.scatter([X[i] / height for i in idxls], 
             # Y_P99, s=5, marker='.', c=COLORS[height - 1], label=height)
     else:
         Y_P99 = [p.p99 for p in vprof_ls.data]
-        plt_l.scatter(X, Y_P99, s=5, marker='.', c=COLORS[height - 1])
-    plt_ls.append((height, X, Y_UTIL))
+        plt_l.scatter(X, Y_P99, s=5, marker='.', c=COLORS[(height - 1) % len(COLORS)], label=f"(width: {width}, height: {height})")
+    
+    plt_ls.append((width, height, X, Y_UTIL, vprof_ls.max_slo))
     # plt_r.plot(X, Y_UTIL, '-', c=COLORS[height - 1],  label=str(height))
 
 plt_l.axhline(BASE_P50 * SLO_RATIO, ls='--', color='black')
@@ -199,25 +202,25 @@ plt_l.set_ylabel('p99 latency (us)')
 # plt_r.scatter([],[], marker='.', c='black', label='p99')
 
 
-plt_l.set_xlabel('normalized mps')
+plt_l.set_xlabel('mps')
 # plt_r.legend(loc="lower right")
 plt_l.legend(loc="upper left")
 
 plt_l.set_title(f"{name} vert profiling results")
 
-plt.savefig(os.path.join('benchmark', 'imgs', f'{name}_vprofp99.png'), )
+plt.savefig(os.path.join('benchmark', 'imgs', f'{name}_vprofp99_{sys.argv[2]}.png'), )
 
 
 plt.cla()
 for i in range(len(plt_ls)):
-    height=plt_ls[i][0]
-    X = plt_ls[i][1]
-    Y_UTIL=plt_ls[i][2]
-    plt.plot(X, Y_UTIL, '-', c=COLORS[height - 1],  label=str(height))
+    width=plt_ls[i][0]
+    height=plt_ls[i][1]
+    X = plt_ls[i][2]
+    Y_UTIL=plt_ls[i][3]
+    plt.plot(X, Y_UTIL, '-', c=COLORS[(height - 1) % len(COLORS)],  label=f"(width: {width}, height: {height})")
+    plt.axvline(plt_ls[i][4], ls='--', color=COLORS[(height - 1) % len(COLORS)])
 
-
-
-plt.xlabel("normalized mps")
+plt.xlabel("mps")
 plt.ylabel("normalized util%")
 plt.legend()
-plt.savefig(os.path.join('benchmark', 'imgs', f'{name}_vprofutil.png'))
+plt.savefig(os.path.join('benchmark', 'imgs', f'{name}_vprofutil_{sys.argv[2]}.png'))

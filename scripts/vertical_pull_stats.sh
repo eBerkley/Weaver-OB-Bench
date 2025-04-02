@@ -39,7 +39,7 @@ fi
 
 parse_svc_latency () {
   local component=$1
-  local path="../metrics_collection/p50_svc_latency.csv"
+  local path="../metrics_collection/svc_latency.csv"
   local pattern="[^,]+,([0-9.]+)"
 
   if [[ $component = "" ]]; then
@@ -49,7 +49,7 @@ parse_svc_latency () {
   local line=$(grep -e $component $path)
   if [[ $line =~ $pattern ]]; then
     val=${BASH_REMATCH[1]}
-    echo $(awk "BEGIN {printf \"%.3f\", $val}")
+    awk "BEGIN {printf \"%.3f\", $val}"
   else
     echo "unable to parse line $line."
     return 1
@@ -73,6 +73,11 @@ parse_internal_latency () {
   done
 }
 
+#   echo WARNING: WE ARE MANUALLY SETTING SLO TO 14 \* BASE
+# if [[ $COMPONENT_NAME != "currencyservice" ]]; then
+#   echo TERMINATING...
+#   exit 1
+# fi
 LOWLOAD_SVC_P50=$(parse_svc_latency $COMPONENT_PATH)
 # LOWLOAD_SVC_P50=$(parse_internal_latency $COMPONENT_PATH)
 if [[ $? -eq 1 ]]; then
@@ -82,7 +87,7 @@ fi
 echo LOW LOAD P50 SVC LATENCY: $LOWLOAD_SVC_P50 | tee -a $logfile
 
 SVC_SLO_FACTOR=${SVC_SLO_FACTOR:-15.0}
-STABILITY_COUNT=12
+STABILITY_COUNT=20
 
 # is_violating p99_latency
 # Returns 1 if violating, 0 otherwise.

@@ -26,29 +26,6 @@ loop_body () {
   start_time=$(date)
   make bench
 
-
-  # run the benchmark
-  # if [ "$TRACE_ENABLE" = "true" ]; then
-  #   echo "Benchmarking with Traces Collection..."
-  #   make bench_trace
-  # elif [ "$METRIC_ENABLE" = "true" ]; then
-  #   echo "Metrics-based profiling"
-  #   make bench_metric
-  # elif [ "$INSTFP_ENABLE" = "true" ]; then
-  #   echo "Instruction Footprint-based profiling"
-  #   make bench_instfp
-  # elif [ "$CPU_UTIL_ENABLE" = "true" ]; then
-  #    echo "CPU Time-based profiling..."
-  #   make bench_util
-  # elif [ "$VERTICAL_PROF" = "true" ]; then
-  #    echo "Vertical Profiling..."
-  #   make bench_vertical_prof
-  # else
-  #   echo "Regular benchmarking..."
-  #   # run the benchmark
-  #   make bench_once
-  # fi
-
   end_time=$(date)
 
   # Terminate the benchmark
