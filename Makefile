@@ -4,8 +4,6 @@ include auto/paths.mk
 
 WEAVER_KUBE ?= ./weaver-kube/cmd/weaver-kube/weaver-kube # weaver-kube
 WEAVER ?= ./weaver/cmd/weaver/weaver # weaver
-TELEMETRY_TRACES ?= ./weaver-kube/examples/telemetry-traces/telemetry-traces
-TELEMETRY_METRICS ?=./weaver-kube/examples/telemetry-metrics/telemetry-metrics
 
 SHELL := /bin/bash
 CONFIG_FILE ?= CONFIG.cfg
@@ -56,6 +54,17 @@ else ifeq ($(BENCH_TYPE), FIXED)
 	LOCUST_SLOWLOAD_RAMP := $(FIXED_USERS_RAMP)
 	LOCUST_RAMP_RATE := $(FIXED_USERS_RAMP_RATE)
 
+else ifeq ($(BENCH_TYPE), HETERO_HT)
+	METRIC_ENABLE   := true
+	TRACE_ENABLE    := false
+	INSTFP_ENABLE   := false
+	CPU_UTIL_ENABLE := false
+	VERTICAL_PROF   := false
+
+	LOCUST_SHAPE := slowerload
+	LOCUST_SLOWLOAD_RAMP := $(FIXED_USERS_RAMP)
+	LOCUST_RAMP_RATE := $(FIXED_USERS_RAMP_RATE)
+
 else ifeq ($(BENCH_TYPE), INST_FP)
 	METRIC_ENABLE   := false
 	TRACE_ENABLE    := false
@@ -81,7 +90,7 @@ else # ifeq ($(BENCH_TYPE), CUSTOM)
 endif
 
 
-.PHONY: all clean minikube_start minikube_restart check_smt toggle_smt deploy bench bench_all stop clear_logs check_docker check_loadgen pre_deploy bench_once 
+.PHONY: all clean minikube_start minikube_restart check_smt toggle_smt deploy bench bench_all stop clear_logs check_docker check_loadgen pre_deploy bench_once bin_build
 
 all:
 	@echo valid arguments:
@@ -97,6 +106,18 @@ all:
 
 
 include auto/scripts.mk
+
+path_init:
+	@echo "Initializing project setup..."
+	@if [ ! -d "$(WEAVER_BIN_PATH)" ]; then \
+		mkdir -p "$(WEAVER_BIN_PATH)"; \
+		echo "Created $(WEAVER_BIN_PATH)"; \
+	fi
+	@grep -qxF 'export PATH="$$PATH:$(WEAVER_BIN_PATH)"' $(HOME)/.bashrc || \
+		echo 'export PATH="$$PATH:$(WEAVER_BIN_PATH)"' >> $(HOME)/.bashrc && \
+		echo "Added $(WEAVER_BIN_PATH) to PATH in ~/.bashrc"
+	@echo "Setup complete. Run 'source ~/.bashrc' or restart your terminal to activate changes."
+
 
 test_envvars:
 	@echo "BENCH_TYPE         : $$BENCH_TYPE"
@@ -116,7 +137,7 @@ check_loadgen: $(LOAD_SRC_PY)
 # Check to make sure all the prerequisites for deploy execute properly. 
 # Does not actually deploy anything.
 # check_docker should prevent gen yaml scripts from firing without `$$DOCKER` being set.
-pre_deploy: check_docker check_loadgen $(WEAVER_GEN_YAML) $(LOAD_GEN_YAML)
+pre_deploy: check_docker check_loadgen bin_build $(WEAVER_GEN_YAML) $(LOAD_GEN_YAML)
 	@./make_scripts/check_env.sh
 	@./scripts/checks/check_freq_scaling.sh
 	@./scripts/checks/check_hyperthreading.sh
@@ -183,7 +204,6 @@ bench: deploy
 
 	@echo deleting deployment...
 	@-kubectl delete all --all >> $(DEBUG_OUTPUT) 2>&1
-	@./make_scripts/post_bench.sh
 
 # Shouldn't be ran by user, used by bench_all.
 bench_once: deploy
@@ -200,20 +220,26 @@ WEAVER_SRC := $(shell find $(WEAVER_DIR) -type f -name '*.go')
 $(WEAVER): $(WEAVER_SRC)
 	go build -C weaver/cmd/weaver
 
-KUBE_DIR := $(TOP)/weaver-kube
-KUBE_SRC := $(shell find $(KUBE_DIR) -type f -name '*.go')
+KUBE_DIR   := $(TOP)/weaver-kube
+KUBE_SRC   := $(shell find $(KUBE_DIR) -type f -name '*.go')
+KUBE_BIN   := $(WEAVER_BIN_PATH)/weaver-kube
+TRACE_BIN  := $(WEAVER_BIN_PATH)/telemetry-traces
+METRIC_BIN := $(WEAVER_BIN_PATH)/telemetry-metrics
 
-$(WEAVER_KUBE): $(KUBE_SRC) $(TELEMETRY_TRACES) $(TELEMETRY_METRICS)
+$(KUBE_BIN): $(KUBE_SRC)
 	go build -C weaver-kube/cmd/weaver-kube
 	cp ./weaver-kube/cmd/weaver-kube/weaver-kube $(WEAVER_BIN_PATH)
 
-$(TELEMETRY_TRACES): weaver-kube/examples/telemetry-traces/main.go
+$(TRACE_BIN): weaver-kube/examples/telemetry-traces/main.go $(KUBE_SRC)
 	(cd weaver-kube/examples/telemetry-traces && go build -o telemetry-traces .)
 	cp ./weaver-kube/examples/telemetry-traces/telemetry-traces $(WEAVER_BIN_PATH)
 
-$(TELEMETRY_METRICS): weaver-kube/examples/telemetry-metrics/main.go
+$(METRIC_BIN): weaver-kube/examples/telemetry-metrics/main.go $(KUBE_SRC)
 	(cd weaver-kube/examples/telemetry-metrics && go build -o telemetry-metrics .)
 	cp ./weaver-kube/examples/telemetry-metrics/telemetry-metrics $(WEAVER_BIN_PATH)
+
+#rebuild the binary if weaver kube src was modified
+bin_build: $(KUBE_BIN) $(TRACE_BIN) $(METRIC_BIN)
 
 # if deployment specifications or src code was modified,
 # 	Update Weaver kubernetes yaml

@@ -45,4 +45,5 @@ VERSION_FILE := $(GENERATED)/version.txt
 LOGS_FILE := $(TOP)/logs.txt
 TMP_LOGS := $(TOP)/tmp_logs.txt
 
-WEAVER_BIN_PATH := $(shell dirname $(shell which weaver-kube))
+# WEAVER_BIN_PATH := $(shell dirname $(shell which weaver-kube))
+WEAVER_BIN_PATH :=$(HOME)/go/bin

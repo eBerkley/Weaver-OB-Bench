@@ -21,7 +21,7 @@ finish () {
   mv pod_stats.csv ../benchmark/stats/pod_stats.csv
 }
 
-trap finish EXIT
+trap finish EXIT SIGINT SIGTERM
 
 SECONDS=0
 

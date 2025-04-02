@@ -19,6 +19,7 @@ SCHEME_PATH=$SCHEME_DIR/$SCHEME
 
 SCHEME_FILE=$SCHEME_PATH/spec.yaml
 CSCHEME_FILE=$SCHEME_PATH/$C_SCHEME.cfg
+GROUPS_HEIGHT=$SCHEME_PATH/groups_height.cfg
 
 echo set_pod_resources.sh >> $DEBUG_OUTPUT
 
@@ -40,6 +41,16 @@ for name in $(get_group_names); do
       cores=$FIXED_HEIGHT
       echo fixing $name to height $cores >> $DEBUG_OUTPUT
     fi # if name != fixed || fixed direction = OUT, the fallback of 1 is what we want anyways.
+
+  elif [[ $BENCH_TYPE = 'HETERO_HT' ]]; then
+    # Check if current group is listed in hetero_ht.cfg
+    for def in $(cat $GROUPS_HEIGHT); do
+      if [[ $def =~ ^$name=([0-9]+) ]]; then
+        cores=${BASH_REMATCH[1]}
+        echo "HETERO_HT: $name -> $cores" >> $DEBUG_OUTPUT
+        break
+      fi
+    done
   
   else # BENCH_TYPE != FIXED  : Read from cscheme file
   
