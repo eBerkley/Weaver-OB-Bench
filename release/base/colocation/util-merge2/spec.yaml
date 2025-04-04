@@ -17,12 +17,6 @@ groups:
 <cartservice_RESOURCE_SPEC>
 <cartservice_SCALING_SPEC>
 
-  - name: cartcache
-    components:
-    - "github.com/eBerkley/Weaver-OB-Bench/cartservice/cartCache"
-<cartcache_RESOURCE_SPEC>
-<cartcache_SCALING_SPEC>
-
   - name: checkoutservice
     components:
     - "github.com/eBerkley/Weaver-OB-Bench/checkoutservice/CheckoutService"
@@ -35,12 +29,13 @@ groups:
 <currencyservice_RESOURCE_SPEC>
 <currencyservice_SCALING_SPEC>
 
-  - name: emailpay
+  - name: emailpaycache
     components:
     - "github.com/eBerkley/Weaver-OB-Bench/emailservice/EmailService"
     - "github.com/eBerkley/Weaver-OB-Bench/paymentservice/PaymentService"
-<emailpay_RESOURCE_SPEC>
-<emailpay_SCALING_SPEC>
+    - "github.com/eBerkley/Weaver-OB-Bench/cartservice/cartCache"
+<emailpaycache_RESOURCE_SPEC>
+<emailpaycache_SCALING_SPEC>
 
   - name: productcatalogservice
     components:

@@ -29,6 +29,7 @@ ifeq ($(BENCH_TYPE), STATIC)
 	INSTFP_ENABLE   := false
 	CPU_UTIL_ENABLE := false
 	VERTICAL_PROF   := false
+	RUNTIME_METRIC_ENABLE := false
 
 	LOCUST_SHAPE          := slo_rampload
 	LOCUST_LOW_LOAD_USERS := $(STATIC_LOW_LOAD_USERS)
@@ -39,6 +40,7 @@ else ifeq ($(BENCH_TYPE), INITIAL)
 	INSTFP_ENABLE   := false
 	CPU_UTIL_ENABLE := false
 	VERTICAL_PROF   := false
+	RUNTIME_METRIC_ENABLE := false
 
 	LOCUST_SHAPE 			 := constload
 	LOCUST_CONST_USERS := $(INITIAL_USERS)
@@ -49,6 +51,7 @@ else ifeq ($(BENCH_TYPE), FIXED)
 	INSTFP_ENABLE   := false
 	CPU_UTIL_ENABLE := false
 	VERTICAL_PROF   := true
+	RUNTIME_METRIC_ENABLE := false
 
 	LOCUST_SHAPE := slowerload
 	LOCUST_SLOWLOAD_RAMP := $(FIXED_USERS_RAMP)
@@ -60,6 +63,7 @@ else ifeq ($(BENCH_TYPE), HETERO_HT)
 	INSTFP_ENABLE   := false
 	CPU_UTIL_ENABLE := false
 	VERTICAL_PROF   := false
+	RUNTIME_METRIC_ENABLE := false
 
 	LOCUST_SHAPE := slowerload
 	LOCUST_SLOWLOAD_RAMP := $(FIXED_USERS_RAMP)
@@ -71,6 +75,7 @@ else ifeq ($(BENCH_TYPE), INST_FP)
 	INSTFP_ENABLE   := true
 	CPU_UTIL_ENABLE := false
 	VERTICAL_PROF   := false
+	RUNTIME_METRIC_ENABLE := false
 
 	LOCUST_SHAPE 			 := constload
 	LOCUST_CONST_USERS := $(INST_FP_USERS)
@@ -81,6 +86,7 @@ else ifeq ($(BENCH_TYPE), CPU_UTIL)
 	INSTFP_ENABLE   := false
 	CPU_UTIL_ENABLE := true
 	VERTICAL_PROF   := false
+	RUNTIME_METRIC_ENABLE := false
 
 	LOCUST_SHAPE       := constload
 	LOCUST_CONST_USERS := $(CPU_UTIL_USERS)
@@ -196,6 +202,8 @@ bench: deploy
 		./scripts/cpu_util_stats.sh;              \
 	elif [[ $$VERTICAL_PROF = "true" ]]; then   \
 		./scripts/vertical_pull_stats.sh;         \
+	elif [[ $$RUNTIME_METRIC_ENABLE = "true" ]]; then \
+		./scripts/runtime_metric_stats.sh;        \
 	elif [[ $$METRIC_ENABLE = "true" ]]; then   \
 		./scripts/metrics_stats.sh;               \
 	else                                        \
