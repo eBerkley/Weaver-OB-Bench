@@ -16,9 +16,18 @@ source stats_utils/all_stats.sh
 echo load generator podname = $podname
 
 rm -f 'pod_stats.csv'
+# Add this at the top
+terminate=false
+
+# Modify the trap handler to set the flag and still call finish
 finish () {
+  echo "Caught interrupt. Finishing up..."
+  terminate=true
+  kill "${PF_PID}" 2>/dev/null
+  wait "${PF_PID}" 2>/dev/null
   kubectl cp $podname:/stats ../benchmark/stats
   mv pod_stats.csv ../benchmark/stats/pod_stats.csv
+  exit 0
 }
 
 trap finish EXIT SIGINT SIGTERM
@@ -61,18 +70,31 @@ log_debug_info() {
 
 iterations=0
 
-str=$(get_lines $timestamp_file)
+# str=$(get_lines $timestamp_file)
+# size=${#str}
+# echo $str
+
+strs=$(get_lines $timestamp_file 3)
+
+str=$(echo "$strs" | tail -1)
 size=${#str}
-echo $str
+if [[ $size != 0 ]]; then echo "$strs" | tee -a $logfile; fi
 
-while [ $SECONDS -le $INITIAL_RUNTIME ]; do
-
+while [[ $size -lt 5 ]] || [[ $size -gt 28 ]]; do
+  if [ "$terminate" = true ]; then
+    echo "Termination requested. Breaking loop."
+    break
+  fi
+  
   write_cpu_util
   
   sleep 10
   strs=$(get_lines $timestamp_file 3)
   str=$(echo "$strs" | tail -1)
   size=${#str}
+  # echo "DEBUG: str='$str'"
+  # echo "DEBUG: size=$size"
+
   if [[ $size != 0 ]]; then echo "$strs" | tee -a $logfile; fi
   
   (( iterations+=1 ))
@@ -177,3 +199,5 @@ python3 ../benchmark/prometheus_metrics.py \
 echo "All metric data collected and compiled in the '${output_dir}' directory."
 
 echo done.
+
+finish
