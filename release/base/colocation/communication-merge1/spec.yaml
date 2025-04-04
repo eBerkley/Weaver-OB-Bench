@@ -12,12 +12,17 @@ groups:
 <adservice_RESOURCE_SPEC>
 <adservice_SCALING_SPEC>
 
-  - name: carts
+  - name: cartservice
     components:
     - "github.com/eBerkley/Weaver-OB-Bench/cartservice/CartService"
+<cartservice_RESOURCE_SPEC>
+<cartservice_SCALING_SPEC>
+
+  - name: cartcache
+    components:
     - "github.com/eBerkley/Weaver-OB-Bench/cartservice/cartCache"
-<carts_RESOURCE_SPEC>
-<carts_SCALING_SPEC>
+<cartcache_RESOURCE_SPEC>
+<cartcache_SCALING_SPEC>
 
   - name: checkoutservice
     components:
