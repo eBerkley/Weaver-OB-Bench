@@ -33,6 +33,9 @@ sed -i "s/<LOADGEN_REPLICAS_ENV>/\"$LOADGEN_REPLICAS\"/g" $LOAD_GEN_YAML
 # Tell the locust instances which of the loadshapes to run.
 sed -i "s/<LOCUST_SHAPE>/$LOCUST_SHAPE/g" $LOAD_GEN_YAML
 
+sed -i "s/<LOCUST_CONN_POOL>/\"$LOCUST_CONN_POOL\"/g" $LOAD_GEN_YAML
+sed -i "s/<LOCUST_REQ_RATE>/\"$LOCUST_REQ_RATE\"/g" $LOAD_GEN_YAML
+
 sed -i "s/<LOCUST_CONST_USERS>/\"$LOCUST_CONST_USERS\"/g" $LOAD_GEN_YAML
 
 # Set the wait time for the rampload shape

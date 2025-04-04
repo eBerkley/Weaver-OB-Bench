@@ -70,6 +70,12 @@ spec:
 
         - name: LOCUST_SHAPE
           value: <LOCUST_SHAPE>
+
+        - name: LOCUST_CONN_POOL
+          value: <LOCUST_CONN_POOL>
+
+        - name: LOCUST_REQ_RATE
+          value: <LOCUST_REQ_RATE>
         
         - name: LOCUST_WAIT_TIME
           value: <LOCUST_WAIT_TIME>
@@ -182,6 +188,12 @@ spec:
         
         - name: FRONTEND_ADDR
           value: "<ADDR>"
+
+        - name: LOCUST_CONN_POOL
+          value: <LOCUST_CONN_POOL>
+
+        - name: LOCUST_REQ_RATE
+          value: <LOCUST_REQ_RATE>
 
         - name: LOCUST_WAIT_TIME
           value: <LOCUST_WAIT_TIME>

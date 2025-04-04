@@ -24,16 +24,28 @@ import os
 import locust.stats
 locust.stats.CSV_STATS_INTERVAL_SEC = int(os.getenv("LOCUST_CSV_INTERVAL", 1))
 
+from urllib3 import PoolManager
+
+CONN_POOL = int(os.getenv("LOCUST_CONN_POOL", "0")) # 1 = True, 0 = False
+REQ_RATE = float(os.getenv("LOCUST_REQ_RATE", "1")) 
+
+def get_conn_pool():
+    if CONN_POOL:
+        return PoolManager(maxsize=2500, block=False)
+    else:
+        return None
+
+
 RESET_CONN = int(os.getenv("LOCUST_RESET_CONN", "0")) # 1 = True, 0 = False
 
-RESET_FREQ      = 5 * RESET_CONN
-INDEX_FREQ      = 20
-CURRENCY_FREQ   = 10
-BROWSE_FREQ     = 20
-VIEW_CART_FREQ  = 20
-ADD_CART_FREQ   = 30
-EMPTY_CART_FREQ = 10
-CHECKOUT_FREQ   = 10
+RESET_FREQ      = 5 * RESET_CONN # 5 if HPA is enabled, 0 otherwise. 
+INDEX_FREQ      = 20 # GET /
+CURRENCY_FREQ   = 10 # POST /setCurrency
+BROWSE_FREQ     = 20 # GET /product/<product_id>
+VIEW_CART_FREQ  = 20 # GET /cart
+ADD_CART_FREQ   = 30 # POST /cart
+EMPTY_CART_FREQ = 10 # POST /cart/empty
+CHECKOUT_FREQ   = 10 # POST /cart/checkout
 
 
 fake = Faker()
@@ -79,7 +91,11 @@ products = [
 
 currencies = ['EUR', 'USD', 'JPY', 'CAD', 'GBP', 'TRY']
 class WebsiteUser(FastHttpUser):
-    wait_time = constant_pacing(2.5)
+    
+    wait_time = constant_pacing(REQ_RATE)
+
+    # If LOCUST_CONN_POOL==1, pool connections.
+    pool_manager = get_conn_pool()
 
     def __init__(self, environment):
         super().__init__(environment)
