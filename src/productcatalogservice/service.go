@@ -107,12 +107,16 @@ func (s *impl) Init(ctx context.Context) error {
 		s.Logger(ctx).Warn("Envvar MY_INDEX is non-int value. Randomly setting to either 0 or 1:", "value", s.myIndex)
 	}
 	s.Logger(ctx).Info(fmt.Sprintf("myIndex: %v", s.myIndex))
+
+	// Since we can't do anything until s.db is initialized anyways, we lock the db before calling refreshCatalogFile.
 	s.mu.Lock()
 	if s.catalogReplicas == 0 {
 		s.catalogReplicas = ProductCatalogReplicas
 	}
-	err = s.refreshCatalogFile()
+	s.prevCtx, s.prevCtxCancelFn = context.WithCancel(ctx)
+	s.db, err = s.refreshCatalogFile(s.prevCtx, s.catalogReplicas)
 	s.mu.Unlock()
+
 	if err != nil {
 		return fmt.Errorf("could not parse product catalog: %w", err)
 	}
@@ -125,71 +129,88 @@ func (s *impl) UpdateRoutingHook(ctx context.Context, componentName string, repl
 	if !strings.HasSuffix(componentName, "ProductCatalogService") {
 		return runtime.RoutingDontCareError
 	}
+	// Will halt previous s.refreshCatalogFile() invocation, if one is running.
+	// Will prevent prevDb from being cleared, if it hasn't already.
+	s.prevCtxCancelFn()
+
+	// Do we need to lock here?
+	s.prevCtx, s.prevCtxCancelFn = context.WithCancel(ctx)
+
+	db, _ := s.refreshCatalogFile(s.prevCtx, replicas)
+	if db == nil {
+		return nil // Fix later if necessary
+	}
 
 	s.mu.Lock()
 	s.catalogReplicas = replicas
-	s.refreshCatalogFile()
+
+	// TODO: verify that this kind of swap is ok
+	s.prevDb = s.db
+	s.db = db
+
 	s.mu.Unlock()
 
-	return nil
-}
-
-// requires: s.mu is held
-func (s *impl) fillDB(agg []Product) {
-
-	s.prevDb = s.db
-	s.db = make(map[string]Product)
-	s.prevCtxCancelFn()
-	s.prevCtx, s.prevCtxCancelFn = context.WithCancel(context.Background())
-
 	t := time.NewTimer(time.Duration(1) * time.Minute)
-
 	go func() {
 		select {
 		case <-t.C: // If timer expires before a new replica is created, delete old db.
+
+			// We optimistically assume it's ok to delete stuff
+			// out of the old database without locking.
 			for k := range s.prevDb {
 				delete(s.prevDb, k)
 			}
-			return
 
 		case <-s.prevCtx.Done(): // if we reset db, we don't want to prematurely delete old db.
+
+			// Do we need to do anything with db or prevDB to store intermediate databases?
 			return
 		}
 	}()
 
+	return nil
+}
+
+func (s *impl) fillDB(agg []Product, db map[string]Product, repls int) {
+
 	for _, p := range agg {
-		if HashProductID(p.ID, s.catalogReplicas) == s.myIndex {
-			s.db[p.ID] = p
+		if HashProductID(p.ID, repls) == s.myIndex {
+			db[p.ID] = p
 		}
 	}
 }
 
-// requires: s.mu is held
-func (s *impl) refreshCatalogFile() error {
+func (s *impl) refreshCatalogFile(ctx context.Context, repls int) (map[string]Product, error) {
 
 	dir, err := catalogFileData.ReadDir("products")
 	if err != nil {
-		return err
+		return nil, err
 	}
+	db := make(map[string]Product)
 
 	for _, entry := range dir {
+		select {
+		case <-ctx.Done(): // If a new UpdateRoutingHook is getting fired, stop running this.
+			return nil, ctx.Err()
+		default:
 
-		data, err := catalogFileData.ReadFile(path.Join("products", entry.Name()))
+			data, err := catalogFileData.ReadFile(path.Join("products", entry.Name()))
 
-		if err != nil {
-			return err
+			if err != nil {
+				return nil, err
+			}
+
+			var products []Product
+
+			if err := json.Unmarshal(data, &products); err != nil {
+				return nil, err
+			}
+
+			s.fillDB(products, db, repls)
 		}
-
-		var products []Product
-
-		if err := json.Unmarshal(data, &products); err != nil {
-			return err
-		}
-
-		s.fillDB(products)
 	}
 
-	return nil
+	return db, nil
 
 }
 
