@@ -23,6 +23,7 @@ import (
 
 	"github.com/eBerkley/Weaver-OB-Bench/productcatalogservice"
 	"github.com/eberkley/weaver"
+	"github.com/eberkley/weaver/runtime"
 	imetrics "github.com/eberkley/weaver/runtime/codegen"
 	_ "go.uber.org/automaxprocs"
 )
@@ -35,14 +36,78 @@ type impl struct {
 	weaver.Implements[RecService]
 	catalogService weaver.Ref[productcatalogservice.ProductCatalogService]
 
+	catalogMu           sync.RWMutex
+	catalogInit         bool
 	catalogRoutingTable productcatalogservice.ProductRoutingTable
+	catalogReplicas     int
+	cancelFn            context.CancelFunc
 }
 
 func (s *impl) Init(ctx context.Context) error {
-	s.Logger(ctx).Info("in rec init")
-	s.catalogRoutingTable = productcatalogservice.GetRoutingTable(&s.catalogService)
-	s.Logger(ctx).Info("out of rec init!!")
-	s.Logger(ctx).Info(fmt.Sprintf("routing table: %v", s.catalogRoutingTable))
+
+	if s.catalogReplicas == 0 {
+		s.catalogReplicas = productcatalogservice.ProductCatalogReplicas
+	}
+
+	s.UpdateCatalogService(ctx, s.catalogReplicas)
+
+	return nil
+}
+
+func (s *impl) UpdateCatalogService(ctx2 context.Context, replicas int) {
+
+	ctx, cancelFn := context.WithCancel(ctx2)
+
+	if s.cancelFn != nil {
+		s.cancelFn()
+	}
+	s.cancelFn = cancelFn
+
+	updateCatalogInfo := func() {
+		// We ***reeeeaaaaalllly*** don't want to hold the lock while forming table...
+		table, err := productcatalogservice.GetRoutingTable(ctx, &s.catalogService, replicas)
+
+		if err != nil {
+			s.Logger(ctx2).Warn(fmt.Sprintf("getRoutingTable returned error: %v. Hopefully everything is alright.", err))
+			return
+		}
+
+		s.catalogMu.Lock()
+		s.catalogReplicas = replicas
+		s.catalogRoutingTable = table
+		s.catalogMu.Unlock()
+	}
+
+	if !s.catalogInit {
+		updateCatalogInfo()
+		s.catalogInit = true
+		return
+	}
+
+	timer := time.NewTimer(time.Duration(20) * time.Second)
+	go func() {
+		select {
+		case <-timer.C:
+			updateCatalogInfo()
+
+		case <-ctx.Done():
+
+		}
+
+	}()
+
+}
+
+func (s *impl) UpdateRoutingHook(ctx context.Context, componentName string, replicas int) error {
+
+	if !strings.HasSuffix(componentName, "ProductCatalogService") {
+		if strings.HasSuffix(componentName, "RecService") {
+			return runtime.RoutingDontCareError
+		}
+		return nil
+	}
+
+	s.UpdateCatalogService(ctx, replicas)
 	return nil
 }
 
@@ -56,23 +121,34 @@ func (s *impl) ListRecommendations(ctx context.Context, userID string, userProdu
 	}()
 
 	// Get the shards for each productID
-	productShardMap := make([][]string, productcatalogservice.ProductCatalogReplicas)
+
+	// A call to ListRecommendations will use the same routing info for the full run
+	s.catalogMu.RLock()
+	repls := s.catalogReplicas
+	table := make([]int, repls)
+	for i := 0; i < repls; i++ {
+		table[i] = s.catalogRoutingTable[i]
+	}
+	s.catalogMu.RUnlock()
+
+	productShardMap := make([][]string, repls)
 	for _, pid := range userProductIDs {
-		shard := productcatalogservice.HashProductID(pid)
+		shard := productcatalogservice.HashProductID(pid, repls)
 		productShardMap[shard] = append(productShardMap[shard], pid)
 	}
 
+	productShards := make([][]productcatalogservice.Product, repls)
+
 	// shard index => list of products
-	productShards := make([][]productcatalogservice.Product, productcatalogservice.ProductCatalogReplicas)
 
 	// Concurrently send an RPC to each product catalog service. Wait until there's a response from all of them.
 	// If one returns an error, this function returns an error.
 	wg := sync.WaitGroup{}
-	wg.Add(productcatalogservice.ProductCatalogReplicas)
-	errChan := make(chan error, productcatalogservice.ProductCatalogReplicas)
+	wg.Add(repls)
+	errChan := make(chan error, repls)
 
 	concurrentGetProductsTime := time.Now()
-	for shard := 0; shard < productcatalogservice.ProductCatalogReplicas; shard++ {
+	for shard := 0; shard < repls; shard++ {
 		go func(shard int) {
 			// Don't send RPC if we aren't requesting any products.
 			if len(productShardMap[shard]) == 0 {
@@ -80,7 +156,7 @@ func (s *impl) ListRecommendations(ctx context.Context, userID string, userProdu
 				return
 			}
 			// Routing key that will route to the correct shard.
-			key := s.catalogRoutingTable[shard]
+			key := table[shard]
 			prods, err := s.catalogService.Get().GetProducts(ctx, productShardMap[shard], key)
 
 			if err != nil {
@@ -127,14 +203,14 @@ func (s *impl) ListRecommendations(ctx context.Context, userID string, userProdu
 		}
 	}
 	// shard index => list of similar products
-	productStringShards := make([][]string, productcatalogservice.ProductCatalogReplicas)
+	productStringShards := make([][]string, repls)
 
 	// Concurrently send another RPC to each product catalog service. Wait until there's a response from all of them.
 	// If one returns an error, this function returns an error.
-	wg.Add(productcatalogservice.ProductCatalogReplicas)
-	errChan2 := make(chan error, productcatalogservice.ProductCatalogReplicas)
+	wg.Add(repls)
+	errChan2 := make(chan error, repls)
 	concurrentSearchProductsTime := time.Now()
-	for shard := 0; shard < productcatalogservice.ProductCatalogReplicas; shard++ {
+	for shard := 0; shard < repls; shard++ {
 		go func(shard int) {
 			// Routing key that will route to the correct shard.
 			key := s.catalogRoutingTable[shard]

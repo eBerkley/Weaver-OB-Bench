@@ -27,7 +27,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/eBerkley/Weaver-OB-Bench/adservice"
@@ -94,51 +93,33 @@ func (fe *Server) homeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Begin fetching list of products from shard
-	// shard index => list of products
-	productShards := make([][]productcatalogservice.Product, productcatalogservice.ProductCatalogReplicas)
-	// Concurrently send an RPC to each product catalog service. Wait until there's a response from all of them.
-	// If one returns an error, this function returns an error.
-	wg := sync.WaitGroup{}
-	wg.Add(productcatalogservice.ProductCatalogReplicas)
-	errChan := make(chan error, productcatalogservice.ProductCatalogReplicas)
-
-	var durationMu sync.Mutex
-
-	for shard := 0; shard < productcatalogservice.ProductCatalogReplicas; shard++ {
-		go func(shard int) {
-			// Routing key that will route to the correct shard.
-			key := fe.catalogRoutingTable[shard]
-			listTime := time.Now()
-			prods, err := fe.catalogService.Get().ListProducts(r.Context(), key)
-			d := time.Since(listTime)
-			durationMu.Lock()
-			duration += d
-			durationMu.Unlock()
-
-			if err != nil {
-				errChan <- err
-			} else {
-				productShards[shard] = prods
-			}
-			wg.Done()
-		}(shard)
-	}
-	// Halt thread until all requests have responses.
-	// If theres an error from one, return it. If not, continue on.
-	wg.Wait()
-	select {
-	case err := <-errChan:
-		fe.renderHTTPError(r, w, fmt.Errorf("could not retrieve products: %w", err), http.StatusInternalServerError)
-		return
-	default:
-		break
-	}
-
-	// Get the aggregate of products.
 	var products []productcatalogservice.Product
-	for _, s := range productShards {
-		products = append(products, s...)
+
+	// We gotta do this first sadly, could be bad if routing table updates mid loop
+	fe.catalogMu.RLock()
+	repls := fe.catalogReplicas
+	table := make([]int, repls)
+	for i := 0; i < repls; i++ {
+		table[i] = fe.catalogRoutingTable[i]
 	}
+	fe.catalogMu.RUnlock()
+
+	for shard := 0; shard < repls; shard++ {
+		// Routing key that will route to the correct shard.
+		key := table[shard]
+
+		listTime := time.Now()
+		prods, err := fe.catalogService.Get().ListProducts(r.Context(), key)
+		duration += time.Since(listTime)
+
+		if err != nil {
+			fe.renderHTTPError(r, w, fmt.Errorf("could not retrieve products: %w", err), http.StatusInternalServerError)
+			return
+		}
+
+		products = append(products, prods...)
+	}
+
 	getCartTime := time.Now()
 	cart, err := fe.cartService.Get().GetCart(r.Context(), sessionID(r))
 	duration += time.Since(getCartTime)
@@ -203,9 +184,14 @@ func (fe *Server) productHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	logger.Debug("serving product page", "id", id, "currency", currentCurrency(r))
-	shard := productcatalogservice.HashProductID(id)
+
+	fe.catalogMu.RLock()
+	shard := productcatalogservice.HashProductID(id, fe.catalogReplicas)
+	key := fe.catalogRoutingTable[shard]
+	fe.catalogMu.RUnlock()
+
 	getProductTime := time.Now()
-	p, err := fe.catalogService.Get().GetProduct(r.Context(), id, fe.catalogRoutingTable[shard])
+	p, err := fe.catalogService.Get().GetProduct(r.Context(), id, key)
 	duration += time.Since(getProductTime)
 
 	if err != nil {
@@ -302,10 +288,14 @@ func (fe *Server) addToCartHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	logger.Debug("adding to cart", "product", productID, "quantity", quantity)
-	shard := productcatalogservice.HashProductID(productID)
+
+	fe.catalogMu.RLock()
+	shard := productcatalogservice.HashProductID(productID, fe.catalogReplicas)
+	key := fe.catalogRoutingTable[shard]
+	fe.catalogMu.RUnlock()
 
 	getProductTime := time.Now()
-	p, err := fe.catalogService.Get().GetProduct(r.Context(), productID, fe.catalogRoutingTable[shard])
+	p, err := fe.catalogService.Get().GetProduct(r.Context(), productID, key)
 	duration += time.Since(getProductTime)
 
 	if err != nil {
@@ -400,10 +390,14 @@ func (fe *Server) viewCartHandler(w http.ResponseWriter, r *http.Request) {
 	items := make([]cartItemView, len(cart))
 	totalPrice := money.T{CurrencyCode: currentCurrency(r)}
 	for i, item := range cart {
-		shard := productcatalogservice.HashProductID(item.ProductID)
+
+		fe.catalogMu.RLock()
+		shard := productcatalogservice.HashProductID(item.ProductID, fe.catalogReplicas)
+		key := fe.catalogRoutingTable[shard]
+		fe.catalogMu.RUnlock()
 
 		getProductTime := time.Now()
-		p, err := fe.catalogService.Get().GetProduct(r.Context(), item.ProductID, fe.catalogRoutingTable[shard])
+		p, err := fe.catalogService.Get().GetProduct(r.Context(), item.ProductID, key)
 		duration += time.Since(getProductTime)
 
 		if err != nil {
@@ -645,6 +639,7 @@ func (fe *Server) getShippingQuote(ctx context.Context, items []cartservice.Cart
 
 func (fe *Server) getRecommendations(ctx context.Context, userID string, productIDs []string) ([]productcatalogservice.Product, time.Duration, error) {
 	var duration time.Duration
+
 	listRecsTime := time.Now()
 	recommendationIDs, err := fe.recommendationService.Get().ListRecommendations(ctx, userID, productIDs)
 	duration += time.Since(listRecsTime)
@@ -654,21 +649,30 @@ func (fe *Server) getRecommendations(ctx context.Context, userID string, product
 	}
 
 	out := make([]productcatalogservice.Product, 0, len(recommendationIDs))
-	productShardMap := make([][]string, productcatalogservice.ProductCatalogReplicas)
+
+	fe.catalogMu.RLock()
+	productShardMap := make([][]string, fe.catalogReplicas)
+	repls := fe.catalogReplicas
+	table := make([]int, repls)
+	for i := 0; i < repls; i++ {
+		table[i] = fe.catalogRoutingTable[i]
+	}
+	fe.catalogMu.RUnlock()
 
 	for _, id := range recommendationIDs {
-		shard := productcatalogservice.HashProductID(id)
+		shard := productcatalogservice.HashProductID(id, repls)
 		productShardMap[shard] = append(productShardMap[shard], id)
 	}
 
 	// Because of the large number of goroutines active in main, we send an RPC to each replica serially, rather than concurrently.
-	for shard := 0; shard < productcatalogservice.ProductCatalogReplicas; shard++ {
+	for shard := 0; shard < repls; shard++ {
 
 		if len(productShardMap[shard]) == 0 {
 			continue
 		}
 
-		key := fe.catalogRoutingTable[shard]
+		key := table[shard]
+
 		getProductsTime := time.Now()
 		prods, err := fe.catalogService.Get().
 			GetProducts(ctx, productShardMap[shard], key)

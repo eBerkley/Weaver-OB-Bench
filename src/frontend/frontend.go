@@ -23,6 +23,9 @@ import (
 	"net/http"
 	"os"
 	"slices"
+	"strings"
+	"sync"
+	"time"
 
 	"github.com/eBerkley/Weaver-OB-Bench/adservice"
 	"github.com/eBerkley/Weaver-OB-Bench/cartservice"
@@ -32,6 +35,7 @@ import (
 	"github.com/eBerkley/Weaver-OB-Bench/recommendationservice"
 	"github.com/eBerkley/Weaver-OB-Bench/shippingservice"
 	"github.com/eberkley/weaver"
+	"github.com/eberkley/weaver/runtime"
 	_ "go.uber.org/automaxprocs"
 )
 
@@ -73,14 +77,77 @@ type Server struct {
 
 	boutique weaver.Listener
 
+	catalogMu           sync.RWMutex
 	catalogRoutingTable productcatalogservice.ProductRoutingTable
+	catalogReplicas     int
+	catalogInit         bool
+	cancelFn            context.CancelFunc
 }
 
 func (fe *Server) Init(ctx context.Context) error {
 
-	fe.catalogRoutingTable = productcatalogservice.GetRoutingTable(&fe.catalogService)
-	fe.Logger(ctx).Info(fmt.Sprintf("frontend routing table: %v", fe.catalogRoutingTable))
+	if fe.catalogReplicas == 0 {
+		fe.catalogReplicas = productcatalogservice.ProductCatalogReplicas
+	}
+
+	fe.UpdateCatalogService(ctx, fe.catalogReplicas)
 	return nil
+}
+
+func (fe *Server) UpdateRoutingHook(ctx context.Context, componentName string, replicas int) error {
+	if componentName == runtime.Main {
+		return runtime.RoutingDontCareError
+	}
+	if !strings.HasSuffix(componentName, "ProductCatalogService") {
+		return nil
+	}
+
+	fe.UpdateCatalogService(ctx, replicas)
+
+	return nil
+}
+
+func (s *Server) UpdateCatalogService(ctx2 context.Context, replicas int) {
+	ctx, cancelFn := context.WithCancel(ctx2)
+
+	if s.cancelFn != nil {
+		s.cancelFn()
+	}
+	s.cancelFn = cancelFn
+
+	updateCatalogInfo := func() {
+		// We ***reeeeaaaaalllly*** don't want to hold the lock while forming table...
+		table, err := productcatalogservice.GetRoutingTable(ctx, &s.catalogService, replicas)
+
+		if err != nil {
+			s.Logger(ctx2).Warn(fmt.Sprintf("getRoutingTable returned error: %v. Hopefully everything is alright.", err))
+			return
+		}
+
+		s.catalogMu.Lock()
+		s.catalogReplicas = replicas
+		s.catalogRoutingTable = table
+		s.catalogMu.Unlock()
+	}
+
+	if !s.catalogInit {
+		updateCatalogInfo()
+		s.catalogInit = true
+		return
+	}
+
+	timer := time.NewTimer(time.Duration(20) * time.Second)
+	go func() {
+		select {
+		case <-timer.C:
+			updateCatalogInfo()
+
+		case <-ctx.Done():
+
+		}
+
+	}()
+
 }
 
 func Serve(ctx context.Context, s *Server) error {

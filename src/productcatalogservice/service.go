@@ -19,6 +19,7 @@ import (
 	"encoding/json"
 	"math/rand"
 	"path"
+	"sync"
 	"time"
 
 	"embed"
@@ -29,6 +30,7 @@ import (
 
 	"github.com/eBerkley/Weaver-OB-Bench/types/money"
 	"github.com/eberkley/weaver"
+	"github.com/eberkley/weaver/runtime"
 	imetrics "github.com/eberkley/weaver/runtime/codegen"
 	_ "go.uber.org/automaxprocs"
 )
@@ -79,9 +81,15 @@ type impl struct {
 	weaver.Implements[ProductCatalogService]
 	weaver.WithRouter[ProductCatalogRouter]
 
-	// mu      sync.RWMutex
-	db      map[string]Product
+	// Doesn't change.
 	myIndex int
+
+	mu              sync.RWMutex
+	prevCtx         context.Context    // Cancel if we should NOT delete the contents of db when timer expires
+	prevCtxCancelFn context.CancelFunc // see impl.prevCtx
+	db              map[string]Product
+	prevDb          map[string]Product // temporarily stores the previous contents of db
+	catalogReplicas int
 }
 
 var _ ProductCatalogService = (*impl)(nil)
@@ -90,13 +98,21 @@ func (s *impl) Init(ctx context.Context) error {
 	var err error
 	indexStr := os.Getenv("MY_INDEX")
 	s.myIndex, err = strconv.Atoi(indexStr)
+
 	s.db = make(map[string]Product)
+	s.prevDb = make(map[string]Product)
+
 	if err != nil {
 		s.myIndex = rand.Intn(2)
 		s.Logger(ctx).Warn("Envvar MY_INDEX is non-int value. Randomly setting to either 0 or 1:", "value", s.myIndex)
 	}
 	s.Logger(ctx).Info(fmt.Sprintf("myIndex: %v", s.myIndex))
+	s.mu.Lock()
+	if s.catalogReplicas == 0 {
+		s.catalogReplicas = ProductCatalogReplicas
+	}
 	err = s.refreshCatalogFile()
+	s.mu.Unlock()
 	if err != nil {
 		return fmt.Errorf("could not parse product catalog: %w", err)
 	}
@@ -104,14 +120,51 @@ func (s *impl) Init(ctx context.Context) error {
 	return nil
 }
 
+func (s *impl) UpdateRoutingHook(ctx context.Context, componentName string, replicas int) error {
+
+	if !strings.HasSuffix(componentName, "ProductCatalogService") {
+		return runtime.RoutingDontCareError
+	}
+
+	s.mu.Lock()
+	s.catalogReplicas = replicas
+	s.refreshCatalogFile()
+	s.mu.Unlock()
+
+	return nil
+}
+
+// requires: s.mu is held
 func (s *impl) fillDB(agg []Product) {
+
+	s.prevDb = s.db
+	s.db = make(map[string]Product)
+	s.prevCtxCancelFn()
+	s.prevCtx, s.prevCtxCancelFn = context.WithCancel(context.Background())
+
+	t := time.NewTimer(time.Duration(1) * time.Minute)
+
+	go func() {
+		select {
+		case <-t.C: // If timer expires before a new replica is created, delete old db.
+			for k := range s.prevDb {
+				delete(s.prevDb, k)
+			}
+			return
+
+		case <-s.prevCtx.Done(): // if we reset db, we don't want to prematurely delete old db.
+			return
+		}
+	}()
+
 	for _, p := range agg {
-		if HashProductID(p.ID) == s.myIndex {
+		if HashProductID(p.ID, s.catalogReplicas) == s.myIndex {
 			s.db[p.ID] = p
 		}
 	}
 }
 
+// requires: s.mu is held
 func (s *impl) refreshCatalogFile() error {
 
 	dir, err := catalogFileData.ReadDir("products")
@@ -164,12 +217,25 @@ func (s *impl) GetProduct(ctx context.Context, productID string, _ int) (Product
 		imetrics.InternalMetricsFor(imetrics.InternalMethodLabels{Component: "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService", Method: "GetProduct"}).Put(float64(time.Since(initTime).Microseconds()))
 	}()
 
-	p, ok := s.db[productID]
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	var p Product
+	var ok bool
+
+	p, ok = s.db[productID]
+
+	// If it wasn't in the original db, try the old one...
 	if !ok {
-		idx := s.myIndex
-		needed := HashProductID(productID)
-		return Product{}, fmt.Errorf("request for productID %v made to shard %v, but needed to be %v", productID, idx, needed)
+		p, ok = s.prevDb[productID]
+
+		// if we STILL haven't found it...
+		if !ok {
+			idx := s.myIndex
+			needed := HashProductID(productID, s.catalogReplicas)
+			return Product{}, fmt.Errorf("request for productID %v made to shard %v, but needed to be %v", productID, idx, needed)
+		}
 	}
+
 	return p, nil
 }
 
@@ -179,14 +245,27 @@ func (s *impl) GetProducts(ctx context.Context, productIDs []string, _ int) ([]P
 		imetrics.InternalMetricsFor(imetrics.InternalMethodLabels{Component: "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService", Method: "GetProducts"}).Put(float64(time.Since(initTime).Microseconds()))
 	}()
 
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
 	products := make([]Product, len(productIDs))
 	for i, pid := range productIDs {
-		p, ok := s.db[pid]
+
+		var p Product
+		var ok bool
+
+		p, ok = s.db[pid]
+
 		if !ok {
-			idx := s.myIndex
-			needed := HashProductID(pid)
-			return nil, fmt.Errorf("request for productID %v made to shard %v, but needed to be %v", pid, idx, needed)
+			p, ok = s.prevDb[pid]
+
+			if !ok {
+				idx := s.myIndex
+				needed := HashProductID(pid, s.catalogReplicas)
+				return nil, fmt.Errorf("request for productID %v made to shard %v, but needed to be %v", pid, idx, needed)
+			}
 		}
+
 		products[i] = p
 	}
 	return products, nil
@@ -201,6 +280,10 @@ func (s *impl) SearchProducts(ctx context.Context, query string, _ int) ([]Produ
 	var ps []Product
 	i := 0
 	q := strings.ToLower(query)
+
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
 	for _, p := range s.db {
 		if strings.Contains(strings.ToLower(p.Name), q) {
 			ps = append(ps, p)

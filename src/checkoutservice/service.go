@@ -17,6 +17,8 @@ package checkoutservice
 import (
 	"context"
 	"fmt"
+	"strings"
+	"sync"
 	"time"
 
 	"github.com/eBerkley/Weaver-OB-Bench/cartservice"
@@ -28,6 +30,7 @@ import (
 	"github.com/eBerkley/Weaver-OB-Bench/types"
 	"github.com/eBerkley/Weaver-OB-Bench/types/money"
 	"github.com/eberkley/weaver"
+	"github.com/eberkley/weaver/runtime"
 	imetrics "github.com/eberkley/weaver/runtime/codegen"
 	"github.com/google/uuid"
 
@@ -57,11 +60,79 @@ type impl struct {
 	emailService    weaver.Ref[emailservice.EmailService]
 	paymentService  weaver.Ref[paymentservice.PaymentService]
 
+	catalogMu           sync.RWMutex
 	catalogRoutingTable productcatalogservice.ProductRoutingTable
+	catalogReplicas     int
+	catalogInit         bool
+	cancelFn            context.CancelFunc
 }
 
 func (s *impl) Init(ctx context.Context) error {
-	s.catalogRoutingTable = productcatalogservice.GetRoutingTable(&s.catalogService)
+
+	if s.catalogReplicas == 0 {
+		s.catalogReplicas = productcatalogservice.ProductCatalogReplicas
+	}
+
+	s.UpdateCatalogService(ctx, s.catalogReplicas)
+
+	return nil
+}
+
+func (s *impl) UpdateCatalogService(ctx2 context.Context, replicas int) {
+	ctx, cancelFn := context.WithCancel(ctx2)
+
+	if s.cancelFn != nil {
+		s.cancelFn()
+	}
+	s.cancelFn = cancelFn
+
+	updateCatalogInfo := func() {
+		// We ***reeeeaaaaalllly*** don't want to hold the lock while forming table...
+		table, err := productcatalogservice.GetRoutingTable(ctx, &s.catalogService, replicas)
+
+		if err != nil {
+			s.Logger(ctx2).Warn(fmt.Sprintf("getRoutingTable returned error: %v. Hopefully everything is alright.", err))
+			return
+		}
+
+		s.catalogMu.Lock()
+		s.catalogReplicas = replicas
+		s.catalogRoutingTable = table
+		s.catalogInit = true
+		s.catalogMu.Unlock()
+	}
+
+	if !s.catalogInit {
+		updateCatalogInfo()
+		s.catalogInit = true
+		return
+	}
+
+	timer := time.NewTimer(time.Duration(20) * time.Second)
+	go func() {
+		select {
+		case <-timer.C:
+			updateCatalogInfo()
+
+		case <-ctx.Done():
+
+		}
+
+	}()
+
+}
+
+func (s *impl) UpdateRoutingHook(ctx context.Context, componentName string, replicas int) error {
+
+	if !strings.HasSuffix(componentName, "ProductCatalogService") {
+		if strings.HasSuffix(componentName, "CheckoutService") {
+			return runtime.RoutingDontCareError
+		}
+		return nil
+	}
+
+	s.UpdateCatalogService(ctx, replicas)
+
 	return nil
 }
 
@@ -184,9 +255,13 @@ func (s *impl) prepareOrderItemsAndShippingQuoteFromCart(ctx context.Context, us
 
 func (s *impl) prepOrderItems(ctx context.Context, items []cartservice.CartItem, userCurrency string) (out []types.OrderItem, duration time.Duration, err error) {
 	out = make([]types.OrderItem, len(items))
+
 	for i, item := range items {
 		var product productcatalogservice.Product
-		key := s.catalogRoutingTable[productcatalogservice.HashProductID(item.ProductID)]
+
+		s.catalogMu.RLock()
+		key := s.catalogRoutingTable[productcatalogservice.HashProductID(item.ProductID, s.catalogReplicas)]
+		s.catalogMu.RUnlock()
 
 		getProductTime := time.Now()
 		product, err = s.catalogService.Get().GetProduct(ctx, item.ProductID, key)
