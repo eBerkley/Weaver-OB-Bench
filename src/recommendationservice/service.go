@@ -48,7 +48,7 @@ func (s *impl) Init(ctx context.Context) error {
 	if s.catalogReplicas == 0 {
 		s.catalogReplicas = productcatalogservice.ProductCatalogReplicas
 	}
-
+	s.Logger(ctx).Info("in Init function")
 	s.UpdateCatalogService(ctx, s.catalogReplicas)
 
 	return nil
@@ -62,6 +62,7 @@ func (s *impl) UpdateCatalogService(ctx2 context.Context, replicas int) {
 		s.cancelFn()
 	}
 	s.cancelFn = cancelFn
+	s.Logger(ctx).Info("running UpdateCatalogService", "replicas", replicas)
 
 	updateCatalogInfo := func() {
 		// We ***reeeeaaaaalllly*** don't want to hold the lock while forming table...
@@ -76,9 +77,11 @@ func (s *impl) UpdateCatalogService(ctx2 context.Context, replicas int) {
 		s.catalogReplicas = replicas
 		s.catalogRoutingTable = table
 		s.catalogMu.Unlock()
+		s.Logger(ctx).Info("Updated catalogservice routing table successfully!")
 	}
 
 	if !s.catalogInit {
+		s.Logger(ctx).Info("s.catalogInit == false, running without timer.")
 		updateCatalogInfo()
 		s.catalogInit = true
 		return
@@ -88,10 +91,11 @@ func (s *impl) UpdateCatalogService(ctx2 context.Context, replicas int) {
 	go func() {
 		select {
 		case <-timer.C:
+			s.Logger(ctx).Info("Timer expired, preparing to update!")
 			updateCatalogInfo()
 
 		case <-ctx.Done():
-
+			s.Logger(ctx).Info("context expired... (idk if we can even read this...)")
 		}
 
 	}()
@@ -99,11 +103,16 @@ func (s *impl) UpdateCatalogService(ctx2 context.Context, replicas int) {
 }
 
 func (s *impl) UpdateRoutingHook(ctx context.Context, componentName string, replicas int) error {
+	s.Logger(ctx).Info("in UpdateRoutingHook", "componentName", componentName, "replicas", replicas)
 
 	if !strings.HasSuffix(componentName, "ProductCatalogService") {
 		if strings.HasSuffix(componentName, "RecService") {
 			return runtime.RoutingDontCareError
 		}
+		return nil
+	}
+
+	if replicas == -1 {
 		return nil
 	}
 

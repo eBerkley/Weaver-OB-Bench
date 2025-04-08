@@ -129,9 +129,15 @@ func (s *impl) UpdateRoutingHook(ctx context.Context, componentName string, repl
 	if !strings.HasSuffix(componentName, "ProductCatalogService") {
 		return runtime.RoutingDontCareError
 	}
+	s.Logger(ctx).Info("running UpdateRoutingHook", "replicas", replicas)
+	if replicas == -1 {
+		return nil
+	}
 	// Will halt previous s.refreshCatalogFile() invocation, if one is running.
 	// Will prevent prevDb from being cleared, if it hasn't already.
-	s.prevCtxCancelFn()
+	if s.prevCtxCancelFn != nil {
+		s.prevCtxCancelFn()
+	}
 
 	// Do we need to lock here?
 	s.prevCtx, s.prevCtxCancelFn = context.WithCancel(ctx)
@@ -140,6 +146,7 @@ func (s *impl) UpdateRoutingHook(ctx context.Context, componentName string, repl
 	if db == nil {
 		return nil // Fix later if necessary
 	}
+	s.Logger(ctx).Info("refreshCatalogFile ran successfully.")
 
 	s.mu.Lock()
 	s.catalogReplicas = replicas
@@ -152,17 +159,18 @@ func (s *impl) UpdateRoutingHook(ctx context.Context, componentName string, repl
 
 	t := time.NewTimer(time.Duration(1) * time.Minute)
 	go func() {
+		prevCtx := s.prevCtx
 		select {
 		case <-t.C: // If timer expires before a new replica is created, delete old db.
-
+			s.Logger(ctx).Info("Timer expired, deleting old db.")
 			// We optimistically assume it's ok to delete stuff
 			// out of the old database without locking.
 			for k := range s.prevDb {
 				delete(s.prevDb, k)
 			}
 
-		case <-s.prevCtx.Done(): // if we reset db, we don't want to prematurely delete old db.
-
+		case <-prevCtx.Done(): // if we reset db, we don't want to prematurely delete old db.
+			s.Logger(s.prevCtx).Info("Context cancelled, keeping db!")
 			// Do we need to do anything with db or prevDB to store intermediate databases?
 			return
 		}

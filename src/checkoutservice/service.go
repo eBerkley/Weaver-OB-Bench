@@ -130,6 +130,9 @@ func (s *impl) UpdateRoutingHook(ctx context.Context, componentName string, repl
 		}
 		return nil
 	}
+	if replicas == -1 {
+		return nil
+	}
 
 	s.UpdateCatalogService(ctx, replicas)
 

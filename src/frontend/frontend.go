@@ -101,6 +101,9 @@ func (fe *Server) UpdateRoutingHook(ctx context.Context, componentName string, r
 	if !strings.HasSuffix(componentName, "ProductCatalogService") {
 		return nil
 	}
+	if replicas == -1 {
+		return nil
+	}
 
 	fe.UpdateCatalogService(ctx, replicas)
 
@@ -113,7 +116,9 @@ func (s *Server) UpdateCatalogService(ctx2 context.Context, replicas int) {
 	if s.cancelFn != nil {
 		s.cancelFn()
 	}
+
 	s.cancelFn = cancelFn
+	s.Logger(ctx).Info("running UpdateCatalogService", "replicas", replicas)
 
 	updateCatalogInfo := func() {
 		// We ***reeeeaaaaalllly*** don't want to hold the lock while forming table...
