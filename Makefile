@@ -172,7 +172,7 @@ deploy: minikube_start pre_deploy
 	@kubectl apply -f $(LOAD_GEN_YAML) >> $(LOGS_FILE) 2>&1
 	@echo creating OB ... >> $(LOGS_FILE)
 	@kubectl apply -f $(WEAVER_GEN_YAML) >> $(LOGS_FILE) 2>&1
-	sleep 20
+	sleep 10
 	@if [ "$(TRACE_ENABLE)" = "true" ]; then \
 		echo "Jaeger is enabled, starting to collect trace" ; \
 	    kubectl apply -f $(JAEGER_TRACE_YAML) >> $(DEBUG_OUTPUT) 2>&1; \
@@ -194,7 +194,10 @@ deploy: minikube_start pre_deploy
 # Can be run by user 
 # Used to benchmark app under environment specified by env vars
 bench: deploy	
-	@if [[ $$TRACE_ENABLE = "true" ]]; then     \
+
+	@if [[ $$RUNTIME_METRIC_ENABLE = "true" ]]; then \
+		./scripts/runtime_metrics_stats.sh;        \
+	elif [[ $$TRACE_ENABLE = "true" ]]; then    \
 		./scripts/trace_stats.sh;                 \
 	elif [[ $$INSTFP_ENABLE = "true" ]]; then   \
 		./scripts/instfp_stats.sh $(TOP);         \
@@ -202,8 +205,6 @@ bench: deploy
 		./scripts/cpu_util_stats.sh;              \
 	elif [[ $$VERTICAL_PROF = "true" ]]; then   \
 		./scripts/vertical_pull_stats.sh;         \
-	elif [[ $$RUNTIME_METRIC_ENABLE = "true" ]]; then \
-		./scripts/runtime_metric_stats.sh;        \
 	elif [[ $$METRIC_ENABLE = "true" ]]; then   \
 		./scripts/metrics_stats.sh;               \
 	else                                        \

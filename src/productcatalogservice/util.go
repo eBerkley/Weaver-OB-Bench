@@ -44,7 +44,15 @@ func HashProductID(id string, replicas int) int {
 
 type ProductRoutingTable map[int]int
 
-func GetRoutingTable(ctx context.Context, ref *weaver.Ref[ProductCatalogService], replicas int) (ProductRoutingTable, error) {
+func GetRoutingTable(_ context.Context, _ *weaver.Ref[ProductCatalogService], replicas int) (ProductRoutingTable, error) {
+	table := make(ProductRoutingTable)
+	for i := 0; i < replicas; i++ {
+		table[i] = i
+	}
+	return table, nil
+}
+
+func GetRoutingTableOLD(ctx context.Context, ref *weaver.Ref[ProductCatalogService], replicas int) (ProductRoutingTable, error) {
 	// To avoid making MAX_INT=9223372036854775807 RPCs in the event of a
 	// routing / deployment error, we lower the max number of values
 	// to try before giving up.

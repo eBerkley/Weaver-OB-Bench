@@ -17,10 +17,11 @@ import (
 
 func init() {
 	codegen.Register(codegen.Registration{
-		Name:   "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService",
-		Iface:  reflect.TypeOf((*ProductCatalogService)(nil)).Elem(),
-		Impl:   reflect.TypeOf(impl{}),
-		Routed: true,
+		Name:     "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService",
+		Iface:    reflect.TypeOf((*ProductCatalogService)(nil)).Elem(),
+		Impl:     reflect.TypeOf(impl{}),
+		Routed:   true,
+		Stateful: true,
 		LocalStubFn: func(impl any, caller string, tracer trace.Tracer) any {
 			return productCatalogService_local_stub{impl: impl.(ProductCatalogService), tracer: tracer, getIndexMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService", Method: "GetIndex", Remote: false, Generated: true}), getProductMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService", Method: "GetProduct", Remote: false, Generated: true}), getProductsMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService", Method: "GetProducts", Remote: false, Generated: true}), listProductsMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService", Method: "ListProducts", Remote: false, Generated: true}), searchProductsMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService", Method: "SearchProducts", Remote: false, Generated: true})}
 		},
@@ -47,11 +48,11 @@ var _ weaver.InstanceOf[ProductCatalogService] = (*impl)(nil)
 var _ weaver.RoutedBy[ProductCatalogRouter] = (*impl)(nil)
 
 // Component "impl", router "ProductCatalogRouter" checks.
-var _ func(_ context.Context, shard int) int = (&ProductCatalogRouter{}).ListProducts             // routed
-var _ func(_ context.Context, _ string, shard int) int = (&ProductCatalogRouter{}).GetProduct     // routed
-var _ func(_ context.Context, _ []string, shard int) int = (&ProductCatalogRouter{}).GetProducts  // routed
-var _ func(_ context.Context, _ string, shard int) int = (&ProductCatalogRouter{}).SearchProducts // routed
-var _ func(_ context.Context, shard int) int = (&ProductCatalogRouter{}).GetIndex                 // routed
+var _ func(_ context.Context, shard int) uint64 = (&ProductCatalogRouter{}).ListProducts             // routed
+var _ func(_ context.Context, _ string, shard int) uint64 = (&ProductCatalogRouter{}).GetProduct     // routed
+var _ func(_ context.Context, _ []string, shard int) uint64 = (&ProductCatalogRouter{}).GetProducts  // routed
+var _ func(_ context.Context, _ string, shard int) uint64 = (&ProductCatalogRouter{}).SearchProducts // routed
+var _ func(_ context.Context, shard int) uint64 = (&ProductCatalogRouter{}).GetIndex                 // routed
 
 // Local stub implementations.
 
@@ -222,7 +223,7 @@ func (s productCatalogService_client_stub) GetIndex(ctx context.Context, a0 int)
 
 	// Set the shardKey.
 	var r ProductCatalogRouter
-	shardKey := _hashProductCatalogService(r.GetIndex(ctx, a0))
+	shardKey := r.GetIndex(ctx, a0)
 
 	// Call the remote method.
 	requestBytes = len(enc.Data())
@@ -283,7 +284,7 @@ func (s productCatalogService_client_stub) GetProduct(ctx context.Context, a0 st
 
 	// Set the shardKey.
 	var r ProductCatalogRouter
-	shardKey := _hashProductCatalogService(r.GetProduct(ctx, a0, a1))
+	shardKey := r.GetProduct(ctx, a0, a1)
 
 	// Call the remote method.
 	requestBytes = len(enc.Data())
@@ -338,7 +339,7 @@ func (s productCatalogService_client_stub) GetProducts(ctx context.Context, a0 [
 
 	// Set the shardKey.
 	var r ProductCatalogRouter
-	shardKey := _hashProductCatalogService(r.GetProducts(ctx, a0, a1))
+	shardKey := r.GetProducts(ctx, a0, a1)
 
 	// Call the remote method.
 	requestBytes = len(enc.Data())
@@ -397,7 +398,7 @@ func (s productCatalogService_client_stub) ListProducts(ctx context.Context, a0 
 
 	// Set the shardKey.
 	var r ProductCatalogRouter
-	shardKey := _hashProductCatalogService(r.ListProducts(ctx, a0))
+	shardKey := r.ListProducts(ctx, a0)
 
 	// Call the remote method.
 	requestBytes = len(enc.Data())
@@ -458,7 +459,7 @@ func (s productCatalogService_client_stub) SearchProducts(ctx context.Context, a
 
 	// Set the shardKey.
 	var r ProductCatalogRouter
-	shardKey := _hashProductCatalogService(r.SearchProducts(ctx, a0, a1))
+	shardKey := r.SearchProducts(ctx, a0, a1)
 
 	// Call the remote method.
 	requestBytes = len(enc.Data())
@@ -515,7 +516,7 @@ func (s productCatalogService_routed_local_stub) GetIndex(ctx context.Context, a
 
 	// Set the shardKey.
 	var r ProductCatalogRouter
-	shardKey := _hashProductCatalogService(r.GetIndex(ctx, a0))
+	shardKey := r.GetIndex(ctx, a0)
 	if s.isLocal(shardKey) {
 		r0, err = s.impl.GetIndex(ctx, a0)
 		return
@@ -585,7 +586,7 @@ func (s productCatalogService_routed_local_stub) GetProduct(ctx context.Context,
 
 	// Set the shardKey.
 	var r ProductCatalogRouter
-	shardKey := _hashProductCatalogService(r.GetProduct(ctx, a0, a1))
+	shardKey := r.GetProduct(ctx, a0, a1)
 	if s.isLocal(shardKey) {
 		r0, err = s.impl.GetProduct(ctx, a0, a1)
 		return
@@ -657,7 +658,7 @@ func (s productCatalogService_routed_local_stub) GetProducts(ctx context.Context
 
 	// Set the shardKey.
 	var r ProductCatalogRouter
-	shardKey := _hashProductCatalogService(r.GetProducts(ctx, a0, a1))
+	shardKey := r.GetProducts(ctx, a0, a1)
 	if s.isLocal(shardKey) {
 		r0, err = s.impl.GetProducts(ctx, a0, a1)
 		return
@@ -723,7 +724,7 @@ func (s productCatalogService_routed_local_stub) ListProducts(ctx context.Contex
 
 	// Set the shardKey.
 	var r ProductCatalogRouter
-	shardKey := _hashProductCatalogService(r.ListProducts(ctx, a0))
+	shardKey := r.ListProducts(ctx, a0)
 	if s.isLocal(shardKey) {
 		r0, err = s.impl.ListProducts(ctx, a0)
 		return
@@ -793,7 +794,7 @@ func (s productCatalogService_routed_local_stub) SearchProducts(ctx context.Cont
 
 	// Set the shardKey.
 	var r ProductCatalogRouter
-	shardKey := _hashProductCatalogService(r.SearchProducts(ctx, a0, a1))
+	shardKey := r.SearchProducts(ctx, a0, a1)
 	if s.isLocal(shardKey) {
 		r0, err = s.impl.SearchProducts(ctx, a0, a1)
 		return
@@ -908,7 +909,7 @@ func (s productCatalogService_server_stub) getIndex(ctx context.Context, args []
 	var a0 int
 	a0 = dec.Int()
 	var r ProductCatalogRouter
-	s.addLoad(_hashProductCatalogService(r.GetIndex(ctx, a0)), 1.0)
+	s.addLoad(r.GetIndex(ctx, a0), 1.0)
 
 	// TODO(rgrandl): The deferred function above will recover from panics in the
 	// user code: fix this.
@@ -937,7 +938,7 @@ func (s productCatalogService_server_stub) getProduct(ctx context.Context, args 
 	var a1 int
 	a1 = dec.Int()
 	var r ProductCatalogRouter
-	s.addLoad(_hashProductCatalogService(r.GetProduct(ctx, a0, a1)), 1.0)
+	s.addLoad(r.GetProduct(ctx, a0, a1), 1.0)
 
 	// TODO(rgrandl): The deferred function above will recover from panics in the
 	// user code: fix this.
@@ -966,7 +967,7 @@ func (s productCatalogService_server_stub) getProducts(ctx context.Context, args
 	var a1 int
 	a1 = dec.Int()
 	var r ProductCatalogRouter
-	s.addLoad(_hashProductCatalogService(r.GetProducts(ctx, a0, a1)), 1.0)
+	s.addLoad(r.GetProducts(ctx, a0, a1), 1.0)
 
 	// TODO(rgrandl): The deferred function above will recover from panics in the
 	// user code: fix this.
@@ -993,7 +994,7 @@ func (s productCatalogService_server_stub) listProducts(ctx context.Context, arg
 	var a0 int
 	a0 = dec.Int()
 	var r ProductCatalogRouter
-	s.addLoad(_hashProductCatalogService(r.ListProducts(ctx, a0)), 1.0)
+	s.addLoad(r.ListProducts(ctx, a0), 1.0)
 
 	// TODO(rgrandl): The deferred function above will recover from panics in the
 	// user code: fix this.
@@ -1022,7 +1023,7 @@ func (s productCatalogService_server_stub) searchProducts(ctx context.Context, a
 	var a1 int
 	a1 = dec.Int()
 	var r ProductCatalogRouter
-	s.addLoad(_hashProductCatalogService(r.SearchProducts(ctx, a0, a1)), 1.0)
+	s.addLoad(r.SearchProducts(ctx, a0, a1), 1.0)
 
 	// TODO(rgrandl): The deferred function above will recover from panics in the
 	// user code: fix this.
@@ -1136,16 +1137,16 @@ func serviceweaver_dec_slice_string_4af10117(dec *codegen.Decoder) []string {
 // Router methods.
 
 // _hashProductCatalogService returns a 64 bit hash of the provided value.
-func _hashProductCatalogService(r int) uint64 {
+func _hashProductCatalogService(r uint64) uint64 {
 	var h codegen.Hasher
-	h.WriteInt(int(r))
+	h.WriteUint64(uint64(r))
 	return h.Sum64()
 }
 
 // _orderedCodeProductCatalogService returns an order-preserving serialization of the provided value.
-func _orderedCodeProductCatalogService(r int) codegen.OrderedCode {
+func _orderedCodeProductCatalogService(r uint64) codegen.OrderedCode {
 	var enc codegen.OrderedEncoder
-	enc.WriteInt(int(r))
+	enc.WriteUint64(uint64(r))
 	return enc.Encode()
 }
 

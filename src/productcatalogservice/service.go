@@ -67,19 +67,25 @@ type ProductCatalogService interface {
 
 type ProductCatalogRouter struct{}
 
-func (r *ProductCatalogRouter) ListProducts(_ context.Context, shard int) int         { return shard }
-func (r *ProductCatalogRouter) GetProduct(_ context.Context, _ string, shard int) int { return shard }
-func (r *ProductCatalogRouter) GetProducts(_ context.Context, _ []string, shard int) int {
-	return shard
+func (r *ProductCatalogRouter) ListProducts(_ context.Context, shard int) weaver.StateKey {
+	return weaver.StateKey(shard)
 }
-func (r *ProductCatalogRouter) SearchProducts(_ context.Context, _ string, shard int) int {
-	return shard
+func (r *ProductCatalogRouter) GetProduct(_ context.Context, _ string, shard int) weaver.StateKey {
+	return weaver.StateKey(shard)
 }
-func (r *ProductCatalogRouter) GetIndex(_ context.Context, shard int) int { return shard }
+func (r *ProductCatalogRouter) GetProducts(_ context.Context, _ []string, shard int) weaver.StateKey {
+	return weaver.StateKey(shard)
+}
+func (r *ProductCatalogRouter) SearchProducts(_ context.Context, _ string, shard int) weaver.StateKey {
+	return weaver.StateKey(shard)
+}
+func (r *ProductCatalogRouter) GetIndex(_ context.Context, shard int) weaver.StateKey {
+	return weaver.StateKey(shard)
+}
 
 type impl struct {
 	weaver.Implements[ProductCatalogService]
-	weaver.WithRouter[ProductCatalogRouter]
+	weaver.WithStatefulRouter[ProductCatalogRouter]
 
 	// Doesn't change.
 	myIndex int

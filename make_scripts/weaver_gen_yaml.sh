@@ -7,7 +7,7 @@
 # ***Note***: if load_gen_yaml.sh is ran *before* this script is ran,
 # the deployment ***WILL NOT*** work.
 
-
+echo weaver_gen_yaml.sh: >>$DEBUG_OUTPUT
 # Reset config values
 cp $KUBE_BASE_YAML $KUBE_GEN_YAML
 

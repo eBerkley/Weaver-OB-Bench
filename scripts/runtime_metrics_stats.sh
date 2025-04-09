@@ -4,6 +4,7 @@
 # p99/p50 service latency for all components
 # p99/p50 request latency (not from load generator)
 # 
+echo runtime_metrics_stats.sh
 
 cd $(dirname "$0") || exit
 sleep 15
@@ -58,7 +59,7 @@ METRICS_DIR="../metrics_collection/$SCHEME"
 
 for c in main cartcache productcatalogservice adservice cartservice checkoutservice currencyservice emailservice paymentservice recservice shippingservice; do
   
-  echo "timestamp,p50_us,p99_us,MPS,Replicas,Util" > "$METRICS_DIR/$c.csv"
+  echo "timestamp,p50_us,p99_us,MPS,Replicas,Util,Errors Per Sec" > "$METRICS_DIR/$c.csv"
 
 done
 
@@ -142,12 +143,33 @@ fetch_p50() {
   fetch_value "$METRIC_URL/api/v1/query?query=$encoded"
 }
 
+fetch_errors() {
+  local component_name=$1
+    local component_path="${COMPONENT_MAP[$component_name]}"
+  
+    if [[ "$component_name" == "main" ]]; then
+        local raw_query="sum(rate(serviceweaver_http_error_count[30s]))"
+    else
+        local raw_query="sum(rate(serviceweaver_method_error_count{component=\"${component_path}\"}[30s]))"
+    fi
+
+    local encoded_query=$(jq -rn --arg q "$raw_query" '$q|@uri' | sed 's/%28/(/g; s/%29/)/g')
+    local url="$METRIC_URL/api/v1/query?query=$encoded_query"
+    local value=$(curl -s "$url" | jq -r '.data.result[0].value[1]')
+    if [[ "$value" == "null" || -z "$value" ]]; then
+        # echo "0"
+        echo "$value"
+    else
+        echo "$value"
+    fi
+}
+
 echo Seconds,CPU Cores > ../benchmark/stats/cpu.csv
 
 log_debug_info() {  
   local val=$1
 
-  if [ $(( val % $DEBUG_FREQUENCY )) -eq 0 ]; then
+  if [ $(( val % 3 )) -eq 0 ]; then
 
     # echo "=*=*=*=*=*=*=*=*= DEBUG INFO =*=*=*=*=*=*=*=*="
   
@@ -183,13 +205,14 @@ log_debug_info() {
       repls_util=$(fetch_util $c)
       util=$(echo "$repls_util" | tail -n 1)
       repls=$(echo "$repls_util" | head -n 1)
+      eps=$(fetch_errors $c)
 
 
       P99=$(awk "BEGIN {printf \"%.3f\", $P99_VAL}")
       P50=$(awk "BEGIN {printf \"%.3f\", $P50_VAL}")
       MPS=$(awk "BEGIN {printf \"%.3f\", $MPS}")
-
-      echo "$realtime,$P50,$P99,$MPS,$repls,$util" >> "$METRICS_DIR/$c.csv"
+      EPS=$(awk "BEGIN {printf \"%.3f\", $eps}")
+      echo "$realtime,$P50,$P99,$MPS,$repls,$util,$EPS" >> "$METRICS_DIR/$c.csv"
     done
     
     # echo "=*=*=*=*=*=*=*=*= END DEBUG. =*=*=*=*=*=*=*=*="

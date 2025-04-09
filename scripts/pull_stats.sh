@@ -1,7 +1,7 @@
 #!/bin/bash
 cd $(dirname "$0") || exit
 sleep 15
-
+echo pull_stats.sh
 source stats_utils/all_stats.sh
 
 

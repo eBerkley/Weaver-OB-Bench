@@ -88,9 +88,9 @@ func (fe *Server) Init(ctx context.Context) error {
 
 	if fe.catalogReplicas == 0 {
 		fe.catalogReplicas = productcatalogservice.ProductCatalogReplicas
+		fe.UpdateCatalogService(ctx, fe.catalogReplicas)
 	}
 
-	fe.UpdateCatalogService(ctx, fe.catalogReplicas)
 	return nil
 }
 
@@ -141,7 +141,7 @@ func (s *Server) UpdateCatalogService(ctx2 context.Context, replicas int) {
 		return
 	}
 
-	timer := time.NewTimer(time.Duration(20) * time.Second)
+	timer := time.NewTimer(time.Duration(5) * time.Second)
 	go func() {
 		select {
 		case <-timer.C:

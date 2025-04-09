@@ -4,7 +4,7 @@
 # p99/p50 service latency for all components
 # p99/p50 request latency (not from load generator)
 # 
-
+echo metrics_stats.sh
 cd $(dirname "$0") || exit
 sleep 15
 

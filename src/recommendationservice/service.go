@@ -49,7 +49,7 @@ func (s *impl) Init(ctx context.Context) error {
 		s.catalogReplicas = productcatalogservice.ProductCatalogReplicas
 	}
 	s.Logger(ctx).Info("in Init function")
-	s.UpdateCatalogService(ctx, s.catalogReplicas)
+	// s.UpdateCatalogService(ctx, s.catalogReplicas)
 
 	return nil
 }
@@ -169,6 +169,7 @@ func (s *impl) ListRecommendations(ctx context.Context, userID string, userProdu
 			prods, err := s.catalogService.Get().GetProducts(ctx, productShardMap[shard], key)
 
 			if err != nil {
+				s.Logger(ctx).Error("ListRecommendations: GetProducts error", "productIDs", userProductIDs, "err", err, "shard", shard, "key", key)
 				errChan <- err
 			} else {
 				productShards[shard] = prods

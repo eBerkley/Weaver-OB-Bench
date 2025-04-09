@@ -1,7 +1,7 @@
 #!/bin/bash
 cd $(dirname "$0") || exit
 sleep 10
-
+echo vertical_pull_stats.sh
 logfile="../logs.txt"
 
 
