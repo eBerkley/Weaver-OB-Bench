@@ -90,7 +90,7 @@ func (fe *Server) Init(ctx context.Context) error {
 		fe.catalogReplicas = productcatalogservice.ProductCatalogReplicas
 		fe.UpdateCatalogService(ctx, fe.catalogReplicas)
 	}
-
+	fe.Logger(ctx).Debug("Init")
 	return nil
 }
 
@@ -118,14 +118,16 @@ func (s *Server) UpdateCatalogService(ctx2 context.Context, replicas int) {
 	}
 
 	s.cancelFn = cancelFn
-	s.Logger(ctx).Info("running UpdateCatalogService", "replicas", replicas)
+	s.Logger(ctx).Debug("running UpdateCatalogService", "replicas", replicas)
 
 	updateCatalogInfo := func() {
 		// We ***reeeeaaaaalllly*** don't want to hold the lock while forming table...
+		s.Logger(ctx).Debug("UpdateCatalogService: in updateCatalogInfo", "replicas", replicas)
+
 		table, err := productcatalogservice.GetRoutingTable(ctx, &s.catalogService, replicas)
 
 		if err != nil {
-			s.Logger(ctx2).Warn(fmt.Sprintf("getRoutingTable returned error: %v. Hopefully everything is alright.", err))
+			s.Logger(ctx).Warn(fmt.Sprintf("getRoutingTable returned error: %v. Hopefully everything is alright.", err))
 			return
 		}
 
@@ -136,6 +138,7 @@ func (s *Server) UpdateCatalogService(ctx2 context.Context, replicas int) {
 	}
 
 	if !s.catalogInit {
+		s.Logger(ctx).Debug("UpdateCatalogService: s.catalogInit == false, not waiting", "replicas", replicas)
 		updateCatalogInfo()
 		s.catalogInit = true
 		return
@@ -146,9 +149,10 @@ func (s *Server) UpdateCatalogService(ctx2 context.Context, replicas int) {
 		select {
 		case <-timer.C:
 			updateCatalogInfo()
+			s.Logger(context.TODO()).Debug("UpdateCatalogService: updateCatalogInfo returning. ", "replicas'", replicas)
 
 		case <-ctx.Done():
-
+			s.Logger(context.TODO()).Debug("UpdateCatalogService: context cancelled", "replicas", replicas)
 		}
 
 	}()

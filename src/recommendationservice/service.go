@@ -55,21 +55,23 @@ func (s *impl) Init(ctx context.Context) error {
 }
 
 func (s *impl) UpdateCatalogService(ctx2 context.Context, replicas int) {
-
 	ctx, cancelFn := context.WithCancel(ctx2)
 
 	if s.cancelFn != nil {
 		s.cancelFn()
 	}
+
 	s.cancelFn = cancelFn
-	s.Logger(ctx).Info("running UpdateCatalogService", "replicas", replicas)
+	s.Logger(ctx).Debug("running UpdateCatalogService", "replicas", replicas)
 
 	updateCatalogInfo := func() {
 		// We ***reeeeaaaaalllly*** don't want to hold the lock while forming table...
+		s.Logger(ctx).Debug("UpdateCatalogService: in updateCatalogInfo", "replicas", replicas)
+
 		table, err := productcatalogservice.GetRoutingTable(ctx, &s.catalogService, replicas)
 
 		if err != nil {
-			s.Logger(ctx2).Warn(fmt.Sprintf("getRoutingTable returned error: %v. Hopefully everything is alright.", err))
+			s.Logger(ctx).Warn(fmt.Sprintf("getRoutingTable returned error: %v. Hopefully everything is alright.", err))
 			return
 		}
 
@@ -77,25 +79,24 @@ func (s *impl) UpdateCatalogService(ctx2 context.Context, replicas int) {
 		s.catalogReplicas = replicas
 		s.catalogRoutingTable = table
 		s.catalogMu.Unlock()
-		s.Logger(ctx).Info("Updated catalogservice routing table successfully!")
 	}
 
 	if !s.catalogInit {
-		s.Logger(ctx).Info("s.catalogInit == false, running without timer.")
+		s.Logger(ctx).Debug("UpdateCatalogService: s.catalogInit == false, not waiting", "replicas", replicas)
 		updateCatalogInfo()
 		s.catalogInit = true
 		return
 	}
 
-	timer := time.NewTimer(time.Duration(20) * time.Second)
+	timer := time.NewTimer(time.Duration(5) * time.Second)
 	go func() {
 		select {
 		case <-timer.C:
-			s.Logger(ctx).Info("Timer expired, preparing to update!")
 			updateCatalogInfo()
+			s.Logger(context.TODO()).Debug("UpdateCatalogService: updateCatalogInfo returning. ", "replicas'", replicas)
 
 		case <-ctx.Done():
-			s.Logger(ctx).Info("context expired... (idk if we can even read this...)")
+			s.Logger(context.TODO()).Debug("UpdateCatalogService: context cancelled", "replicas", replicas)
 		}
 
 	}()
