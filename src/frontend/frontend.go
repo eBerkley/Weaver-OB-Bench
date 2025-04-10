@@ -77,11 +77,10 @@ type Server struct {
 
 	boutique weaver.Listener
 
-	catalogMu           sync.RWMutex
-	catalogRoutingTable productcatalogservice.ProductRoutingTable
-	catalogReplicas     int
-	catalogInit         bool
-	cancelFn            context.CancelFunc
+	catalogMu       sync.RWMutex
+	catalogReplicas int
+	catalogInit     bool
+	cancelFn        context.CancelFunc
 }
 
 func (fe *Server) Init(ctx context.Context) error {
@@ -124,16 +123,8 @@ func (s *Server) UpdateCatalogService(ctx2 context.Context, replicas int) {
 		// We ***reeeeaaaaalllly*** don't want to hold the lock while forming table...
 		s.Logger(ctx).Debug("UpdateCatalogService: in updateCatalogInfo", "replicas", replicas)
 
-		table, err := productcatalogservice.GetRoutingTable(ctx, &s.catalogService, replicas)
-
-		if err != nil {
-			s.Logger(ctx).Warn(fmt.Sprintf("getRoutingTable returned error: %v. Hopefully everything is alright.", err))
-			return
-		}
-
 		s.catalogMu.Lock()
 		s.catalogReplicas = replicas
-		s.catalogRoutingTable = table
 		s.catalogMu.Unlock()
 	}
 

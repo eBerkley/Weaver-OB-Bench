@@ -25,7 +25,7 @@ func init() {
 			return recService_client_stub{stub: stub, listRecommendationsMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/recommendationservice/RecService", Method: "ListRecommendations", Remote: true, Generated: true})}
 		},
 		ServerStubFn: func(impl any, addLoad func(uint64, float64)) codegen.Server {
-			return recService_server_stub{impl: impl.(RecService), addLoad: addLoad}
+			return recService_server_stub{impl: impl.(RecService), addLoad: addLoad, listRecommendationsMetrics: codegen.InternalConcurrentMetricsFor(codegen.InternalMethodLabels{Component: "github.com/eBerkley/Weaver-OB-Bench/recommendationservice/RecService", Method: "ListRecommendations"})}
 		},
 		ReflectStubFn: func(caller func(string, context.Context, []any, []any) error) any {
 			return recService_reflect_stub{caller: caller}
@@ -181,8 +181,9 @@ please file an issue at https://github.com/eberkley/weaver/issues.
 // Server stub implementations.
 
 type recService_server_stub struct {
-	impl    RecService
-	addLoad func(key uint64, load float64)
+	impl                       RecService
+	addLoad                    func(key uint64, load float64)
+	listRecommendationsMetrics *codegen.ConcurrentMethodMetrics
 }
 
 // Check that recService_server_stub implements the codegen.Server interface.
@@ -205,6 +206,8 @@ func (s recService_server_stub) listRecommendations(ctx context.Context, args []
 			err = codegen.CatchPanics(recover())
 		}
 	}()
+	s.listRecommendationsMetrics.Begin()
+	defer s.listRecommendationsMetrics.End()
 
 	// Decode arguments.
 	dec := codegen.NewDecoder(args)

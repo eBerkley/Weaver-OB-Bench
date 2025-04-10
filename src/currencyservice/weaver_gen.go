@@ -26,7 +26,7 @@ func init() {
 			return currencyService_client_stub{stub: stub, convertMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/currencyservice/CurrencyService", Method: "Convert", Remote: true, Generated: true}), getSupportedCurrenciesMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/currencyservice/CurrencyService", Method: "GetSupportedCurrencies", Remote: true, Generated: true})}
 		},
 		ServerStubFn: func(impl any, addLoad func(uint64, float64)) codegen.Server {
-			return currencyService_server_stub{impl: impl.(CurrencyService), addLoad: addLoad}
+			return currencyService_server_stub{impl: impl.(CurrencyService), addLoad: addLoad, convertMetrics: codegen.InternalConcurrentMetricsFor(codegen.InternalMethodLabels{Component: "github.com/eBerkley/Weaver-OB-Bench/currencyservice/CurrencyService", Method: "Convert"}), getSupportedCurrenciesMetrics: codegen.InternalConcurrentMetricsFor(codegen.InternalMethodLabels{Component: "github.com/eBerkley/Weaver-OB-Bench/currencyservice/CurrencyService", Method: "GetSupportedCurrencies"})}
 		},
 		ReflectStubFn: func(caller func(string, context.Context, []any, []any) error) any {
 			return currencyService_reflect_stub{caller: caller}
@@ -258,8 +258,10 @@ please file an issue at https://github.com/eberkley/weaver/issues.
 // Server stub implementations.
 
 type currencyService_server_stub struct {
-	impl    CurrencyService
-	addLoad func(key uint64, load float64)
+	impl                          CurrencyService
+	addLoad                       func(key uint64, load float64)
+	convertMetrics                *codegen.ConcurrentMethodMetrics
+	getSupportedCurrenciesMetrics *codegen.ConcurrentMethodMetrics
 }
 
 // Check that currencyService_server_stub implements the codegen.Server interface.
@@ -284,6 +286,8 @@ func (s currencyService_server_stub) convert(ctx context.Context, args []byte) (
 			err = codegen.CatchPanics(recover())
 		}
 	}()
+	s.convertMetrics.Begin()
+	defer s.convertMetrics.End()
 
 	// Decode arguments.
 	dec := codegen.NewDecoder(args)
@@ -311,6 +315,8 @@ func (s currencyService_server_stub) getSupportedCurrencies(ctx context.Context,
 			err = codegen.CatchPanics(recover())
 		}
 	}()
+	s.getSupportedCurrenciesMetrics.Begin()
+	defer s.getSupportedCurrenciesMetrics.End()
 
 	// TODO(rgrandl): The deferred function above will recover from panics in the
 	// user code: fix this.

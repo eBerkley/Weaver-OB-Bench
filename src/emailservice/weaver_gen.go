@@ -26,7 +26,7 @@ func init() {
 			return emailService_client_stub{stub: stub, sendOrderConfirmationMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/emailservice/EmailService", Method: "SendOrderConfirmation", Remote: true, Generated: true})}
 		},
 		ServerStubFn: func(impl any, addLoad func(uint64, float64)) codegen.Server {
-			return emailService_server_stub{impl: impl.(EmailService), addLoad: addLoad}
+			return emailService_server_stub{impl: impl.(EmailService), addLoad: addLoad, sendOrderConfirmationMetrics: codegen.InternalConcurrentMetricsFor(codegen.InternalMethodLabels{Component: "github.com/eBerkley/Weaver-OB-Bench/emailservice/EmailService", Method: "SendOrderConfirmation"})}
 		},
 		ReflectStubFn: func(caller func(string, context.Context, []any, []any) error) any {
 			return emailService_reflect_stub{caller: caller}
@@ -181,8 +181,9 @@ please file an issue at https://github.com/eberkley/weaver/issues.
 // Server stub implementations.
 
 type emailService_server_stub struct {
-	impl    EmailService
-	addLoad func(key uint64, load float64)
+	impl                         EmailService
+	addLoad                      func(key uint64, load float64)
+	sendOrderConfirmationMetrics *codegen.ConcurrentMethodMetrics
 }
 
 // Check that emailService_server_stub implements the codegen.Server interface.
@@ -205,6 +206,8 @@ func (s emailService_server_stub) sendOrderConfirmation(ctx context.Context, arg
 			err = codegen.CatchPanics(recover())
 		}
 	}()
+	s.sendOrderConfirmationMetrics.Begin()
+	defer s.sendOrderConfirmationMetrics.End()
 
 	// Decode arguments.
 	dec := codegen.NewDecoder(args)

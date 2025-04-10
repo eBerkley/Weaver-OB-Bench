@@ -78,9 +78,12 @@ var (
 func (fe *Server) homeHandler(w http.ResponseWriter, r *http.Request) {
 	initTime := time.Now()
 	var duration time.Duration
+	label := imetrics.InternalMethodLabels{Component: "github.com/eBerkley/weaver/Main", Method: "homeHandler"}
+	concurrency := imetrics.InternalConcurrentMetricsFor(label)
+	concurrency.Begin()
 	defer func() {
-
-		imetrics.InternalMetricsFor(imetrics.InternalMethodLabels{Component: "github.com/eBerkley/weaver/Main", Method: "homeHandler"}).Put(float64((time.Since(initTime) - duration).Microseconds()))
+		concurrency.End()
+		imetrics.InternalMetricsFor(label).Put(float64((time.Since(initTime) - duration).Microseconds()))
 	}()
 
 	logger := r.Context().Value(ctxKeyLogger{}).(*slog.Logger)
@@ -98,18 +101,12 @@ func (fe *Server) homeHandler(w http.ResponseWriter, r *http.Request) {
 	// We gotta do this first sadly, could be bad if routing table updates mid loop
 	fe.catalogMu.RLock()
 	repls := fe.catalogReplicas
-	table := make([]int, repls)
-	for i := 0; i < repls; i++ {
-		table[i] = fe.catalogRoutingTable[i]
-	}
 	fe.catalogMu.RUnlock()
 
 	for shard := 0; shard < repls; shard++ {
-		// Routing key that will route to the correct shard.
-		key := table[shard]
 
 		listTime := time.Now()
-		prods, err := fe.catalogService.Get().ListProducts(r.Context(), key)
+		prods, err := fe.catalogService.Get().ListProducts(r.Context(), shard)
 		duration += time.Since(listTime)
 
 		if err != nil {
@@ -170,9 +167,12 @@ func (fe *Server) homeHandler(w http.ResponseWriter, r *http.Request) {
 func (fe *Server) productHandler(w http.ResponseWriter, r *http.Request) {
 	initTime := time.Now()
 	var duration time.Duration
+	label := imetrics.InternalMethodLabels{Component: "github.com/eBerkley/weaver/Main", Method: "productHandler"}
+	concurrency := imetrics.InternalConcurrentMetricsFor(label)
+	concurrency.Begin()
 	defer func() {
-
-		imetrics.InternalMetricsFor(imetrics.InternalMethodLabels{Component: "github.com/eBerkley/weaver/Main", Method: "productHandler"}).Put(float64((time.Since(initTime) - duration).Microseconds()))
+		concurrency.End()
+		imetrics.InternalMetricsFor(label).Put(float64((time.Since(initTime) - duration).Microseconds()))
 	}()
 
 	_, id := filepath.Split(r.URL.Path)
@@ -187,11 +187,10 @@ func (fe *Server) productHandler(w http.ResponseWriter, r *http.Request) {
 
 	fe.catalogMu.RLock()
 	shard := productcatalogservice.HashProductID(id, fe.catalogReplicas)
-	key := fe.catalogRoutingTable[shard]
 	fe.catalogMu.RUnlock()
 
 	getProductTime := time.Now()
-	p, err := fe.catalogService.Get().GetProduct(r.Context(), id, key)
+	p, err := fe.catalogService.Get().GetProduct(r.Context(), id, shard)
 	duration += time.Since(getProductTime)
 
 	if err != nil {
@@ -274,10 +273,13 @@ func (fe *Server) cartHandler(w http.ResponseWriter, r *http.Request) {
 func (fe *Server) addToCartHandler(w http.ResponseWriter, r *http.Request) {
 	initTime := time.Now()
 	var duration time.Duration
-
+	label := imetrics.InternalMethodLabels{Component: "github.com/eBerkley/weaver/Main", Method: "addToCartHandler"}
+	concurrency := imetrics.InternalConcurrentMetricsFor(label)
+	concurrency.Begin()
 	defer func() {
+		concurrency.End()
 
-		imetrics.InternalMetricsFor(imetrics.InternalMethodLabels{Component: "github.com/eBerkley/weaver/Main", Method: "addToCartHandler"}).Put(float64((time.Since(initTime) - duration).Microseconds()))
+		imetrics.InternalMetricsFor(label).Put(float64((time.Since(initTime) - duration).Microseconds()))
 	}()
 	logger := r.Context().Value(ctxKeyLogger{}).(*slog.Logger)
 
@@ -291,11 +293,10 @@ func (fe *Server) addToCartHandler(w http.ResponseWriter, r *http.Request) {
 
 	fe.catalogMu.RLock()
 	shard := productcatalogservice.HashProductID(productID, fe.catalogReplicas)
-	key := fe.catalogRoutingTable[shard]
 	fe.catalogMu.RUnlock()
 
 	getProductTime := time.Now()
-	p, err := fe.catalogService.Get().GetProduct(r.Context(), productID, key)
+	p, err := fe.catalogService.Get().GetProduct(r.Context(), productID, shard)
 	duration += time.Since(getProductTime)
 
 	if err != nil {
@@ -320,9 +321,12 @@ func (fe *Server) addToCartHandler(w http.ResponseWriter, r *http.Request) {
 func (fe *Server) emptyCartHandler(w http.ResponseWriter, r *http.Request) {
 	initTime := time.Now()
 	var duration time.Duration
+	label := imetrics.InternalMethodLabels{Component: "github.com/eBerkley/weaver/Main", Method: "emptyCartHandler"}
+	concurrency := imetrics.InternalConcurrentMetricsFor(label)
+	concurrency.Begin()
 	defer func() {
-
-		imetrics.InternalMetricsFor(imetrics.InternalMethodLabels{Component: "github.com/eBerkley/weaver/Main", Method: "emptyCartHandler"}).Put(float64((time.Since(initTime) - duration).Microseconds()))
+		concurrency.End()
+		imetrics.InternalMetricsFor(label).Put(float64((time.Since(initTime) - duration).Microseconds()))
 	}()
 
 	logger := r.Context().Value(ctxKeyLogger{}).(*slog.Logger)
@@ -343,9 +347,12 @@ func (fe *Server) emptyCartHandler(w http.ResponseWriter, r *http.Request) {
 func (fe *Server) viewCartHandler(w http.ResponseWriter, r *http.Request) {
 	initTime := time.Now()
 	var duration time.Duration
+	label := imetrics.InternalMethodLabels{Component: "github.com/eBerkley/weaver/Main", Method: "viewCartHandler"}
+	concurrency := imetrics.InternalConcurrentMetricsFor(label)
+	concurrency.Begin()
 	defer func() {
-
-		imetrics.InternalMetricsFor(imetrics.InternalMethodLabels{Component: "github.com/eBerkley/weaver/Main", Method: "viewCartHandler"}).Put(float64((time.Since(initTime) - duration).Microseconds()))
+		concurrency.End()
+		imetrics.InternalMetricsFor(label).Put(float64((time.Since(initTime) - duration).Microseconds()))
 	}()
 
 	logger := r.Context().Value(ctxKeyLogger{}).(*slog.Logger)
@@ -389,15 +396,15 @@ func (fe *Server) viewCartHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	items := make([]cartItemView, len(cart))
 	totalPrice := money.T{CurrencyCode: currentCurrency(r)}
+	fe.catalogMu.RLock()
+	repls := fe.catalogReplicas
+	fe.catalogMu.RUnlock()
 	for i, item := range cart {
 
-		fe.catalogMu.RLock()
-		shard := productcatalogservice.HashProductID(item.ProductID, fe.catalogReplicas)
-		key := fe.catalogRoutingTable[shard]
-		fe.catalogMu.RUnlock()
+		shard := productcatalogservice.HashProductID(item.ProductID, repls)
 
 		getProductTime := time.Now()
-		p, err := fe.catalogService.Get().GetProduct(r.Context(), item.ProductID, key)
+		p, err := fe.catalogService.Get().GetProduct(r.Context(), item.ProductID, shard)
 		duration += time.Since(getProductTime)
 
 		if err != nil {
@@ -446,9 +453,12 @@ func (fe *Server) viewCartHandler(w http.ResponseWriter, r *http.Request) {
 func (fe *Server) placeOrderHandler(w http.ResponseWriter, r *http.Request) {
 	initTime := time.Now()
 	var duration time.Duration
+	label := imetrics.InternalMethodLabels{Component: "github.com/eBerkley/weaver/Main", Method: "placeOrderHandler"}
+	concurrency := imetrics.InternalConcurrentMetricsFor(label)
+	concurrency.Begin()
 	defer func() {
-
-		imetrics.InternalMetricsFor(imetrics.InternalMethodLabels{Component: "github.com/eBerkley/weaver/Main", Method: "placeOrderHandler"}).Put(float64((time.Since(initTime) - duration).Microseconds()))
+		concurrency.End()
+		imetrics.InternalMetricsFor(label).Put(float64((time.Since(initTime) - duration).Microseconds()))
 	}()
 	logger := r.Context().Value(ctxKeyLogger{}).(*slog.Logger)
 	logger.Debug("placing order")
@@ -550,9 +560,12 @@ func (fe *Server) logoutHandler(w http.ResponseWriter, r *http.Request) {
 func (fe *Server) setCurrencyHandler(w http.ResponseWriter, r *http.Request) {
 	initTime := time.Now()
 	var duration time.Duration
+	label := imetrics.InternalMethodLabels{Component: "github.com/eBerkley/weaver/Main", Method: "setCurrencyHandler"}
+	concurrency := imetrics.InternalConcurrentMetricsFor(label)
+	concurrency.Begin()
 	defer func() {
-
-		imetrics.InternalMetricsFor(imetrics.InternalMethodLabels{Component: "github.com/eBerkley/weaver/Main", Method: "setCurrencyHandler"}).Put(float64((time.Since(initTime) - duration).Microseconds()))
+		concurrency.End()
+		imetrics.InternalMetricsFor(label).Put(float64((time.Since(initTime) - duration).Microseconds()))
 	}()
 
 	logger := r.Context().Value(ctxKeyLogger{}).(*slog.Logger)
@@ -651,13 +664,10 @@ func (fe *Server) getRecommendations(ctx context.Context, userID string, product
 	out := make([]productcatalogservice.Product, 0, len(recommendationIDs))
 
 	fe.catalogMu.RLock()
-	productShardMap := make([][]string, fe.catalogReplicas)
 	repls := fe.catalogReplicas
-	table := make([]int, repls)
-	for i := 0; i < repls; i++ {
-		table[i] = fe.catalogRoutingTable[i]
-	}
 	fe.catalogMu.RUnlock()
+
+	productShardMap := make([][]string, repls)
 
 	for _, id := range recommendationIDs {
 		shard := productcatalogservice.HashProductID(id, repls)
@@ -671,11 +681,9 @@ func (fe *Server) getRecommendations(ctx context.Context, userID string, product
 			continue
 		}
 
-		key := table[shard]
-
 		getProductsTime := time.Now()
 		prods, err := fe.catalogService.Get().
-			GetProducts(ctx, productShardMap[shard], key)
+			GetProducts(ctx, productShardMap[shard], shard)
 		duration += time.Since(getProductsTime)
 
 		if err != nil {

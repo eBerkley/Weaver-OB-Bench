@@ -28,7 +28,7 @@ func init() {
 			return shippingService_client_stub{stub: stub, getQuoteMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/shippingservice/ShippingService", Method: "GetQuote", Remote: true, Generated: true}), shipOrderMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/shippingservice/ShippingService", Method: "ShipOrder", Remote: true, Generated: true})}
 		},
 		ServerStubFn: func(impl any, addLoad func(uint64, float64)) codegen.Server {
-			return shippingService_server_stub{impl: impl.(ShippingService), addLoad: addLoad}
+			return shippingService_server_stub{impl: impl.(ShippingService), addLoad: addLoad, getQuoteMetrics: codegen.InternalConcurrentMetricsFor(codegen.InternalMethodLabels{Component: "github.com/eBerkley/Weaver-OB-Bench/shippingservice/ShippingService", Method: "GetQuote"}), shipOrderMetrics: codegen.InternalConcurrentMetricsFor(codegen.InternalMethodLabels{Component: "github.com/eBerkley/Weaver-OB-Bench/shippingservice/ShippingService", Method: "ShipOrder"})}
 		},
 		ReflectStubFn: func(caller func(string, context.Context, []any, []any) error) any {
 			return shippingService_reflect_stub{caller: caller}
@@ -265,8 +265,10 @@ please file an issue at https://github.com/eberkley/weaver/issues.
 // Server stub implementations.
 
 type shippingService_server_stub struct {
-	impl    ShippingService
-	addLoad func(key uint64, load float64)
+	impl             ShippingService
+	addLoad          func(key uint64, load float64)
+	getQuoteMetrics  *codegen.ConcurrentMethodMetrics
+	shipOrderMetrics *codegen.ConcurrentMethodMetrics
 }
 
 // Check that shippingService_server_stub implements the codegen.Server interface.
@@ -291,6 +293,8 @@ func (s shippingService_server_stub) getQuote(ctx context.Context, args []byte) 
 			err = codegen.CatchPanics(recover())
 		}
 	}()
+	s.getQuoteMetrics.Begin()
+	defer s.getQuoteMetrics.End()
 
 	// Decode arguments.
 	dec := codegen.NewDecoder(args)
@@ -318,6 +322,8 @@ func (s shippingService_server_stub) shipOrder(ctx context.Context, args []byte)
 			err = codegen.CatchPanics(recover())
 		}
 	}()
+	s.shipOrderMetrics.Begin()
+	defer s.shipOrderMetrics.End()
 
 	// Decode arguments.
 	dec := codegen.NewDecoder(args)

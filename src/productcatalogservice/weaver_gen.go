@@ -29,7 +29,7 @@ func init() {
 			return productCatalogService_client_stub{stub: stub, getIndexMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService", Method: "GetIndex", Remote: true, Generated: true}), getProductMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService", Method: "GetProduct", Remote: true, Generated: true}), getProductsMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService", Method: "GetProducts", Remote: true, Generated: true}), listProductsMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService", Method: "ListProducts", Remote: true, Generated: true}), searchProductsMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService", Method: "SearchProducts", Remote: true, Generated: true})}
 		},
 		ServerStubFn: func(impl any, addLoad func(uint64, float64)) codegen.Server {
-			return productCatalogService_server_stub{impl: impl.(ProductCatalogService), addLoad: addLoad}
+			return productCatalogService_server_stub{impl: impl.(ProductCatalogService), addLoad: addLoad, getIndexMetrics: codegen.InternalConcurrentMetricsFor(codegen.InternalMethodLabels{Component: "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService", Method: "GetIndex"}), getProductMetrics: codegen.InternalConcurrentMetricsFor(codegen.InternalMethodLabels{Component: "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService", Method: "GetProduct"}), getProductsMetrics: codegen.InternalConcurrentMetricsFor(codegen.InternalMethodLabels{Component: "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService", Method: "GetProducts"}), listProductsMetrics: codegen.InternalConcurrentMetricsFor(codegen.InternalMethodLabels{Component: "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService", Method: "ListProducts"}), searchProductsMetrics: codegen.InternalConcurrentMetricsFor(codegen.InternalMethodLabels{Component: "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService", Method: "SearchProducts"})}
 		},
 		ReflectStubFn: func(caller func(string, context.Context, []any, []any) error) any {
 			return productCatalogService_reflect_stub{caller: caller}
@@ -871,8 +871,13 @@ please file an issue at https://github.com/eberkley/weaver/issues.
 // Server stub implementations.
 
 type productCatalogService_server_stub struct {
-	impl    ProductCatalogService
-	addLoad func(key uint64, load float64)
+	impl                  ProductCatalogService
+	addLoad               func(key uint64, load float64)
+	getIndexMetrics       *codegen.ConcurrentMethodMetrics
+	getProductMetrics     *codegen.ConcurrentMethodMetrics
+	getProductsMetrics    *codegen.ConcurrentMethodMetrics
+	listProductsMetrics   *codegen.ConcurrentMethodMetrics
+	searchProductsMetrics *codegen.ConcurrentMethodMetrics
 }
 
 // Check that productCatalogService_server_stub implements the codegen.Server interface.
@@ -903,6 +908,8 @@ func (s productCatalogService_server_stub) getIndex(ctx context.Context, args []
 			err = codegen.CatchPanics(recover())
 		}
 	}()
+	s.getIndexMetrics.Begin()
+	defer s.getIndexMetrics.End()
 
 	// Decode arguments.
 	dec := codegen.NewDecoder(args)
@@ -930,6 +937,8 @@ func (s productCatalogService_server_stub) getProduct(ctx context.Context, args 
 			err = codegen.CatchPanics(recover())
 		}
 	}()
+	s.getProductMetrics.Begin()
+	defer s.getProductMetrics.End()
 
 	// Decode arguments.
 	dec := codegen.NewDecoder(args)
@@ -959,6 +968,8 @@ func (s productCatalogService_server_stub) getProducts(ctx context.Context, args
 			err = codegen.CatchPanics(recover())
 		}
 	}()
+	s.getProductsMetrics.Begin()
+	defer s.getProductsMetrics.End()
 
 	// Decode arguments.
 	dec := codegen.NewDecoder(args)
@@ -988,6 +999,8 @@ func (s productCatalogService_server_stub) listProducts(ctx context.Context, arg
 			err = codegen.CatchPanics(recover())
 		}
 	}()
+	s.listProductsMetrics.Begin()
+	defer s.listProductsMetrics.End()
 
 	// Decode arguments.
 	dec := codegen.NewDecoder(args)
@@ -1015,6 +1028,8 @@ func (s productCatalogService_server_stub) searchProducts(ctx context.Context, a
 			err = codegen.CatchPanics(recover())
 		}
 	}()
+	s.searchProductsMetrics.Begin()
+	defer s.searchProductsMetrics.End()
 
 	// Decode arguments.
 	dec := codegen.NewDecoder(args)

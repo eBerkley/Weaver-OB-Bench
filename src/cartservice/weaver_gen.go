@@ -26,7 +26,7 @@ func init() {
 			return cartService_client_stub{stub: stub, addItemMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/cartservice/CartService", Method: "AddItem", Remote: true, Generated: true}), emptyCartMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/cartservice/CartService", Method: "EmptyCart", Remote: true, Generated: true}), getCartMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/cartservice/CartService", Method: "GetCart", Remote: true, Generated: true})}
 		},
 		ServerStubFn: func(impl any, addLoad func(uint64, float64)) codegen.Server {
-			return cartService_server_stub{impl: impl.(CartService), addLoad: addLoad}
+			return cartService_server_stub{impl: impl.(CartService), addLoad: addLoad, addItemMetrics: codegen.InternalConcurrentMetricsFor(codegen.InternalMethodLabels{Component: "github.com/eBerkley/Weaver-OB-Bench/cartservice/CartService", Method: "AddItem"}), emptyCartMetrics: codegen.InternalConcurrentMetricsFor(codegen.InternalMethodLabels{Component: "github.com/eBerkley/Weaver-OB-Bench/cartservice/CartService", Method: "EmptyCart"}), getCartMetrics: codegen.InternalConcurrentMetricsFor(codegen.InternalMethodLabels{Component: "github.com/eBerkley/Weaver-OB-Bench/cartservice/CartService", Method: "GetCart"})}
 		},
 		ReflectStubFn: func(caller func(string, context.Context, []any, []any) error) any {
 			return cartService_reflect_stub{caller: caller}
@@ -48,7 +48,7 @@ func init() {
 			return cartCache_client_stub{stub: stub, addMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/cartservice/cartCache", Method: "Add", Remote: true, Generated: true}), getMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/cartservice/cartCache", Method: "Get", Remote: true, Generated: true}), removeMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/cartservice/cartCache", Method: "Remove", Remote: true, Generated: true})}
 		},
 		ServerStubFn: func(impl any, addLoad func(uint64, float64)) codegen.Server {
-			return cartCache_server_stub{impl: impl.(cartCache), addLoad: addLoad}
+			return cartCache_server_stub{impl: impl.(cartCache), addLoad: addLoad, addMetrics: codegen.InternalConcurrentMetricsFor(codegen.InternalMethodLabels{Component: "github.com/eBerkley/Weaver-OB-Bench/cartservice/cartCache", Method: "Add"}), getMetrics: codegen.InternalConcurrentMetricsFor(codegen.InternalMethodLabels{Component: "github.com/eBerkley/Weaver-OB-Bench/cartservice/cartCache", Method: "Get"}), removeMetrics: codegen.InternalConcurrentMetricsFor(codegen.InternalMethodLabels{Component: "github.com/eBerkley/Weaver-OB-Bench/cartservice/cartCache", Method: "Remove"})}
 		},
 		ReflectStubFn: func(caller func(string, context.Context, []any, []any) error) any {
 			return cartCache_reflect_stub{caller: caller}
@@ -856,8 +856,11 @@ please file an issue at https://github.com/eberkley/weaver/issues.
 // Server stub implementations.
 
 type cartService_server_stub struct {
-	impl    CartService
-	addLoad func(key uint64, load float64)
+	impl             CartService
+	addLoad          func(key uint64, load float64)
+	addItemMetrics   *codegen.ConcurrentMethodMetrics
+	emptyCartMetrics *codegen.ConcurrentMethodMetrics
+	getCartMetrics   *codegen.ConcurrentMethodMetrics
 }
 
 // Check that cartService_server_stub implements the codegen.Server interface.
@@ -884,6 +887,8 @@ func (s cartService_server_stub) addItem(ctx context.Context, args []byte) (res 
 			err = codegen.CatchPanics(recover())
 		}
 	}()
+	s.addItemMetrics.Begin()
+	defer s.addItemMetrics.End()
 
 	// Decode arguments.
 	dec := codegen.NewDecoder(args)
@@ -910,6 +915,8 @@ func (s cartService_server_stub) emptyCart(ctx context.Context, args []byte) (re
 			err = codegen.CatchPanics(recover())
 		}
 	}()
+	s.emptyCartMetrics.Begin()
+	defer s.emptyCartMetrics.End()
 
 	// Decode arguments.
 	dec := codegen.NewDecoder(args)
@@ -934,6 +941,8 @@ func (s cartService_server_stub) getCart(ctx context.Context, args []byte) (res 
 			err = codegen.CatchPanics(recover())
 		}
 	}()
+	s.getCartMetrics.Begin()
+	defer s.getCartMetrics.End()
 
 	// Decode arguments.
 	dec := codegen.NewDecoder(args)
@@ -953,8 +962,11 @@ func (s cartService_server_stub) getCart(ctx context.Context, args []byte) (res 
 }
 
 type cartCache_server_stub struct {
-	impl    cartCache
-	addLoad func(key uint64, load float64)
+	impl          cartCache
+	addLoad       func(key uint64, load float64)
+	addMetrics    *codegen.ConcurrentMethodMetrics
+	getMetrics    *codegen.ConcurrentMethodMetrics
+	removeMetrics *codegen.ConcurrentMethodMetrics
 }
 
 // Check that cartCache_server_stub implements the codegen.Server interface.
@@ -981,6 +993,8 @@ func (s cartCache_server_stub) add(ctx context.Context, args []byte) (res []byte
 			err = codegen.CatchPanics(recover())
 		}
 	}()
+	s.addMetrics.Begin()
+	defer s.addMetrics.End()
 
 	// Decode arguments.
 	dec := codegen.NewDecoder(args)
@@ -1009,6 +1023,8 @@ func (s cartCache_server_stub) get(ctx context.Context, args []byte) (res []byte
 			err = codegen.CatchPanics(recover())
 		}
 	}()
+	s.getMetrics.Begin()
+	defer s.getMetrics.End()
 
 	// Decode arguments.
 	dec := codegen.NewDecoder(args)
@@ -1036,6 +1052,8 @@ func (s cartCache_server_stub) remove(ctx context.Context, args []byte) (res []b
 			err = codegen.CatchPanics(recover())
 		}
 	}()
+	s.removeMetrics.Begin()
+	defer s.removeMetrics.End()
 
 	// Decode arguments.
 	dec := codegen.NewDecoder(args)

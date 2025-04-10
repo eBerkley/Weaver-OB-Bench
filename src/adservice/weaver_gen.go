@@ -26,7 +26,7 @@ func init() {
 			return adService_client_stub{stub: stub, getAdsMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/adservice/AdService", Method: "GetAds", Remote: true, Generated: true})}
 		},
 		ServerStubFn: func(impl any, addLoad func(uint64, float64)) codegen.Server {
-			return adService_server_stub{impl: impl.(AdService), addLoad: addLoad}
+			return adService_server_stub{impl: impl.(AdService), addLoad: addLoad, getAdsMetrics: codegen.InternalConcurrentMetricsFor(codegen.InternalMethodLabels{Component: "github.com/eBerkley/Weaver-OB-Bench/adservice/AdService", Method: "GetAds"})}
 		},
 		ReflectStubFn: func(caller func(string, context.Context, []any, []any) error) any {
 			return adService_reflect_stub{caller: caller}
@@ -181,8 +181,9 @@ please file an issue at https://github.com/eberkley/weaver/issues.
 // Server stub implementations.
 
 type adService_server_stub struct {
-	impl    AdService
-	addLoad func(key uint64, load float64)
+	impl          AdService
+	addLoad       func(key uint64, load float64)
+	getAdsMetrics *codegen.ConcurrentMethodMetrics
 }
 
 // Check that adService_server_stub implements the codegen.Server interface.
@@ -205,6 +206,8 @@ func (s adService_server_stub) getAds(ctx context.Context, args []byte) (res []b
 			err = codegen.CatchPanics(recover())
 		}
 	}()
+	s.getAdsMetrics.Begin()
+	defer s.getAdsMetrics.End()
 
 	// Decode arguments.
 	dec := codegen.NewDecoder(args)

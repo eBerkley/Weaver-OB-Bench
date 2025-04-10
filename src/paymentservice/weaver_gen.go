@@ -28,7 +28,7 @@ func init() {
 			return paymentService_client_stub{stub: stub, chargeMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/paymentservice/PaymentService", Method: "Charge", Remote: true, Generated: true})}
 		},
 		ServerStubFn: func(impl any, addLoad func(uint64, float64)) codegen.Server {
-			return paymentService_server_stub{impl: impl.(PaymentService), addLoad: addLoad}
+			return paymentService_server_stub{impl: impl.(PaymentService), addLoad: addLoad, chargeMetrics: codegen.InternalConcurrentMetricsFor(codegen.InternalMethodLabels{Component: "github.com/eBerkley/Weaver-OB-Bench/paymentservice/PaymentService", Method: "Charge"})}
 		},
 		ReflectStubFn: func(caller func(string, context.Context, []any, []any) error) any {
 			return paymentService_reflect_stub{caller: caller}
@@ -184,8 +184,9 @@ please file an issue at https://github.com/eberkley/weaver/issues.
 // Server stub implementations.
 
 type paymentService_server_stub struct {
-	impl    PaymentService
-	addLoad func(key uint64, load float64)
+	impl          PaymentService
+	addLoad       func(key uint64, load float64)
+	chargeMetrics *codegen.ConcurrentMethodMetrics
 }
 
 // Check that paymentService_server_stub implements the codegen.Server interface.
@@ -208,6 +209,8 @@ func (s paymentService_server_stub) charge(ctx context.Context, args []byte) (re
 			err = codegen.CatchPanics(recover())
 		}
 	}()
+	s.chargeMetrics.Begin()
+	defer s.chargeMetrics.End()
 
 	// Decode arguments.
 	dec := codegen.NewDecoder(args)

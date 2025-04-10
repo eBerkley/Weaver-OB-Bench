@@ -60,11 +60,10 @@ type impl struct {
 	emailService    weaver.Ref[emailservice.EmailService]
 	paymentService  weaver.Ref[paymentservice.PaymentService]
 
-	catalogMu           sync.RWMutex
-	catalogRoutingTable productcatalogservice.ProductRoutingTable
-	catalogReplicas     int
-	catalogInit         bool
-	cancelFn            context.CancelFunc
+	catalogMu       sync.RWMutex
+	catalogReplicas int
+	catalogInit     bool
+	cancelFn        context.CancelFunc
 }
 
 func (s *impl) Init(ctx context.Context) error {
@@ -87,17 +86,8 @@ func (s *impl) UpdateCatalogService(ctx2 context.Context, replicas int) {
 	s.cancelFn = cancelFn
 
 	updateCatalogInfo := func() {
-		// We ***reeeeaaaaalllly*** don't want to hold the lock while forming table...
-		table, err := productcatalogservice.GetRoutingTable(ctx, &s.catalogService, replicas)
-
-		if err != nil {
-			s.Logger(ctx2).Warn(fmt.Sprintf("getRoutingTable returned error: %v. Hopefully everything is alright.", err))
-			return
-		}
-
 		s.catalogMu.Lock()
 		s.catalogReplicas = replicas
-		s.catalogRoutingTable = table
 		s.catalogInit = true
 		s.catalogMu.Unlock()
 	}
@@ -258,16 +248,18 @@ func (s *impl) prepareOrderItemsAndShippingQuoteFromCart(ctx context.Context, us
 
 func (s *impl) prepOrderItems(ctx context.Context, items []cartservice.CartItem, userCurrency string) (out []types.OrderItem, duration time.Duration, err error) {
 	out = make([]types.OrderItem, len(items))
-
+	s.catalogMu.RLock()
+	repls := s.catalogReplicas
+	s.catalogMu.RUnlock()
 	for i, item := range items {
 		var product productcatalogservice.Product
 
 		s.catalogMu.RLock()
-		key := s.catalogRoutingTable[productcatalogservice.HashProductID(item.ProductID, s.catalogReplicas)]
+		shard := productcatalogservice.HashProductID(item.ProductID, repls)
 		s.catalogMu.RUnlock()
 
 		getProductTime := time.Now()
-		product, err = s.catalogService.Get().GetProduct(ctx, item.ProductID, key)
+		product, err = s.catalogService.Get().GetProduct(ctx, item.ProductID, shard)
 		duration += time.Since(getProductTime)
 
 		if err != nil {

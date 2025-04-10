@@ -29,7 +29,7 @@ func init() {
 			return checkoutService_client_stub{stub: stub, placeOrderMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/checkoutservice/CheckoutService", Method: "PlaceOrder", Remote: true, Generated: true})}
 		},
 		ServerStubFn: func(impl any, addLoad func(uint64, float64)) codegen.Server {
-			return checkoutService_server_stub{impl: impl.(CheckoutService), addLoad: addLoad}
+			return checkoutService_server_stub{impl: impl.(CheckoutService), addLoad: addLoad, placeOrderMetrics: codegen.InternalConcurrentMetricsFor(codegen.InternalMethodLabels{Component: "github.com/eBerkley/Weaver-OB-Bench/checkoutservice/CheckoutService", Method: "PlaceOrder"})}
 		},
 		ReflectStubFn: func(caller func(string, context.Context, []any, []any) error) any {
 			return checkoutService_reflect_stub{caller: caller}
@@ -184,8 +184,9 @@ please file an issue at https://github.com/eberkley/weaver/issues.
 // Server stub implementations.
 
 type checkoutService_server_stub struct {
-	impl    CheckoutService
-	addLoad func(key uint64, load float64)
+	impl              CheckoutService
+	addLoad           func(key uint64, load float64)
+	placeOrderMetrics *codegen.ConcurrentMethodMetrics
 }
 
 // Check that checkoutService_server_stub implements the codegen.Server interface.
@@ -208,6 +209,8 @@ func (s checkoutService_server_stub) placeOrder(ctx context.Context, args []byte
 			err = codegen.CatchPanics(recover())
 		}
 	}()
+	s.placeOrderMetrics.Begin()
+	defer s.placeOrderMetrics.End()
 
 	// Decode arguments.
 	dec := codegen.NewDecoder(args)

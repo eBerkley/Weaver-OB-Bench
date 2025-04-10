@@ -36,11 +36,10 @@ type impl struct {
 	weaver.Implements[RecService]
 	catalogService weaver.Ref[productcatalogservice.ProductCatalogService]
 
-	catalogMu           sync.RWMutex
-	catalogInit         bool
-	catalogRoutingTable productcatalogservice.ProductRoutingTable
-	catalogReplicas     int
-	cancelFn            context.CancelFunc
+	catalogMu       sync.RWMutex
+	catalogInit     bool
+	catalogReplicas int
+	cancelFn        context.CancelFunc
 }
 
 func (s *impl) Init(ctx context.Context) error {
@@ -65,19 +64,10 @@ func (s *impl) UpdateCatalogService(ctx2 context.Context, replicas int) {
 	s.Logger(ctx).Debug("running UpdateCatalogService", "replicas", replicas)
 
 	updateCatalogInfo := func() {
-		// We ***reeeeaaaaalllly*** don't want to hold the lock while forming table...
 		s.Logger(ctx).Debug("UpdateCatalogService: in updateCatalogInfo", "replicas", replicas)
-
-		table, err := productcatalogservice.GetRoutingTable(ctx, &s.catalogService, replicas)
-
-		if err != nil {
-			s.Logger(ctx).Warn(fmt.Sprintf("getRoutingTable returned error: %v. Hopefully everything is alright.", err))
-			return
-		}
 
 		s.catalogMu.Lock()
 		s.catalogReplicas = replicas
-		s.catalogRoutingTable = table
 		s.catalogMu.Unlock()
 	}
 
@@ -135,10 +125,6 @@ func (s *impl) ListRecommendations(ctx context.Context, userID string, userProdu
 	// A call to ListRecommendations will use the same routing info for the full run
 	s.catalogMu.RLock()
 	repls := s.catalogReplicas
-	table := make([]int, repls)
-	for i := 0; i < repls; i++ {
-		table[i] = s.catalogRoutingTable[i]
-	}
 	s.catalogMu.RUnlock()
 
 	productShardMap := make([][]string, repls)
@@ -166,11 +152,10 @@ func (s *impl) ListRecommendations(ctx context.Context, userID string, userProdu
 				return
 			}
 			// Routing key that will route to the correct shard.
-			key := table[shard]
-			prods, err := s.catalogService.Get().GetProducts(ctx, productShardMap[shard], key)
+			prods, err := s.catalogService.Get().GetProducts(ctx, productShardMap[shard], shard)
 
 			if err != nil {
-				s.Logger(ctx).Error("ListRecommendations: GetProducts error", "productIDs", userProductIDs, "err", err, "shard", shard, "key", key)
+				s.Logger(ctx).Error("ListRecommendations: GetProducts error", "productIDs", userProductIDs, "err", err, "shard", shard)
 				errChan <- err
 			} else {
 				productShards[shard] = prods
@@ -223,10 +208,8 @@ func (s *impl) ListRecommendations(ctx context.Context, userID string, userProdu
 	concurrentSearchProductsTime := time.Now()
 	for shard := 0; shard < repls; shard++ {
 		go func(shard int) {
-			// Routing key that will route to the correct shard.
-			key := s.catalogRoutingTable[shard]
 			// Get all similar products
-			prods, err := s.catalogService.Get().SearchProducts(ctx, searchQuery, key)
+			prods, err := s.catalogService.Get().SearchProducts(ctx, searchQuery, shard)
 
 			if err != nil {
 				errChan2 <- err
