@@ -95,7 +95,7 @@ export timestamp="[$(date +'%a %h %d %T %Y')] "
 # -x flag makes declare export.
 declare -Ax COMPONENT_MAP=(
     [main]=""
-    [cartcache]="github.com/eBerkley/Weaver-OB-Bench/cartservice/CartService"
+    [cartcache]="github.com/eBerkley/Weaver-OB-Bench/cartservice/cartCache"
     [productcatalogservice]="github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService"
     [adservice]="github.com/eBerkley/Weaver-OB-Bench/adservice/AdService"
     [cartservice]="github.com/eBerkley/Weaver-OB-Bench/cartservice/CartService"

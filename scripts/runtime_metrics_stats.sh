@@ -59,7 +59,7 @@ METRICS_DIR="../metrics_collection/$SCHEME"
 
 for c in main cartcache productcatalogservice adservice cartservice checkoutservice currencyservice emailservice paymentservice recservice shippingservice; do
   
-  echo "timestamp,p50_us,p99_us,MPS,Replicas,Util,Errors Per Sec" > "$METRICS_DIR/$c.csv"
+  echo "timestamp,p50_us,p99_us,MPS,Replicas,Util,External Concurrence,Internal Concurrence,Errors Per Sec" > "$METRICS_DIR/$c.csv"
 
 done
 
@@ -98,6 +98,37 @@ fetch_mps() {
     else
         echo "$value"
     fi
+}
+
+fetch_concurrence () {
+  
+  local component_name=$1
+  local component_path="${COMPONENT_MAP[$component_name]}"
+
+  if [[ "$component_name" == "main" ]]; then
+    local external_suffix="{component=\"github.com/eBerkley/weaver/Main\"}"
+    local internal_suffix="{component=\"github.com/eBerkley/weaver/Main\"}"
+  else
+    local external_suffix="{caller!=\"*\",component=\"${component_path}\"}"
+    local internal_suffix="{caller=\"*\",component=\"${component_path}\"}"
+  fi
+
+  local external_raw_query="sum(serviceweaver_started_method_count${external_suffix}) - sum(serviceweaver_finished_method_count${external_suffix})"
+  local internal_raw_query="sum(serviceweaver_started_method_count${internal_suffix}) - sum(serviceweaver_finished_method_count${internal_suffix})"
+  
+  local external_encoded_query=$(jq -rn --arg q "$external_raw_query" '$q|@uri' | sed 's/%28/(/g; s/%29/)/g')
+  local internal_encoded_query=$(jq -rn --arg q "$internal_raw_query" '$q|@uri' | sed 's/%28/(/g; s/%29/)/g')
+  local external_url="$METRIC_URL/api/v1/query?query=$external_encoded_query"
+  local internal_url="$METRIC_URL/api/v1/query?query=$internal_encoded_query"
+
+  local external_value=$(curl -s "$external_url" | jq -r '.data.result[0].value[1]')
+  local internal_value=$(curl -s "$internal_url" | jq -r '.data.result[0].value[1]')
+  # if [[ "$external_value" == "null" || -z "$external_value" ]]; then # Assume we would have the same problem
+    echo "$external_value" #| tee -a $logfile
+    echo "$internal_value" #| tee -a $logfile
+  # else
+    # echo "$value"
+  # fi
 }
 
 fetch_util() {
@@ -205,14 +236,17 @@ log_debug_info() {
       repls_util=$(fetch_util $c)
       util=$(echo "$repls_util" | tail -n 1)
       repls=$(echo "$repls_util" | head -n 1)
-      eps=$(fetch_errors $c)
+      concurrency="$(fetch_concurrence $c)"
+      ext=$(echo "$concurrency" | head -n 1)
+      int=$(echo "$concurrency" | tail -n 1)
 
+      eps=$(fetch_errors $c)
 
       P99=$(awk "BEGIN {printf \"%.3f\", $P99_VAL}")
       P50=$(awk "BEGIN {printf \"%.3f\", $P50_VAL}")
       MPS=$(awk "BEGIN {printf \"%.3f\", $MPS}")
       EPS=$(awk "BEGIN {printf \"%.3f\", $eps}")
-      echo "$realtime,$P50,$P99,$MPS,$repls,$util,$EPS" >> "$METRICS_DIR/$c.csv"
+      echo "$realtime,$P50,$P99,$MPS,$repls,$util,$ext,$int,$EPS" >> "$METRICS_DIR/$c.csv"
     done
     
     # echo "=*=*=*=*=*=*=*=*= END DEBUG. =*=*=*=*=*=*=*=*="

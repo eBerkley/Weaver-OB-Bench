@@ -157,6 +157,7 @@ pre_deploy: check_docker check_loadgen bin_build $(WEAVER_GEN_YAML) $(LOAD_GEN_Y
 	@echo "loadgenerator workers:         $$LOADGEN_REPLICAS"						| tee -a $(LOGS_FILE)
 	@echo "max replicas per fusion group: $$OB_REPLICAS" 								| tee -a $(LOGS_FILE)
 	@echo "VERBOSE, DEBUG_OUTPUT:         $$VERBOSE, $(DEBUG_OUTPUT)" 	| tee -a $(LOGS_FILE)
+	@echo "CheckoutService type:          $$CHECKOUT_FUNCTIONALITY"     | tee -a $(LOGS_FILE)
 	@echo 																															| tee -a $(LOGS_FILE)
 	
 	@echo pre deploy check / code gen complete.
@@ -196,7 +197,7 @@ deploy: minikube_start pre_deploy
 bench: deploy	
 
 	@if [[ $$RUNTIME_METRIC_ENABLE = "true" ]]; then \
-		./scripts/runtime_metrics_stats.sh;        \
+		taskset -c 5-25 ./scripts/runtime_metrics_stats.sh;        \
 	elif [[ $$TRACE_ENABLE = "true" ]]; then    \
 		./scripts/trace_stats.sh;                 \
 	elif [[ $$INSTFP_ENABLE = "true" ]]; then   \
@@ -285,6 +286,6 @@ $(LOAD_GEN_YAML): $(LOAD_SRC_ALL) $(VERSION_FILE) $(LOAD_BASE_YAML) $(CONFIG_FIL
 $(BIN): $(MAIN_SRC)
 	@echo rebuilding binary...
 	
-	@cd $(SRC); ../$(WEAVER) generate ./...; go build -o ../release/generated; cd ..
+	@cd $(SRC); ../$(WEAVER) generate -tags $(CHECKOUT_FUNCTIONALITY) ./...; go build -tags $(CHECKOUT_FUNCTIONALITY) -o ../release/generated; cd ..
 	@mv release/generated/Weaver-OB-Bench release/generated/ob
 
