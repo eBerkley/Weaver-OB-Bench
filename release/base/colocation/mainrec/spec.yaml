@@ -1,10 +1,10 @@
 groups:
-  - name: maincurrency
+  - name: mainrec
     components:
     - "github.com/eberkley/weaver/Main"
-    - "github.com/eBerkley/Weaver-OB-Bench/currencyservice/CurrencyService"
-<maincurrency_RESOURCE_SPEC>
-<maincurrency_SCALING_SPEC>
+    - "github.com/eBerkley/Weaver-OB-Bench/recommendationservice/RecService"
+<mainrec_RESOURCE_SPEC>
+<mainrec_SCALING_SPEC>
 
   - name: adservice
     components:
@@ -30,6 +30,12 @@ groups:
 <checkoutservice_RESOURCE_SPEC>
 <checkoutservice_SCALING_SPEC>
 
+  - name: currencyservice
+    components:
+    - "github.com/eBerkley/Weaver-OB-Bench/currencyservice/CurrencyService"
+<currencyservice_RESOURCE_SPEC>
+<currencyservice_SCALING_SPEC>
+
   - name: emailservice
     components:
     - "github.com/eBerkley/Weaver-OB-Bench/emailservice/EmailService"
@@ -48,12 +54,6 @@ groups:
 <productcatalogservice_RESOURCE_SPEC>
 <productcatalogservice_STATEFUL_SPEC>
 <productcatalogservice_SCALING_SPEC>
-
-  - name: recservice
-    components:
-    - "github.com/eBerkley/Weaver-OB-Bench/recommendationservice/RecService"
-<recservice_RESOURCE_SPEC>
-<recservice_SCALING_SPEC>
 
   - name: shippingservice
     components:
