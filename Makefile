@@ -42,8 +42,9 @@ else ifeq ($(BENCH_TYPE), INITIAL)
 	VERTICAL_PROF   := false
 	RUNTIME_METRIC_ENABLE := false
 
-	LOCUST_SHAPE 			 := constload
-	LOCUST_CONST_USERS := $(INITIAL_USERS)
+	LOCUST_SHAPE 			 := slowerload
+	LOCUST_SLOWLOAD_RAMP := $(FIXED_USERS_RAMP)
+	LOCUST_RAMP_RATE := $(FIXED_USERS_RAMP_RATE)
 
 else ifeq ($(BENCH_TYPE), FIXED)
 	METRIC_ENABLE   := true
@@ -51,7 +52,7 @@ else ifeq ($(BENCH_TYPE), FIXED)
 	INSTFP_ENABLE   := false
 	CPU_UTIL_ENABLE := false
 	VERTICAL_PROF   := true
-	RUNTIME_METRIC_ENABLE := false
+	RUNTIME_METRIC_ENABLE := true
 
 	LOCUST_SHAPE := slowerload
 	LOCUST_SLOWLOAD_RAMP := $(FIXED_USERS_RAMP)
@@ -155,6 +156,7 @@ pre_deploy: check_docker check_loadgen bin_build $(WEAVER_GEN_YAML) $(LOAD_GEN_Y
 	@echo "cscheme:                       $$C_SCHEME"										| tee -a $(LOGS_FILE)
 	@echo "loadshape:                     $$LOCUST_SHAPE"								| tee -a $(LOGS_FILE)
 	@echo "loadgenerator workers:         $$LOADGEN_REPLICAS"						| tee -a $(LOGS_FILE)
+	@echo "connection pooling:            $$LOCUST_CONN_POOL"						| tee -a $(LOGS_FILE)
 	@echo "max replicas per fusion group: $$OB_REPLICAS" 								| tee -a $(LOGS_FILE)
 	@echo "VERBOSE, DEBUG_OUTPUT:         $$VERBOSE, $(DEBUG_OUTPUT)" 	| tee -a $(LOGS_FILE)
 	@echo "CheckoutService type:          $$CHECKOUT_FUNCTIONALITY"     | tee -a $(LOGS_FILE)
@@ -199,7 +201,7 @@ bench: deploy
 	@if [[ $$RUNTIME_METRIC_ENABLE = "true" ]]; then \
 		taskset -c 5-25 ./scripts/runtime_metrics_stats.sh;        \
 	elif [[ $$TRACE_ENABLE = "true" ]]; then    \
-		./scripts/trace_stats.sh;                 \
+		./scripts/traces_stats.sh;                 \
 	elif [[ $$INSTFP_ENABLE = "true" ]]; then   \
 		./scripts/instfp_stats.sh $(TOP);         \
 	elif [[ $$CPU_UTIL_ENABLE = "true" ]]; then \
@@ -236,15 +238,15 @@ KUBE_BIN   := $(WEAVER_BIN_PATH)/weaver-kube
 TRACE_BIN  := $(WEAVER_BIN_PATH)/telemetry-traces
 METRIC_BIN := $(WEAVER_BIN_PATH)/telemetry-metrics
 
-$(KUBE_BIN): $(KUBE_SRC)
+$(KUBE_BIN): $(KUBE_SRC) $(WEAVER)
 	go build -C weaver-kube/cmd/weaver-kube
 	cp ./weaver-kube/cmd/weaver-kube/weaver-kube $(WEAVER_BIN_PATH)
 
-$(TRACE_BIN): weaver-kube/examples/telemetry-traces/main.go $(KUBE_SRC)
+$(TRACE_BIN): weaver-kube/examples/telemetry-traces/main.go $(KUBE_SRC) $(WEAVER)
 	(cd weaver-kube/examples/telemetry-traces && go build -o telemetry-traces .)
 	cp ./weaver-kube/examples/telemetry-traces/telemetry-traces $(WEAVER_BIN_PATH)
 
-$(METRIC_BIN): weaver-kube/examples/telemetry-metrics/main.go $(KUBE_SRC)
+$(METRIC_BIN): weaver-kube/examples/telemetry-metrics/main.go $(KUBE_SRC) $(WEAVER)
 	(cd weaver-kube/examples/telemetry-metrics && go build -o telemetry-metrics .)
 	cp ./weaver-kube/examples/telemetry-metrics/telemetry-metrics $(WEAVER_BIN_PATH)
 
@@ -283,7 +285,7 @@ $(LOAD_GEN_YAML): $(LOAD_SRC_ALL) $(VERSION_FILE) $(LOAD_BASE_YAML) $(CONFIG_FIL
 
 # If src code or .env (since checkout functionality var is defined there) were modified,
 #	Update binary
-$(BIN): $(MAIN_SRC) .env
+$(BIN): $(MAIN_SRC) .env $(WEAVER_SRC)
 	@echo rebuilding binary...
 	
 	@cd $(SRC); ../$(WEAVER) generate -tags $(CHECKOUT_FUNCTIONALITY) ./...; go build -tags $(CHECKOUT_FUNCTIONALITY) -o ../release/generated; cd ..

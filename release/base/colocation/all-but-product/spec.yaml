@@ -1,5 +1,5 @@
 groups:
-  - name: all
+  - name: all-but-product
     components:
     - "github.com/eberkley/weaver/Main"
     - "github.com/eBerkley/Weaver-OB-Bench/adservice/AdService"
@@ -9,9 +9,14 @@ groups:
     - "github.com/eBerkley/Weaver-OB-Bench/currencyservice/CurrencyService"
     - "github.com/eBerkley/Weaver-OB-Bench/emailservice/EmailService"
     - "github.com/eBerkley/Weaver-OB-Bench/paymentservice/PaymentService"
-    - "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService"
     - "github.com/eBerkley/Weaver-OB-Bench/recommendationservice/RecService"
     - "github.com/eBerkley/Weaver-OB-Bench/shippingservice/ShippingService"
-<all_RESOURCE_SPEC>
-<all_STATEFUL_SPEC>
-<all_SCALING_SPEC>
+<all-but-product_RESOURCE_SPEC>
+<all-but-product_SCALING_SPEC>
+
+  - name: productcatalogservice
+    components:
+    - "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService"
+<productcatalogservice_RESOURCE_SPEC>
+<productcatalogservice_STATEFUL_SPEC>
+<productcatalogservice_SCALING_SPEC>

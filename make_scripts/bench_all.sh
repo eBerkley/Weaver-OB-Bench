@@ -50,6 +50,10 @@ loop_body () {
   elif [ "$INSTFP_ENABLE" = "true" ]; then
     cp inst_fp_collection benchmark/out/$cfg/instfp_collection
   fi
+
+  if [ "$RUNTIME_METRIC_ENABLE" = "true" ]; then
+    mv metrics_collection/$SCHEME metrics_collection/$cfg
+  fi
   # Move the stats dir into the dir created above
   mv benchmark/stats benchmark/out/$cfg/stats
 

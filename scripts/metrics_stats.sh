@@ -155,7 +155,8 @@ query_metric "request_counts" $(jq -rn --arg q "sum(rate(serviceweaver_http_requ
 query_metric "serviceweaver_method_count" $(metric_no_sys "serviceweaver_method_count")
 query_metric "serviceweaver_method_bytes_request_sum" $(metric_no_sys "serviceweaver_method_bytes_request_sum")
 query_metric "serviceweaver_method_bytes_reply_sum" $(metric_no_sys "serviceweaver_method_bytes_reply_sum")  
-
+query_metric "serviceweaver_started_method_count" $(metric_no_sys "serviceweaver_started_method_count")
+query_metric "serviceweaver_finished_method_count" $(metric_no_sys "serviceweaver_finished_method_count")
 
 
 

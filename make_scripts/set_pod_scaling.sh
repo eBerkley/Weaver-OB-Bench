@@ -73,7 +73,11 @@ for name in $(get_group_names); do
 
 
   # Now we do the stuff for statefulSpec attributes.
-  replicas=$PRODUCT_CATALOG_REPLICAS
+  if [[ $type = 'FIXED' ]]; then
+    replicas=$FIXED_WIDTH
+  else
+    replicas=$PRODUCT_CATALOG_REPLICAS
+  fi
   stateful_spec="
     statefulSpec:
       replicas: $replicas"

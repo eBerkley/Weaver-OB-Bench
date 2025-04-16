@@ -59,7 +59,7 @@ METRICS_DIR="../metrics_collection/$SCHEME"
 
 for c in main cartcache productcatalogservice adservice cartservice checkoutservice currencyservice emailservice paymentservice recservice shippingservice; do
   
-  echo "timestamp,p50_us,p99_us,MPS,Replicas,Util,External Concurrence,Internal Concurrence,Errors Per Sec" > "$METRICS_DIR/$c.csv"
+  echo "timestamp,p50_us,p99_us,MPS,Replicas,Util,Remote External Concurrence,Local External Concurrence,Internal Concurrence,Errors Per Sec" > "$METRICS_DIR/$c.csv"
 
 done
 
@@ -106,25 +106,42 @@ fetch_concurrence () {
   local component_path="${COMPONENT_MAP[$component_name]}"
 
   if [[ "$component_name" == "main" ]]; then
-    local external_suffix="{component=\"github.com/eBerkley/weaver/Main\"}"
+    # local external_suffix="{component=\"github.com/eBerkley/weaver/Main\"}"
+    local external_remote_suffix="{component=\"github.com/eBerkley/weaver/Main\",remote=\"true\"}"
+    local external_local_suffix="{component=\"github.com/eBerkley/weaver/Main\",remote=\"false\"}"
     local internal_suffix="{component=\"github.com/eBerkley/weaver/Main\"}"
   else
-    local external_suffix="{caller!=\"*\",component=\"${component_path}\"}"
+    # local external_suffix="{caller!=\"*\",component=\"${component_path}\"}"
+    local external_remote_suffix="{caller!=\"*\",component=\"${component_path}\",remote=\"true\"}"
+    local external_local_suffix="{caller!=\"*\",component=\"${component_path}\",remote=\"false\"}"
     local internal_suffix="{caller=\"*\",component=\"${component_path}\"}"
   fi
 
-  local external_raw_query="sum(serviceweaver_started_method_count${external_suffix}) - sum(serviceweaver_finished_method_count${external_suffix})"
-  local internal_raw_query="sum(serviceweaver_started_method_count${internal_suffix}) - sum(serviceweaver_finished_method_count${internal_suffix})"
-  
-  local external_encoded_query=$(jq -rn --arg q "$external_raw_query" '$q|@uri' | sed 's/%28/(/g; s/%29/)/g')
-  local internal_encoded_query=$(jq -rn --arg q "$internal_raw_query" '$q|@uri' | sed 's/%28/(/g; s/%29/)/g')
-  local external_url="$METRIC_URL/api/v1/query?query=$external_encoded_query"
-  local internal_url="$METRIC_URL/api/v1/query?query=$internal_encoded_query"
+  # Remote External queries
+  local external_remote_raw_query="sum(serviceweaver_started_method_count${external_remote_suffix}) - sum(serviceweaver_finished_method_count${external_remote_suffix})"
+  local external_remote_encoded_query=$(jq -rn --arg q "$external_remote_raw_query" '$q|@uri' | sed 's/%28/(/g; s/%29/)/g')
+  local external_remote_url="$METRIC_URL/api/v1/query?query=$external_remote_encoded_query"
+  local external_remote_value=$(curl -s "$external_remote_url" | jq -r '.data.result[0].value[1]')
 
-  local external_value=$(curl -s "$external_url" | jq -r '.data.result[0].value[1]')
+  # Local External queries
+  local external_local_raw_query="sum(serviceweaver_started_method_count${external_local_suffix}) - sum(serviceweaver_finished_method_count${external_local_suffix})"
+  local external_local_encoded_query=$(jq -rn --arg q "$external_local_raw_query" '$q|@uri' | sed 's/%28/(/g; s/%29/)/g')
+  local external_local_url="$METRIC_URL/api/v1/query?query=$external_local_encoded_query"
+  local external_local_value=$(curl -s "$external_local_url" | jq -r '.data.result[0].value[1]')
+
+
+  # local external_raw_query="sum(serviceweaver_started_method_count${external_suffix}) - sum(serviceweaver_finished_method_count${external_suffix})"
+  # local external_encoded_query=$(jq -rn --arg q "$external_raw_query" '$q|@uri' | sed 's/%28/(/g; s/%29/)/g')
+  # local external_url="$METRIC_URL/api/v1/query?query=$external_encoded_query"
+  # local external_value=$(curl -s "$external_url" | jq -r '.data.result[0].value[1]')
+
+  local internal_raw_query="sum(serviceweaver_started_method_count${internal_suffix}) - sum(serviceweaver_finished_method_count${internal_suffix})"
+  local internal_encoded_query=$(jq -rn --arg q "$internal_raw_query" '$q|@uri' | sed 's/%28/(/g; s/%29/)/g')
+  local internal_url="$METRIC_URL/api/v1/query?query=$internal_encoded_query"
   local internal_value=$(curl -s "$internal_url" | jq -r '.data.result[0].value[1]')
   # if [[ "$external_value" == "null" || -z "$external_value" ]]; then # Assume we would have the same problem
-    echo "$external_value" #| tee -a $logfile
+    echo "$external_remote_value" #| tee -a $logfile
+    echo "$external_local_value" #| tee -a $logfile
     echo "$internal_value" #| tee -a $logfile
   # else
     # echo "$value"
@@ -237,8 +254,10 @@ log_debug_info() {
       util=$(echo "$repls_util" | tail -n 1)
       repls=$(echo "$repls_util" | head -n 1)
       concurrency="$(fetch_concurrence $c)"
-      ext=$(echo "$concurrency" | head -n 1)
-      int=$(echo "$concurrency" | tail -n 1)
+      remote_ext=$(echo "$concurrency" | sed -n '1p')  # first line
+      local_ext=$(echo "$concurrency" | sed -n '2p')   # second line
+      int=$(echo "$concurrency" | sed -n '3p')         # third line
+
 
       eps=$(fetch_errors $c)
 
@@ -246,7 +265,7 @@ log_debug_info() {
       P50=$(awk "BEGIN {printf \"%.3f\", $P50_VAL}")
       MPS=$(awk "BEGIN {printf \"%.3f\", $MPS}")
       EPS=$(awk "BEGIN {printf \"%.3f\", $eps}")
-      echo "$realtime,$P50,$P99,$MPS,$repls,$util,$ext,$int,$EPS" >> "$METRICS_DIR/$c.csv"
+      echo "$realtime,$P50,$P99,$MPS,$repls,$util,$remote_ext,$local_ext,$int,$EPS" >> "$METRICS_DIR/$c.csv"
     done
     
     # echo "=*=*=*=*=*=*=*=*= END DEBUG. =*=*=*=*=*=*=*=*="
