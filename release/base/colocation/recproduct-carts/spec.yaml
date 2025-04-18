@@ -11,12 +11,6 @@ groups:
 <adservice_RESOURCE_SPEC>
 <adservice_SCALING_SPEC>
 
-  - name: cartcache
-    components:
-    - "github.com/eBerkley/Weaver-OB-Bench/cartservice/cartCache"
-<cartcache_RESOURCE_SPEC>
-<cartcache_SCALING_SPEC>
-
   - name: checkoutservice
     components:
     - "github.com/eBerkley/Weaver-OB-Bench/checkoutservice/CheckoutService"
@@ -41,14 +35,20 @@ groups:
 <paymentservice_RESOURCE_SPEC>
 <paymentservice_SCALING_SPEC>
 
-  - name: recproductcartsvc
+  - name: recproduct
     components:
     - "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService"
     - "github.com/eBerkley/Weaver-OB-Bench/recommendationservice/RecService"
+<recproduct_RESOURCE_SPEC>
+<recproduct_STATEFUL_SPEC>
+<recproduct_SCALING_SPEC>
+
+  - name: carts
+    components:
     - "github.com/eBerkley/Weaver-OB-Bench/cartservice/CartService"
-<recproductcartsvc_RESOURCE_SPEC>
-<recproductcartsvc_STATEFUL_SPEC>
-<recproductcartsvc_SCALING_SPEC>
+    - "github.com/eBerkley/Weaver-OB-Bench/cartservice/cartCache"
+<carts_RESOURCE_SPEC>
+<carts_SCALING_SPEC>
 
   - name: shippingservice
     components:

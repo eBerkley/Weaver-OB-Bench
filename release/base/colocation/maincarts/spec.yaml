@@ -1,17 +1,17 @@
 groups:
-  - name: cartsrec
-    components:
-    - "github.com/eBerkley/Weaver-OB-Bench/cartservice/CartService"
-    - "github.com/eBerkley/Weaver-OB-Bench/cartservice/cartCache"
-    - "github.com/eBerkley/Weaver-OB-Bench/recommendationservice/RecService"
-<cartsrec_RESOURCE_SPEC>
-<cartsrec_SCALING_SPEC>
-
-  - name: main
+  - name: maincarts
     components:
     - "github.com/eberkley/weaver/Main"
-<main_RESOURCE_SPEC>
-<main_SCALING_SPEC>
+    - "github.com/eBerkley/Weaver-OB-Bench/cartservice/CartService"
+    - "github.com/eBerkley/Weaver-OB-Bench/cartservice/cartCache"
+<maincarts_RESOURCE_SPEC>
+<maincarts_SCALING_SPEC>
+
+  - name: recservice
+    components:
+    - "github.com/eBerkley/Weaver-OB-Bench/recommendationservice/RecService"
+<recservice_RESOURCE_SPEC>
+<recservice_SCALING_SPEC>
 
   - name: adservice
     components:
