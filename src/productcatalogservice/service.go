@@ -27,6 +27,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	goruntime "runtime"
 
 	"github.com/eBerkley/Weaver-OB-Bench/types/money"
 	"github.com/eberkley/weaver"
@@ -126,6 +127,20 @@ func (s *impl) Init(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("could not parse product catalog: %w", err)
 	}
+
+	go func() {
+		ticker := time.NewTicker(time.Second)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				imetrics.GroupGoroutineFor(imetrics.ComponentLabels{Component: "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService"}).Set(float64(goruntime.NumGoroutine()))
+			}
+		}
+	}()
+
 
 	return nil
 }

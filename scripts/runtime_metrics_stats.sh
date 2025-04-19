@@ -70,7 +70,7 @@ if [[ $RUNTIME_METRIC_HIGH_GRANULARITY = "1" ]]; then
     mkdir -p "$METRICS_DIR/$c/concurrency-internal"
     mkdir -p "$METRICS_DIR/$c/eps"
 
-    echo "timestamp,p50_us,p99_us,MPS,Replicas,Util,Remote External Concurrence,Local External Concurrence,Internal Concurrence,Errors Per Sec" > "$METRICS_DIR/$c/$c.csv"
+    echo "timestamp,p50_us,p99_us,MPS,Replicas,Util,Remote External Concurrence,Local External Concurrence,Internal Concurrence,Goroutines,Errors Per Sec" > "$METRICS_DIR/$c/$c.csv"
   
   done
 
@@ -78,7 +78,7 @@ else # RUNTIME_METRIC_HIGH_GRANULARITY = 0
 
   for c in main cartcache productcatalogservice adservice cartservice checkoutservice currencyservice emailservice paymentservice recservice shippingservice; do
   
-    echo "timestamp,p50_us,p99_us,MPS,Replicas,Util,Remote External Concurrence,Local External Concurrence,Internal Concurrence,Errors Per Sec" > "$METRICS_DIR/$c.csv"
+    echo "timestamp,p50_us,p99_us,MPS,Replicas,Util,Remote External Concurrence,Local External Concurrence,Internal Concurrence,Goroutines,Errors Per Sec" > "$METRICS_DIR/$c.csv"
 
   done
 
@@ -234,6 +234,24 @@ fetch_errors() {
         echo "$value"
     fi
 }
+
+fetch_groutines() {
+  local component_name=$1
+  local component_path="${COMPONENT_MAP[$component_name]}"
+
+  if [[ "$component_name" == "main" ]]; then
+    local goroutine_suffix="{component=\"github.com/eBerkley/weaver/Main\"}"
+  else
+    local goroutine_suffix="{component=\"${component_path}\"}"
+  fi
+  local raw_query="serviceweaver_goroutines${goroutine_suffix}"
+  local encoded_query=$(jq -rn --arg q "$raw_query" '$q|@uri' | sed 's/%28/(/g; s/%29/)/g')
+  local url="$METRIC_URL/api/v1/query?query=$encoded_query"
+  local value=$(curl -s "$url" | jq -r '.data.result[0].value[1]')
+
+  echo "$value"
+}
+
 
 #endregion
 
@@ -391,6 +409,9 @@ if [[ $RUNTIME_METRIC_HIGH_GRANULARITY = "1" ]]; then
 
       realtime=$(date --iso-8601=seconds)
       echo $realtime
+      echo
+      kubectl top po 2>/dev/null | awk 'NR==1 || $1 !~ /^loadgenerator/'
+      echo
     
       try_get_replicas
       
@@ -415,6 +436,7 @@ if [[ $RUNTIME_METRIC_HIGH_GRANULARITY = "1" ]]; then
         remote_ext=$(echo "$concurrency" | sed -n '1p')  # first line
         local_ext=$(echo "$concurrency" | sed -n '2p')   # second line
         int=$(echo "$concurrency" | sed -n '3p')         # third line
+        gort=$(fetch_groutines $c)
 
         eps=$(fetch_errors $c)
 
@@ -422,7 +444,7 @@ if [[ $RUNTIME_METRIC_HIGH_GRANULARITY = "1" ]]; then
         P50=$(awk "BEGIN {printf \"%.3f\", $P50_VAL}")
         MPS=$(awk "BEGIN {printf \"%.3f\", $MPS}")
         EPS=$(awk "BEGIN {printf \"%.3f\", $eps}")
-        echo "$realtime,$P50,$P99,$MPS,$repls,$util,$remote_ext,$local_ext,$int,$EPS" >> "$METRICS_DIR/$c/$c.csv"
+        echo "$realtime,$P50,$P99,$MPS,$repls,$util,$remote_ext,$local_ext,$int,$gort,$EPS" >> "$METRICS_DIR/$c/$c.csv"
 
         # High granularity
 
@@ -452,6 +474,8 @@ else # Low granularity
       
       echo $realtime
       echo
+      kubectl top po 2>/dev/null | awk 'NR==1 || $1 !~ /^loadgenerator/'
+      echo
       
       try_get_replicas
       
@@ -476,6 +500,7 @@ else # Low granularity
         remote_ext=$(echo "$concurrency" | sed -n '1p')  # first line
         local_ext=$(echo "$concurrency" | sed -n '2p')   # second line
         int=$(echo "$concurrency" | sed -n '3p')         # third line
+        gort=$(fetch_groutines $c)
 
 
         eps=$(fetch_errors $c)
@@ -484,7 +509,7 @@ else # Low granularity
         P50=$(awk "BEGIN {printf \"%.3f\", $P50_VAL}")
         MPS=$(awk "BEGIN {printf \"%.3f\", $MPS}")
         EPS=$(awk "BEGIN {printf \"%.3f\", $eps}")
-        echo "$realtime,$P50,$P99,$MPS,$repls,$util,$remote_ext,$local_ext,$int,$EPS" >> "$METRICS_DIR/$c.csv"
+        echo "$realtime,$P50,$P99,$MPS,$repls,$util,$remote_ext,$local_ext,$int,$gort,$EPS" >> "$METRICS_DIR/$c.csv"
 
       done
       

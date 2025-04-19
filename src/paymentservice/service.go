@@ -17,6 +17,7 @@ package paymentservice
 import (
 	"context"
 	"time"
+	goruntime "runtime"
 
 	"github.com/eBerkley/Weaver-OB-Bench/types/money"
 	"github.com/eberkley/weaver"
@@ -31,6 +32,22 @@ type CreditCardInfo struct {
 	CVV             int32
 	ExpirationYear  int
 	ExpirationMonth time.Month
+}
+
+func (s *impl) Init(ctx context.Context) error {
+	go func() {
+		ticker := time.NewTicker(time.Second)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				imetrics.GroupGoroutineFor(imetrics.ComponentLabels{Component: "github.com/eBerkley/Weaver-OB-Bench/paymentservice/PaymentService"}).Set(float64(goruntime.NumGoroutine()))
+			}
+		}
+	}()
+	return nil
 }
 
 // LastFour returns the last four digits of the card number.

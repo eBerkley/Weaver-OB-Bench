@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"html/template"
 	"time"
+	goruntime "runtime"
 
 	"github.com/eBerkley/Weaver-OB-Bench/types"
 	"github.com/eberkley/weaver"
@@ -45,6 +46,22 @@ type EmailService interface {
 
 type impl struct {
 	weaver.Implements[EmailService]
+}
+
+func (s *impl) Init(ctx context.Context) error {
+	go func() {
+		ticker := time.NewTicker(time.Second)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				imetrics.GroupGoroutineFor(imetrics.ComponentLabels{Component: "github.com/eBerkley/Weaver-OB-Bench/emailservice/EmailService"}).Set(float64(goruntime.NumGoroutine()))
+			}
+		}
+	}()
+	return nil
 }
 
 // SendOrderConfirmation sends the confirmation email for the order to the

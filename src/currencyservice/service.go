@@ -22,6 +22,7 @@ import (
 	"math"
 	"strconv"
 	"time"
+	goruntime "runtime"
 
 	"github.com/eBerkley/Weaver-OB-Bench/types/money"
 	"github.com/eberkley/weaver"
@@ -48,11 +49,24 @@ type impl struct {
 	// conversionMap map[string]float64
 }
 
-func (s *impl) Init(context.Context) error {
+func (s *impl) Init(ctx context.Context) error {
 	// m, err := createConversionMap()
 	// s.conversionMap = m
 	om, err := createConversionOM()
 	s.conversionOM = om
+
+	go func() {
+		ticker := time.NewTicker(time.Second)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				imetrics.GroupGoroutineFor(imetrics.ComponentLabels{Component: "github.com/eBerkley/Weaver-OB-Bench/currencyservice/CurrencyService"}).Set(float64(goruntime.NumGoroutine()))
+			}
+		}
+	}()
 
 	return err
 }

@@ -26,6 +26,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	goruntime "runtime"
 
 	"github.com/eBerkley/Weaver-OB-Bench/adservice"
 	"github.com/eBerkley/Weaver-OB-Bench/cartservice"
@@ -36,6 +37,7 @@ import (
 	"github.com/eBerkley/Weaver-OB-Bench/shippingservice"
 	"github.com/eberkley/weaver"
 	"github.com/eberkley/weaver/runtime"
+	imetrics "github.com/eberkley/weaver/runtime/codegen"
 	_ "go.uber.org/automaxprocs"
 )
 
@@ -90,6 +92,19 @@ func (fe *Server) Init(ctx context.Context) error {
 		fe.UpdateCatalogService(ctx, fe.catalogReplicas)
 	}
 	fe.Logger(ctx).Debug("Init")
+	go func() {
+		ticker := time.NewTicker(time.Second)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				imetrics.GroupGoroutineFor(imetrics.ComponentLabels{Component: "github.com/eBerkley/weaver/Main"}).Set(float64(goruntime.NumGoroutine()))
+			}
+		}
+	}()
+
 	return nil
 }
 

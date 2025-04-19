@@ -17,6 +17,7 @@ package cartservice
 import (
 	"context"
 	"time"
+	goruntime "runtime"
 
 	"github.com/eberkley/weaver"
 	_ "go.uber.org/automaxprocs"
@@ -45,6 +46,19 @@ type impl struct {
 func (s *impl) Init(ctx context.Context) error {
 	store, err := newCartStore(s.Logger(ctx), s.cache.Get())
 	s.store = store
+
+	go func() {
+		ticker := time.NewTicker(time.Second)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				imetrics.GroupGoroutineFor(imetrics.ComponentLabels{Component: "github.com/eBerkley/Weaver-OB-Bench/cartservice/CartService"}).Set(float64(goruntime.NumGoroutine()))
+			}
+		}
+	}()
 	return err
 }
 

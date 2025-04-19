@@ -20,6 +20,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	goruntime "runtime"
 
 	"github.com/eBerkley/Weaver-OB-Bench/productcatalogservice"
 	"github.com/eberkley/weaver"
@@ -49,6 +50,19 @@ func (s *impl) Init(ctx context.Context) error {
 	}
 	s.Logger(ctx).Info("in Init function")
 	// s.UpdateCatalogService(ctx, s.catalogReplicas)
+	go func() {
+		ticker := time.NewTicker(time.Second)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				imetrics.GroupGoroutineFor(imetrics.ComponentLabels{Component: "github.com/eBerkley/Weaver-OB-Bench/recommendationservice/RecService"}).Set(float64(goruntime.NumGoroutine()))
+			}
+		}
+	}()
+
 
 	return nil
 }
@@ -139,41 +153,34 @@ func (s *impl) ListRecommendations(ctx context.Context, userID string, userProdu
 
 	// Concurrently send an RPC to each product catalog service. Wait until there's a response from all of them.
 	// If one returns an error, this function returns an error.
-	wg := sync.WaitGroup{}
-	wg.Add(repls)
 	errChan := make(chan error, repls)
 
 	concurrentGetProductsTime := time.Now()
 	for shard := 0; shard < repls; shard++ {
-		go func(shard int) {
-			// Don't send RPC if we aren't requesting any products.
-			if len(productShardMap[shard]) == 0 {
-				wg.Done()
-				return
-			}
-			// Routing key that will route to the correct shard.
-			prods, err := s.catalogService.Get().GetProducts(ctx, productShardMap[shard], shard)
+		// Don't send RPC if we aren't requesting any products.
+		if len(productShardMap[shard]) == 0 {
+			continue
+		}
+		// Routing key that will route to the correct shard.
+		prods, err := s.catalogService.Get().GetProducts(ctx, productShardMap[shard], shard)
 
-			if err != nil {
-				s.Logger(ctx).Error("ListRecommendations: GetProducts error", "productIDs", userProductIDs, "err", err, "shard", shard)
-				errChan <- err
-			} else {
-				productShards[shard] = prods
-			}
-			wg.Done()
-
-		}(shard)
+		if err != nil {
+			s.Logger(ctx).Error("ListRecommendations: GetProducts error", "productIDs", userProductIDs, "err", err, "shard", shard)
+			errChan <- err
+			break
+		} else {
+			productShards[shard] = prods
+		}
 	}
 	// Halt thread until all requests have responses.
 	// If theres an error from one, return it. If not, continue on.
-	wg.Wait()
 	duration += time.Since(concurrentGetProductsTime)
 
 	select {
 	case err := <-errChan:
 		return nil, err
 	default:
-		break
+		// no-op
 	}
 
 	// Each product name is 3 words: color, material, object.
@@ -203,37 +210,35 @@ func (s *impl) ListRecommendations(ctx context.Context, userID string, userProdu
 
 	// Concurrently send another RPC to each product catalog service. Wait until there's a response from all of them.
 	// If one returns an error, this function returns an error.
-	wg.Add(repls)
 	errChan2 := make(chan error, repls)
 	concurrentSearchProductsTime := time.Now()
 	for shard := 0; shard < repls; shard++ {
-		go func(shard int) {
-			// Get all similar products
-			prods, err := s.catalogService.Get().SearchProducts(ctx, searchQuery, shard)
+		// Get all similar products
+		prods, err := s.catalogService.Get().SearchProducts(ctx, searchQuery, shard)
 
-			if err != nil {
-				errChan2 <- err
-				wg.Done()
-				return
-			}
-			// remove ones in userProductIDs paramater.
-			// Since only the products in this shard could be returned by
-			// this method call, we just use the products in productShards[shard].
-			for _, prod := range prods {
-				for _, userProd := range productShards[shard] {
-					if prod.ID == userProd.ID {
-						break
-					}
+		if err != nil {
+			errChan2 <- err
+			break
+		}
+		// remove ones in userProductIDs paramater.
+		// Since only the products in this shard could be returned by
+		// this method call, we just use the products in productShards[shard].
+		for _, prod := range prods {
+			SkipFlag := false
+			for _, userProd := range productShards[shard] {
+				if prod.ID == userProd.ID {
+					SkipFlag = true
+					break
 				}
+			}
+			if !SkipFlag {
 				productStringShards[shard] = append(productStringShards[shard], prod.ID)
 			}
-			wg.Done()
-		}(shard)
+		}
 	}
 
 	// Halt thread until all requests have responses.
 	// If theres an error from one, return it. If not, continue on.
-	wg.Wait()
 	duration += time.Since(concurrentSearchProductsTime)
 	select {
 	case err := <-errChan2:

@@ -17,6 +17,7 @@ package cartservice
 import (
 	"context"
 	"time"
+	goruntime "runtime"
 
 	"github.com/eberkley/weaver"
 	imetrics "github.com/eberkley/weaver/runtime/codegen"
@@ -47,9 +48,21 @@ type cartCacheImpl struct {
 	cache *lru.Cache[string, []CartItem]
 }
 
-func (c *cartCacheImpl) Init(context.Context) error {
+func (c *cartCacheImpl) Init(ctx context.Context) error {
 	cache, err := lru.New[string, []CartItem](cacheSize)
 	c.cache = cache
+	go func() {
+		ticker := time.NewTicker(time.Second)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				imetrics.GroupGoroutineFor(imetrics.ComponentLabels{Component: "github.com/eBerkley/Weaver-OB-Bench/cartservice/cartCache"}).Set(float64(goruntime.NumGoroutine()))
+			}
+		}
+	}()
 	return err
 }
 

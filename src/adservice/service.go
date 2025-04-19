@@ -19,6 +19,7 @@ import (
 	"math/rand"
 	"strings"
 	"time"
+	goruntime "runtime"
 
 	"github.com/eberkley/weaver"
 	imetrics "github.com/eberkley/weaver/runtime/codegen"
@@ -51,6 +52,19 @@ type impl struct {
 func (s *impl) Init(ctx context.Context) error {
 	s.Logger(ctx).Info("Ad Service started")
 	s.ads = createAdsMap()
+
+	go func() {
+		ticker := time.NewTicker(time.Second)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				imetrics.GroupGoroutineFor(imetrics.ComponentLabels{Component: "github.com/eBerkley/Weaver-OB-Bench/adservice/AdService"}).Set(float64(goruntime.NumGoroutine()))
+			}
+		}
+	}()
 	return nil
 }
 
