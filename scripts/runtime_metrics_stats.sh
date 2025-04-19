@@ -244,7 +244,7 @@ fetch_groutines() {
   else
     local goroutine_suffix="{component=\"${component_path}\"}"
   fi
-  local raw_query="serviceweaver_goroutines${goroutine_suffix}"
+  local raw_query="sum(serviceweaver_goroutines${goroutine_suffix})"
   local encoded_query=$(jq -rn --arg q "$raw_query" '$q|@uri' | sed 's/%28/(/g; s/%29/)/g')
   local url="$METRIC_URL/api/v1/query?query=$encoded_query"
   local value=$(curl -s "$url" | jq -r '.data.result[0].value[1]')
