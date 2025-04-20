@@ -17,10 +17,10 @@ package recommendationservice
 import (
 	"context"
 	"fmt"
+	goruntime "runtime"
 	"strings"
 	"sync"
 	"time"
-	goruntime "runtime"
 
 	"github.com/eBerkley/Weaver-OB-Bench/productcatalogservice"
 	"github.com/eberkley/weaver"
@@ -45,10 +45,12 @@ type impl struct {
 
 func (s *impl) Init(ctx context.Context) error {
 
-	if s.catalogReplicas == 0 {
-		s.catalogReplicas = productcatalogservice.ProductCatalogReplicas
-	}
 	s.Logger(ctx).Info("in Init function")
+
+	if s.catalogReplicas == 0 {
+		s.UpdateCatalogService(ctx, productcatalogservice.ProductCatalogReplicas)
+	}
+
 	// s.UpdateCatalogService(ctx, s.catalogReplicas)
 	go func() {
 		ticker := time.NewTicker(time.Second)
@@ -62,7 +64,6 @@ func (s *impl) Init(ctx context.Context) error {
 			}
 		}
 	}()
-
 
 	return nil
 }
@@ -153,7 +154,7 @@ func (s *impl) ListRecommendations(ctx context.Context, userID string, userProdu
 
 	// Concurrently send an RPC to each product catalog service. Wait until there's a response from all of them.
 	// If one returns an error, this function returns an error.
-	errChan := make(chan error, repls)
+	// errChan := make(chan error, repls)
 
 	concurrentGetProductsTime := time.Now()
 	for shard := 0; shard < repls; shard++ {
@@ -166,8 +167,9 @@ func (s *impl) ListRecommendations(ctx context.Context, userID string, userProdu
 
 		if err != nil {
 			s.Logger(ctx).Error("ListRecommendations: GetProducts error", "productIDs", userProductIDs, "err", err, "shard", shard)
-			errChan <- err
-			break
+			// errChan <- err
+			// break
+			return nil, err
 		} else {
 			productShards[shard] = prods
 		}
@@ -176,12 +178,12 @@ func (s *impl) ListRecommendations(ctx context.Context, userID string, userProdu
 	// If theres an error from one, return it. If not, continue on.
 	duration += time.Since(concurrentGetProductsTime)
 
-	select {
-	case err := <-errChan:
-		return nil, err
-	default:
-		// no-op
-	}
+	// select {
+	// case err := <-errChan:
+	// 	return nil, err
+	// default:
+	// 	// no-op
+	// }
 
 	// Each product name is 3 words: color, material, object.
 	// We split them up into words, give material 2x as much
@@ -210,15 +212,16 @@ func (s *impl) ListRecommendations(ctx context.Context, userID string, userProdu
 
 	// Concurrently send another RPC to each product catalog service. Wait until there's a response from all of them.
 	// If one returns an error, this function returns an error.
-	errChan2 := make(chan error, repls)
+	// errChan2 := make(chan error, repls)
 	concurrentSearchProductsTime := time.Now()
 	for shard := 0; shard < repls; shard++ {
 		// Get all similar products
 		prods, err := s.catalogService.Get().SearchProducts(ctx, searchQuery, shard)
 
 		if err != nil {
-			errChan2 <- err
-			break
+			// errChan2 <- err
+			// break
+			return nil, err
 		}
 		// remove ones in userProductIDs paramater.
 		// Since only the products in this shard could be returned by
@@ -240,12 +243,12 @@ func (s *impl) ListRecommendations(ctx context.Context, userID string, userProdu
 	// Halt thread until all requests have responses.
 	// If theres an error from one, return it. If not, continue on.
 	duration += time.Since(concurrentSearchProductsTime)
-	select {
-	case err := <-errChan2:
-		return nil, err
-	default:
-		break
-	}
+	// select {
+	// case err := <-errChan2:
+	// 	return nil, err
+	// default:
+	// 	break
+	// }
 
 	// Get the aggregate of products.
 	var ret []string
