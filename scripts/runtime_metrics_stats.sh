@@ -347,7 +347,7 @@ fetch_p99_HG() {
   fi
   local query="histogram_quantile(0.99, rate(${query_base}[30s]))"
   local encoded=$(jq -rn --arg q "$query" '$q|@uri')
-  fetch_value "$METRIC_URL/api/v1/query?query=$encoded"
+  fetch_value_HG "$METRIC_URL/api/v1/query?query=$encoded"
 }
 
 fetch_p50_HG() {
@@ -361,7 +361,7 @@ fetch_p50_HG() {
   fi
   local query="histogram_quantile(0.50, rate(${query_base}[30s]))"
   local encoded=$(jq -rn --arg q "$query" '$q|@uri')
-  fetch_value "$METRIC_URL/api/v1/query?query=$encoded"
+  fetch_value_HG "$METRIC_URL/api/v1/query?query=$encoded"
 }
 
 fetch_errors_HG() {
@@ -453,9 +453,9 @@ if [[ $RUNTIME_METRIC_HIGH_GRANULARITY = "1" ]]; then
         fetch_mps_HG $c > "$METRICS_DIR/$c/mps/$realtime.json"
         concurrency_hg=$(fetch_concurrence_HG $c)
 
-        echo "$concurrency" | sed -n '1p' > "$METRICS_DIR/$c/concurrency-remote/$realtime.json"
-        echo "$concurrency" | sed -n '2p' > "$METRICS_DIR/$c/concurrency-local/$realtime.json"
-        echo "$concurrency" | sed -n '3p' > "$METRICS_DIR/$c/concurrency-internal/$realtime.json"
+        echo "$concurrency_hg" | sed -n '1p' > "$METRICS_DIR/$c/concurrency-remote/$realtime.json"
+        echo "$concurrency_hg" | sed -n '2p' > "$METRICS_DIR/$c/concurrency-local/$realtime.json"
+        echo "$concurrency_hg" | sed -n '3p' > "$METRICS_DIR/$c/concurrency-internal/$realtime.json"
 
         fetch_errors_HG $c > "$METRICS_DIR/$c/eps/$realtime.json"
       done
