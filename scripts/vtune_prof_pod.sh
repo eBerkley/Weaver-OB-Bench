@@ -22,81 +22,96 @@ uset() {
   sudo -u $username PATH="$PATH:/home/$username/go/bin" $*
 }
 
-PROFILE_TIME=120
-mode=hotspots
+PROFILE_TIME=60
+# mode=hotspots
 
 
-if [[ ! -e "/opt/intel/oneapi/vtune/latest/vtune-vars.sh" ]]; then
-  echo "VTune is not installed. Please install VTune to use this script."
-  exit 1
-fi
+# if [[ ! -e "/opt/intel/oneapi/vtune/latest/vtune-vars.sh" ]]; then
+#   echo "VTune is not installed. Please install VTune to use this script."
+#   exit 1
+# fi
 
-source /opt/intel/oneapi/vtune/latest/vtune-vars.sh
-result_dir=/opt/intel/oneapi/vtune/vtune_results/analyze_pod
+# source /opt/intel/oneapi/vtune/latest/vtune-vars.sh
+# result_dir=/opt/intel/oneapi/vtune/vtune_results/analyze_pod
 
 # create the result directory if it doesn't exist
-mkdir -p "$result_dir"
+# mkdir -p "$result_dir"
 
 
 # Check if the pod exists
-if ! kubectl get pod "$POD_NAME" &>/dev/null; then
+if ! uset kubectl get pod "$POD_NAME" &>/dev/null; then
   echo "Error: Pod '$POD_NAME' not found."
   exit 1
 fi
+
+OLD_VALUE=$(cat /proc/sys/kernel/perf_event_paranoid)
+echo "Original kernel.perf_event_paranoid: $OLD_VALUE"
+echo "Temporarily lowering kernel.perf_event_paranoid to -1..."
+sysctl -w kernel.perf_event_paranoid=-1
+
+cleanup () {
+  sysctl -w kernel.perf_event_paranoid=$OLD_VALUE
+}
+
+trap cleanup SIGINT SIGTERM
+
+OUTPUT_DIR="vtune_results"
+mkdir -p "$OUTPUT_DIR"
 
 for p in $(pgrep -f "/weaver/ob" | xargs --no-run-if-empty ps | awk '{print $1}' | tail -n +2); do
   hostname=$(cat /proc/$p/environ | strings | grep HOSTNAME)
 
   # Extract the pod name from the hostname
-  pod_name=$(echo $hostname | gawk 'match($0, /=ob-([^-]*)/, a) {print a[1]}')
-  if [[ $pod_name != $POD_NAME ]]; then
+  if [[ $hostname =~ ^HOSTNAME=(.*) ]]; then
+    hostname=${BASH_REMATCH[1]}
+  else
+    echo "Error: Unable to extract hostname from /proc/$p/environ"
     continue
   fi
-  echo "Profiling pod: $pod_name"
-  specific_result_dir="$result_dir/$pod_name@@@{at}"
+  
+  if [[ $hostname != $POD_NAME ]]; then
+    # echo "Skipping pod: $hostname"
+    continue
+  fi
 
-  collect_flags=""
-  collect_flags+=" --duration $PROFILE_TIME"
-  collect_flags+=" -source-search-dir=./src"
-  collect_flags+=" -search-dir=./release/generated"
-  # collect_flags+=" -knob sampling-mode=hw"
-  collect_flags+=" --output-dir $specific_result_dir"
+  echo "Profiling pod: $hostname"
+  stat_output_file="$OUTPUT_DIR/${hostname}_stats.txt"
+  record_output_file="$OUTPUT_DIR/${hostname}_record.data"
+  
+  # perf stat -o "$stat_output_file" \
+        # -e instructions,cycles,L1-icache-load-misses \
+        # -p "$p" 
 
-  echo "VTune collect flags: $collect_flags"
-  vtune -collect $mode $collect_flags -target-pid $p
+  echo "Starting perf record for PID $p (Pod: $pod_name). Output: $record_output_file"
+  perf record -o "$record_output_file" \
+        -e instructions \
+        -p "$p" &
+  perf_pid=$!
 
-  report_path="vtune_results/$pod_name"
-  mkdir -p $report_path
+  sleep $PROFILE_TIME
 
-  vtune -report summary \
-    -r $specific_result_dir \
-    -format csv \
-    -report-output $report_path/report.csv
-  vtune -report hotspots \
-    -r $specific_result_dir \
-    -format csv \
-    -report-output $report_path/hotspots.csv
-  vtune -report callstacks \
-    -r $specific_result_dir \
-    -format csv \
-    -report-output $report_path /callstacks.csv
-  vtune -report memory-access \
-    -r $specific_result_dir \
-    -format csv \
-    -report-output $report_path/memory-access.csv
-  vtune -report memory-bandwidth \
-    -r $specific_result_dir \
-    -format csv \
-    -report-output $report_path/memory-bandwidth.csv
-  vtune -report memory-allocation \
-    -r $specific_result_dir \
-    -format csv \
-    -report-output $report_path/memory-allocation.csv
-  vtune -report memory-consumption \
-    -r $specific_result_dir \
-    -format csv \
-    -report-output $report_path/memory-consumption.csv
+  kill -SIGINT "$perf_pid" 2>/dev/null
+  wait "$perf_pid" 2>/dev/null
+  
+  echo "Perf record completed for PID $p (Pod: $pod_name). Output: $record_output_file"
 
-  chown -R $username:$username $report_path
+  echo "Starting perf stat for PID $p (Pod: $pod_name). Output: $stat_output_file"
+  perf stat -o "$stat_output_file" \
+        -e instructions,cycles,L1-icache-load-misses \
+        -p "$p" &
+
+  perf_pid=$!
+  
+  sleep $PROFILE_TIME
+  kill -SIGINT "$perf_pid" 2>/dev/null
+  wait "$perf_pid" 2>/dev/null
+
+  echo "Perf stat completed for PID $p (Pod: $pod_name). Output: $stat_output_file"
+
+  chown -R $username "$OUTPUT_DIR"
+  break
 
 done
+
+
+cleanup
