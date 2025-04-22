@@ -35,6 +35,7 @@ COPY load_shapes/scaleload.py .
 COPY load_shapes/testload.py .
 COPY load_shapes/slo_rampload.py .
 COPY load_shapes/slowerload.py .
+COPY load_shapes/binary_slowerload.py .
 
 RUN chmod +x entrypoint.sh
 

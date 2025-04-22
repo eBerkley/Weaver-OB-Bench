@@ -285,7 +285,7 @@ $(LOAD_GEN_YAML): $(LOAD_SRC_ALL) $(VERSION_FILE) $(LOAD_BASE_YAML) $(CONFIG_FIL
 
 # If src code or .env (since checkout functionality var is defined there) were modified,
 #	Update binary
-$(BIN): $(MAIN_SRC) .env $(WEAVER_SRC)
+$(BIN): $(MAIN_SRC) .env Makefile $(WEAVER_SRC)
 	@echo rebuilding binary...
 	
 	@cd $(SRC); ../$(WEAVER) generate -tags $(CHECKOUT_FUNCTIONALITY) ./...; go build -tags $(CHECKOUT_FUNCTIONALITY) -o ../release/generated; cd ..
