@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # This script is used to fill in the <podname_SCALING_SPEC> lines.
-# This determines each deployment's initial replicas, and required util to scale out.
+# This determines each deployment's initial replicas, max replicas, and required util to scale out.
 # It is used for any non-static bench type.
 
 SCALING_SPEC_FILE=${SCALING_SPEC_FILE:-'release/base/scalingSpec.yaml'}
@@ -11,7 +11,13 @@ SCALING_DEFS_FILE=${SCALING_DEFS_FILE:-"release/base/colocation/scalingdefs.cfg"
 GROUPS_FILE=${GROUPS_FILE:-'release/generated/groups.yaml'}
 
 SCHEME_FILE=$SCHEME_DIR/${SCHEME:-$1}/spec.yaml
-BENCH_TYPE=${BENCH_TYPE:-$3}
+BENCH_TYPE=${BENCH_TYPE:-$2}
+
+ALLOC_FILE=${ALLOC_FILE:-$3}
+
+#                   name      = min    , max    , util threshold
+full_alloc_pattern="[a-z_\-]+=([0-9]+),([0-9]+),([0-9]+)"
+less_alloc_pattern="[a-z_\-]+=([0-9]+),([0-9]+)"
 
 cp $SCHEME_FILE $GROUPS_FILE
 
@@ -30,8 +36,8 @@ for name in $(get_group_names); do
   type=FALLBACK
   if [[ $BENCH_TYPE = 'FIXED' ]] && [[ $name = $FIXED ]]; 
     then type='FIXED'; 
-  else
 
+  else
     for scale_def in $(cat $SCALING_DEFS_FILE); do
       if [[ $scale_def =~ $pattern ]]; then
         type=${BASH_REMATCH[1]}
@@ -57,10 +63,29 @@ for name in $(get_group_names); do
 
   else
 
+    line=$(grep -e "^$name=" ${ALLOC_FILE:-"/dev/null"})
+
+    if [[ $line =~ $full_alloc_pattern ]]; then
+      min_replicas=${BASH_REMATCH[1]}
+      max_replicas=${BASH_REMATCH[2]}
+      cpu_util=${BASH_REMATCH[3]}
+
+    elif [[ $line =~ $less_alloc_pattern ]]; then
+      min_replicas=${BASH_REMATCH[1]}
+      max_replicas=${BASH_REMATCH[2]}
+      cpu_util=\<"$type"_SCALE_UTIL\>
+
+    else
+      min_replicas=\<"$type"_MIN_REPLICAS\>
+      max_replicas=\<OB_REPLICAS\>
+      cpu_util=\<"$type"_SCALE_UTIL\>
+
+    fi
+
     scaling_spec=$(\
-      sed -z -e s#\<MIN_REPLICAS\>#\<"$type"_MIN_REPLICAS\>#g \
-      -e s#\<MAX_REPLICAS\>#\<OB_REPLICAS\>#g \
-      -e s#\<AVERAGE_UTILIZATION\>#\<"$type"_SCALE_UTIL\>#g \
+      sed -z -e s#\<MIN_REPLICAS\>#$min_replicas#g \
+      -e s#\<MAX_REPLICAS\>#$max_replicas#g \
+      -e s#\<AVERAGE_UTILIZATION\>#$cpu_util#g \
       $SCALING_SPEC_FILE )
   fi
   

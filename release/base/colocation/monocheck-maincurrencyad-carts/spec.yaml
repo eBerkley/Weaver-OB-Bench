@@ -4,8 +4,8 @@ groups:
     - "github.com/eberkley/weaver/Main"
     - "github.com/eBerkley/Weaver-OB-Bench/currencyservice/CurrencyService"
     - "github.com/eBerkley/Weaver-OB-Bench/adservice/AdService"
-<maincurrency_RESOURCE_SPEC>
-<maincurrency_SCALING_SPEC>
+<maincurrencyad_RESOURCE_SPEC>
+<maincurrencyad_SCALING_SPEC>
 
   - name: carts
     components:
