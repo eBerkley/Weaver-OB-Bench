@@ -54,7 +54,7 @@ ob_replicas=0
 ob_util=0
 
 
-for s in loadgenerator all all-but-main carts front back mainad checkoutemailpay adservice cartservice cartcache checkoutservice currencyservice emailservice main paymentservice productcatalogservice shippingservice recservice maincurrency checkship emailpaycache checkemailpaycache maincheck mainproduct mainrec recproduct largefront maincartsvc all-but-product all-but-stateful maincurrencycartsvc maincurrencycarts maincarts checkcurrency checkrec checkcartsvc maincurrencycheck maincheckship; do
+for s in loadgenerator all all-but-main carts front back mainad checkoutemailpay adservice cartservice cartcache checkoutservice currencyservice emailservice main paymentservice productcatalogservice shippingservice recservice maincurrency checkship emailpaycache checkemailpaycache maincheck mainproduct mainrec recproduct largefront maincartsvc all-but-product all-but-stateful maincurrencycartsvc maincurrencycarts maincarts checkcurrency checkrec checkcartsvc maincurrencycheck maincheckship monocheck maincurrencyad; do
   if [[ $s = "loadgenerator" ]]; then
     pod_str="loadgenerator-worker"
   else
