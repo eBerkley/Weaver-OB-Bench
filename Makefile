@@ -191,7 +191,7 @@ deploy: minikube_start pre_deploy
 	fi
 
 	@# If we need to pin, we wait a while because it takes a min to start up.
-	@if [[ -n $$ALLOC_FILE ]]; then sleep 25; ./scripts/pin_pods.sh | tee -a $(LOGS_FILE); fi
+	@if [[ $$BENCH_TYPE = "STATIC" ]]; then sleep 25; ./scripts/pin_pods.sh | tee -a $(LOGS_FILE); fi
 
 
 # Can be run by user 
@@ -259,7 +259,7 @@ bin_build: $(KUBE_BIN) $(TRACE_BIN) $(METRIC_BIN)
 $(WEAVER_GEN_YAML): $(KUBE_BASE_YAML) $(BIN) $(CONFIG_FILE) .env
 	@echo rebuilding onlineboutique container...
 	
-	@if [ -z $$ALLOC_FILE ]; then \
+	@if [ $$BENCH_TYPE != "STATIC" ]; then \
 		echo "pods=dynamic"; \
 		./make_scripts/set_pod_scaling.sh; \
 	else \

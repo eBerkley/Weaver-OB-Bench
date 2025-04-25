@@ -77,7 +77,9 @@ loop_body () {
   echo .env:                          >>benchmark/out/$cfg/info.txt 
   grep -ve '#' .env | grep -e '[A-Z]' >>benchmark/out/$cfg/info.txt 
 
-
+  echo locust.env:                          >>benchmark/out/$cfg/info.txt
+  grep -ve '#' locust.env | grep -e '[A-Z]' >>benchmark/out/$cfg/info.txt 
+  
   # Clear logs for use with next run
   printf "" > $LOGS_FILE
 

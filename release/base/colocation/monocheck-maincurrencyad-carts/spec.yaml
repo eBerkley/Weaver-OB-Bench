@@ -1,0 +1,38 @@
+groups:
+  - name: maincurrencyad
+    components:
+    - "github.com/eberkley/weaver/Main"
+    - "github.com/eBerkley/Weaver-OB-Bench/currencyservice/CurrencyService"
+    - "github.com/eBerkley/Weaver-OB-Bench/adservice/AdService"
+<maincurrency_RESOURCE_SPEC>
+<maincurrency_SCALING_SPEC>
+
+  - name: carts
+    components:
+    - "github.com/eBerkley/Weaver-OB-Bench/cartservice/CartService"
+    - "github.com/eBerkley/Weaver-OB-Bench/cartservice/cartCache"
+<carts_RESOURCE_SPEC>
+<carts_SCALING_SPEC>
+
+  - name: monocheck
+    components:
+    - "github.com/eBerkley/Weaver-OB-Bench/checkoutservice/CheckoutService"
+    - "github.com/eBerkley/Weaver-OB-Bench/emailservice/EmailService"
+    - "github.com/eBerkley/Weaver-OB-Bench/paymentservice/PaymentService"
+    - "github.com/eBerkley/Weaver-OB-Bench/shippingservice/ShippingService"
+    - "github.com/eBerkley/Weaver-OB-Bench/currencyservice/CurrencyService"
+<monocheck_RESOURCE_SPEC>
+<monocheck_SCALING_SPEC>
+
+  - name: productcatalogservice
+    components:
+    - "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService"
+<productcatalogservice_RESOURCE_SPEC>
+<productcatalogservice_STATEFUL_SPEC>
+<productcatalogservice_SCALING_SPEC>
+
+  - name: recservice
+    components:
+    - "github.com/eBerkley/Weaver-OB-Bench/recommendationservice/RecService"
+<recservice_RESOURCE_SPEC>
+<recservice_SCALING_SPEC>

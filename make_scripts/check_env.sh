@@ -18,13 +18,16 @@ if [[ $BENCH_TYPE = 'STATIC' ]]; then
   else
     echo Running a static benchmark.
   fi
-else
-  if [[ -z $ALLOC_FILE ]]; then
-    echo Running a non-static scheme.
-  else 
-    echo Error: BENCH_TYPE != STATIC, but ALLOC_FILE is set to $ALLOC_FILE >&2
-    exit 1
-  fi
+  ###############################
+  ### BELOW IS NO LONGER TRUE ###
+  ###############################
+  
+# else
+  # if [[ -z $ALLOC_FILE ]]; then
+  #   echo Running a non-static scheme.
+  # else 
+  #   echo Error: BENCH_TYPE != STATIC, but ALLOC_FILE is set to $ALLOC_FILE >&2
+  #   exit 1
+  # fi
 fi
-
 

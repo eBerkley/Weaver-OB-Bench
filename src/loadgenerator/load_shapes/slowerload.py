@@ -16,6 +16,9 @@ PAUSE_TIME = int(getenv("LOCUST_SLOWER_PAUSE", 60)) # seconds
 class SlowLoad(LoadTestShape):
     ramp_amount: Final = RAMP_AMOUNT # users
     """What is the first target to hit?"""
+    
+    slow_thresh: Final = 15_000
+    slow_ramp_amount: Final = ramp_amount // 5
 
     ramp_rate: Final = RAMP_RATE
 
@@ -71,13 +74,18 @@ class SlowLoad(LoadTestShape):
 
         elif self._user_secs >= self.pause_time:
             self._slo_timer = WAIT_TIME
-            self._target = cur_users + self.ramp_amount
+            
+            if cur_users < self.slow_thresh:    
+                self._target = cur_users + self.ramp_amount
+            else:
+                self._target = cur_users + self.slow_ramp_amount
+
             self._user_secs = 0
             log_string += f"stabilized, ramping up."
             
         else:
             self._user_secs += 1
-            self._slo_timer = WAIT_TIME
+            # self._slo_timer = WAIT_TIME # We don't want to make ramping up too easy...
             log_string += f"t: {self._user_secs}"
             self._target = cur_users
             
