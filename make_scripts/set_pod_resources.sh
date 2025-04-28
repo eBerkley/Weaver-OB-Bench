@@ -32,9 +32,10 @@ get_group_names () {
   done
 }
 
-cscheme_pattern="^$name=([0-9]+)"
+
 
 for name in $(get_group_names); do
+  cscheme_pattern="^$name=([0-9]+)"
   cores=1
   if [[ $BENCH_TYPE = 'FIXED' ]]; then  # : We don't read from cscheme file
     if [[ $name = $FIXED ]]; then
