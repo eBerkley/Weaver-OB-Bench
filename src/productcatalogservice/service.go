@@ -25,9 +25,9 @@ import (
 	"embed"
 	"fmt"
 	"os"
+	goruntime "runtime"
 	"strconv"
 	"strings"
-	goruntime "runtime"
 
 	"github.com/eBerkley/Weaver-OB-Bench/types/money"
 	"github.com/eberkley/weaver"
@@ -141,7 +141,6 @@ func (s *impl) Init(ctx context.Context) error {
 		}
 	}()
 
-
 	return nil
 }
 
@@ -249,12 +248,14 @@ func (s *impl) ListProducts(ctx context.Context, _ int) ([]Product, error) {
 		imetrics.InternalMetricsFor(imetrics.InternalMethodLabels{Component: "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService", Method: "ListProducts"}).Put(float64(time.Since(initTime).Microseconds()))
 	}()
 
-	ls := make([]Product, maxProducts)
+	maxProds := maxProducts / s.catalogReplicas
+
+	ls := make([]Product, maxProds)
 	i := 0
 	for _, p := range s.db {
 		ls[i] = p
 		i++
-		if i >= maxProducts {
+		if i >= maxProds {
 			break
 		}
 	}
@@ -333,12 +334,13 @@ func (s *impl) SearchProducts(ctx context.Context, query string, _ int) ([]Produ
 
 	s.mu.RLock()
 	defer s.mu.RUnlock()
+	maxProds := maxProducts / s.catalogReplicas
 
 	for _, p := range s.db {
 		if strings.Contains(strings.ToLower(p.Name), q) {
 			ps = append(ps, p)
 			i++
-			if i >= maxProducts {
+			if i >= maxProds {
 				break
 			}
 		}
