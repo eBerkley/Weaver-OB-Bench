@@ -1,0 +1,62 @@
+groups:
+  - name: main
+    components:
+    - "github.com/eberkley/weaver/Main"
+<main_RESOURCE_SPEC>
+<main_SCALING_SPEC>
+
+  - name: adservice
+    components:
+    - "github.com/eBerkley/Weaver-OB-Bench/adservice/AdService"
+<adservice_RESOURCE_SPEC>
+<adservice_SCALING_SPEC>
+
+  - name: cartservice
+    components:
+    - "github.com/eBerkley/Weaver-OB-Bench/cartservice/CartService"
+<cartservice_RESOURCE_SPEC>
+<cartservice_SCALING_SPEC>
+
+  - name: cartcache
+    components:
+    - "github.com/eBerkley/Weaver-OB-Bench/cartservice/cartCache"
+<cartcache_RESOURCE_SPEC>
+<cartcache_SCALING_SPEC>
+
+  - name: checkrec
+    components:
+    - "github.com/eBerkley/Weaver-OB-Bench/checkoutservice/CheckoutService"
+    - "github.com/eBerkley/Weaver-OB-Bench/recommendationservice/RecService"
+<checkrec_RESOURCE_SPEC>
+<checkrec_SCALING_SPEC>
+
+  - name: currencyservice
+    components:
+    - "github.com/eBerkley/Weaver-OB-Bench/currencyservice/CurrencyService"
+<currencyservice_RESOURCE_SPEC>
+<currencyservice_SCALING_SPEC>
+
+  - name: emailservice
+    components:
+    - "github.com/eBerkley/Weaver-OB-Bench/emailservice/EmailService"
+<emailservice_RESOURCE_SPEC>
+<emailservice_SCALING_SPEC>
+
+  - name: paymentservice
+    components:
+    - "github.com/eBerkley/Weaver-OB-Bench/paymentservice/PaymentService"
+<paymentservice_RESOURCE_SPEC>
+<paymentservice_SCALING_SPEC>
+
+  - name: productcatalogservice
+    components:
+    - "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService"
+<productcatalogservice_RESOURCE_SPEC>
+<productcatalogservice_STATEFUL_SPEC>
+<productcatalogservice_SCALING_SPEC>
+
+  - name: shippingservice
+    components:
+    - "github.com/eBerkley/Weaver-OB-Bench/shippingservice/ShippingService"
+<shippingservice_RESOURCE_SPEC>
+<shippingservice_SCALING_SPEC>
