@@ -63,7 +63,7 @@ fake = Faker()
 
 # Products must be hard coded.
 products = [
-    "f60b9a0918",
+  "f60b9a0918",
 	"50bf7d0d7b",
 	"f668e2bc0b",
 	"aa9834b37d",
@@ -111,7 +111,6 @@ products = [
 	"9dceff68ee",
 	"510a91f5da",
 	"8f93ea862a",
-	"a581434692",
 	"3e75f9698c",
 	"928ecffb53",
 	"be92e211f9",
@@ -139,7 +138,6 @@ products = [
 	"141e1b5ca2",
 	"e32f4fe474",
 	"7695f523e3",
-	"328263424d",
 	"59180bda79",
 	"59f39ec0a1",
 	"c668cbbab9",
@@ -147,12 +145,19 @@ products = [
 	"57af9597a4",
 	"8cdad0fc86",
 	"e9462e5bb6",
-	"78b24fd1e2",
 	"cb51e898ac",
 	"384315bf7d",
 	"3e7e3e8274",
 	"fb168c1d3f",
-	"c7560f1869",
+	"8068541fc4",
+	"c286b5c841",
+	"bd4fca9b35",
+	"d74b7a9453",
+	"f09f36a3a6",
+	"db30bdb01d",
+	"8b05fddd80",
+	"3a9de633ac",
+	"2c430db343",
 ]
 
 currencies = ['EUR', 'USD', 'JPY', 'CAD', 'GBP', 'TRY']
