@@ -1,11 +1,10 @@
 groups:
-  - name: maincurrencyad
+  - name: maincurrency
     components:
     - "github.com/eberkley/weaver/Main"
     - "github.com/eBerkley/Weaver-OB-Bench/currencyservice/CurrencyService"
-    - "github.com/eBerkley/Weaver-OB-Bench/adservice/AdService"
-<maincurrencyad_RESOURCE_SPEC>
-<maincurrencyad_SCALING_SPEC>
+<maincurrency_RESOURCE_SPEC>
+<maincurrency_SCALING_SPEC>
 
   - name: carts
     components:
@@ -14,12 +13,19 @@ groups:
 <carts_RESOURCE_SPEC>
 <carts_SCALING_SPEC>
 
+  - name: adservice
+    components:
+    - "github.com/eBerkley/Weaver-OB-Bench/adservice/AdService"
+<adservice_RESOURCE_SPEC>
+<adservice_SCALING_SPEC>
+
   - name: monocheck
     components:
     - "github.com/eBerkley/Weaver-OB-Bench/checkoutservice/CheckoutService"
     - "github.com/eBerkley/Weaver-OB-Bench/emailservice/EmailService"
     - "github.com/eBerkley/Weaver-OB-Bench/paymentservice/PaymentService"
     - "github.com/eBerkley/Weaver-OB-Bench/shippingservice/ShippingService"
+    - "github.com/eBerkley/Weaver-OB-Bench/currencyservice/CurrencyService"
 <monocheck_RESOURCE_SPEC>
 <monocheck_SCALING_SPEC>
 

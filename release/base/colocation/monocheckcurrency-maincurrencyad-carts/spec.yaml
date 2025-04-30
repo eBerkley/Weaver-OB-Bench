@@ -20,6 +20,7 @@ groups:
     - "github.com/eBerkley/Weaver-OB-Bench/emailservice/EmailService"
     - "github.com/eBerkley/Weaver-OB-Bench/paymentservice/PaymentService"
     - "github.com/eBerkley/Weaver-OB-Bench/shippingservice/ShippingService"
+    - "github.com/eBerkley/Weaver-OB-Bench/currencyservice/CurrencyService"
 <monocheck_RESOURCE_SPEC>
 <monocheck_SCALING_SPEC>
 
