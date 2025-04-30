@@ -46,6 +46,10 @@ for name in $(get_group_names); do
     done
     
   fi
+
+  # for statefulspec stuff, see below.
+  stateful_replicas=
+
   # -e expressions, in order:
   # 1: define MIN_REPLICAS to be that of the scaling type
   # 2: define MAX_REPLICAS to be the default for scaling benchmarks, OB_REPLICAS
@@ -66,14 +70,25 @@ for name in $(get_group_names); do
     line=$(grep -e "^$name=" ${ALLOC_FILE:-"/dev/null"})
 
     if [[ $line =~ $full_alloc_pattern ]]; then
+      
+      
       min_replicas=${BASH_REMATCH[1]}
       max_replicas=${BASH_REMATCH[2]}
       cpu_util=${BASH_REMATCH[3]}
+      
+      if grep -e "$name"_STATEFUL_SPEC $SCHEME_FILE >/dev/null; then # detect productcatalogservice replicas
+        stateful_replicas=$min_replicas
+      fi
 
     elif [[ $line =~ $less_alloc_pattern ]]; then
+      
       min_replicas=${BASH_REMATCH[1]}
       max_replicas=${BASH_REMATCH[2]}
       cpu_util=\<"$type"_SCALE_UTIL\>
+      
+      if grep -e "$name"_STATEFUL_SPEC; then 
+        stateful_replicas=$min_replicas
+      fi
 
     else
       min_replicas=\<"$type"_MIN_REPLICAS\>
@@ -101,7 +116,7 @@ for name in $(get_group_names); do
   if [[ $type = 'FIXED' ]]; then
     replicas=$FIXED_WIDTH
   else
-    replicas=$PRODUCT_CATALOG_REPLICAS
+    replicas=${stateful_replicas:-$PRODUCT_CATALOG_REPLICAS}
   fi
   stateful_spec="
     statefulSpec:
