@@ -3,21 +3,29 @@
 # This script is used to fill in the <podname_SCALING_SPEC> lines.
 # This determines each deployment's initial replicas, max replicas, and required util to scale out.
 # It is used for any non-static bench type.
-
+SCHEME=${SCHEME:-$1}
 SCALING_SPEC_FILE=${SCALING_SPEC_FILE:-'release/base/scalingSpec.yaml'}
 
 SCALING_DEFS_FILE=${SCALING_DEFS_FILE:-"release/base/colocation/scalingdefs.cfg"}
 
 GROUPS_FILE=${GROUPS_FILE:-'release/generated/groups.yaml'}
 
-SCHEME_FILE=$SCHEME_DIR/${SCHEME:-$1}/spec.yaml
+SCHEME_FILE=$SCHEME_DIR/$SCHEME/spec.yaml
 BENCH_TYPE=${BENCH_TYPE:-$2}
 
 ALLOC_FILE=${ALLOC_FILE:-$3}
+if [[ $ALLOC_FILE = "*" ]]; then
+  if [[ -r "alloc/$SCHEME.cfg" ]]; then
+    ALLOC_FILE="alloc/$SCHEME.cfg"
+  else 
+    ALLOC_FILE=""
+  fi
+fi
 
 #                   name      = min    , max    , util threshold
 full_alloc_pattern="[a-z_\-]+=([0-9]+),([0-9]+),([0-9]+)"
 less_alloc_pattern="[a-z_\-]+=([0-9]+),([0-9]+)"
+min_alloc_pattern="[a-z_\-]+=([0-9]+)"
 
 cp $SCHEME_FILE $GROUPS_FILE
 
@@ -86,7 +94,15 @@ for name in $(get_group_names); do
       max_replicas=${BASH_REMATCH[2]}
       cpu_util=\<"$type"_SCALE_UTIL\>
       
-      if grep -e "$name"_STATEFUL_SPEC; then 
+      if grep -e "$name"_STATEFUL_SPEC $SCHEME_FILE >/dev/null; then 
+        stateful_replicas=$min_replicas
+      fi
+    elif [[ $line =~ $min_alloc_pattern ]]; then
+      min_replicas=${BASH_REMATCH[1]}
+      max_replicas=\<OB_REPLICAS\>
+      cpu_util=\<"$type"_SCALE_UTIL\>
+
+      if grep -e "$name"_STATEFUL_SPEC $SCHEME_FILE >/dev/null; then 
         stateful_replicas=$min_replicas
       fi
 

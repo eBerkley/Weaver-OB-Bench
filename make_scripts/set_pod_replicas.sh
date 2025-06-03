@@ -3,14 +3,18 @@
 # This script is used to fill in the <podname_SCALING_SPEC> lines.
 # This determines each deployment's initial replicas, and required util to scale out.
 # It is used for the static bench type.
-
+SCHEME=${SCHEME:-$1}
 SCALING_SPEC_FILE=${SCALING_SPEC_FILE:-'release/base/scalingSpec.yaml'}
 GROUPS_FILE=${GROUPS_FILE:-'release/generated/groups.yaml'}
 
-SCHEME_FILE=$SCHEME_DIR/${SCHEME:-$1}/spec.yaml
+SCHEME_FILE=$SCHEME_DIR/$SCHEME/spec.yaml
 
 # One of the files in alloc/
-alloc_lines=$(cat ${ALLOC_FILE:-$2})
+ALLOC_FILE=${ALLOC_FILE:-$2}
+if [[ $ALLOC_FILE = "*" ]]; then
+  ALLOC_FILE=alloc/$SCHEME.cfg
+fi
+alloc_lines=$(cat $ALLOC_FILE)
 
 
 cp $SCHEME_FILE $GROUPS_FILE
