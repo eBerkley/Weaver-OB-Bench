@@ -49,13 +49,15 @@ func (g *Group) GetTags() string {
 func makeGroup(s string) *Group {
 	shorts := SplitFunc(s, unicode.IsUpper)
 	g := &Group{
-		Name:       s,
+		Name:       "",
 		Components: make([]string, len(shorts)),
 	}
 
 	for i, s := range shorts {
+		g.Name += strings.Map(unicode.ToLower, s) + "-"
 		g.Components[i] = ReverseSetter[s]
 	}
+	g.Name = g.Name[:len(g.Name)-1]
 
 	return g
 }

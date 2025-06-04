@@ -10,6 +10,7 @@
 SCHEME=${SCHEME:-$1}
 C_SCHEME=${C_SCHEME:-$2}
 BENCH_TYPE=${BENCH_TYPE:-$3}
+DEBUG_OUTPUT=${DEBUG_OUTPUT:-"logs.txt"}
 
 GROUPS_FILE=${GROUPS_FILE:-"release/generated/groups.yaml"}
 SCHEME_DIR=${SCHEME_DIR:-'release/base/colocation'}
@@ -24,7 +25,7 @@ GROUPS_HEIGHT=$SCHEME_PATH/groups_height.cfg
 echo set_pod_resources.sh >> $DEBUG_OUTPUT
 
 get_group_names () {
-  local pattern="- name: ([a-z_\-]+)"
+  local pattern="- name: ([A-Za-z_\-]+)"
   IFS=$'\n'
 
   for line in $(grep -e '- name:' $SCHEME_FILE); do
@@ -35,6 +36,7 @@ get_group_names () {
 
 
 for name in $(get_group_names); do
+  echo $name
   cscheme_pattern="^$name=([0-9]+)"
   cores=1
   if [[ $BENCH_TYPE = 'FIXED' ]]; then  # : We don't read from cscheme file

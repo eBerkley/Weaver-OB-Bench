@@ -53,8 +53,20 @@ echo
 ob_replicas=0
 ob_util=0
 
+get_pods () {
+  echo loadgenerator
+  # get every pod named ob-*, and then delete the stuff that comes before / after the group name
+  kubectl top po | grep ob- | sed -E 's/-[a-z0-9]{8,}.*//' | sed -E 's/ob-//'
+}
 
-for s in loadgenerator all all-but-main carts front back mainad checkoutemailpay adservice cartservice cartcache checkoutservice currencyservice emailservice main paymentservice productcatalogservice shippingservice recservice maincurrency checkship emailpaycache checkemailpaycache maincheck mainproduct mainrec recproduct largefront maincartsvc all-but-product all-but-stateful maincurrencycartsvc maincurrencycarts maincarts checkcurrency checkrec checkcartsvc maincurrencyrec maincurrencycheck maincheckship monocheck maincurrencyad monocheckshipless monocheckcurrency; do
+# get_pods will create duplicate listings, but they will be sorted.
+# Therefore, we can skip duplicates by skipping values equal to the last.
+prev=""
+
+for s in $(get_pods); do
+  if [[ $s = $prev ]]; then continue; fi
+  prev=$s
+  
   if [[ $s = "loadgenerator" ]]; then
     pod_str="loadgenerator-worker"
   else

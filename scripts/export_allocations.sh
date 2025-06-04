@@ -4,8 +4,8 @@ ALLOC_DIR="alloc"
 mkdir -p $ALLOC_DIR
 
 
-bench_type_pattern="([a-z_\-]+)_([a-z0-9\-]+)_([0-9]+)"
-stats_pattern="^([a-z\-]+),([0-9]+)"
+# bench_type_pattern="([a-z_\-]+)_([a-z0-9\-]+)_([0-9]+)"
+stats_pattern="^([a-z_\-]+),([0-9]+)"
 write_alloc () {
   local in=$1
   local out=$2
@@ -25,14 +25,16 @@ write_alloc () {
   
 }
 
-tmp=$(mktemp)
+get () {
+    $f=$1
+    $scheme=$f
+    # scheme=${BASH_REMATCH[1]}
 
-for f in $(ls benchmark/out); do
-  if [[ $f =~ $bench_type_pattern ]]; then
+    # cscheme=${BASH_REMATCH[2]}
+    # cores_total=${BASH_REMATCH[3]}
 
-    scheme=${BASH_REMATCH[1]}
-    cscheme=${BASH_REMATCH[2]}
-    cores_total=${BASH_REMATCH[3]}
+    cscheme=groups_height
+    cores_total=36
 
     pod_stats_path=benchmark/out/$f/stats/pod_stats.csv
     if [[ ! -r $pod_stats_path ]]; then
@@ -48,7 +50,11 @@ for f in $(ls benchmark/out); do
     else
       >&2 echo Error: $pod_stats_path reports pods created less than capacity. Skipping...
     fi
-  fi
-done
 
-rm -f $tmp
+}
+
+if [[ -z $1 ]]; then
+  for f in $(ls benchmark/out); do get $f; done
+else 
+  get $1
+fi

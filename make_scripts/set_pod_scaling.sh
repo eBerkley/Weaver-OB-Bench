@@ -23,15 +23,15 @@ if [[ $ALLOC_FILE = "*" ]]; then
 fi
 
 #                   name      = min    , max    , util threshold
-full_alloc_pattern="[a-z_\-]+=([0-9]+),([0-9]+),([0-9]+)"
-less_alloc_pattern="[a-z_\-]+=([0-9]+),([0-9]+)"
-min_alloc_pattern="[a-z_\-]+=([0-9]+)"
+full_alloc_pattern="[A-Za-z_\-]+=([0-9]+),([0-9]+),([0-9]+)"
+less_alloc_pattern="[A-Za-z_\-]+=([0-9]+),([0-9]+)"
+min_alloc_pattern="[A-Za-z_\-]+=([0-9]+)"
 
 cp $SCHEME_FILE $GROUPS_FILE
 
 echo set_pod_scaling.sh >> $DEBUG_OUTPUT
 get_group_names () {
-  local pattern="- name: ([a-z_\-]+)"
+  local pattern="- name: ([A-Za-z_\-]+)"
   IFS=$'\n'
 
   for line in $(grep -e '- name:' $SCHEME_FILE); do
