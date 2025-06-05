@@ -57,12 +57,12 @@ for alloc in $(cat $CSCHEME_FILE); do
       (( total_cores += replicas * $cores ))
     else
       echo Error: name $name not found in stats. >&2
-      echo 1
+      echo 0
       exit 1
     fi
   else
     echo Error: $alloc does not match cscheme pattern. >&2
-    echo 1
+    echo 0
     exit 1
   fi
 done

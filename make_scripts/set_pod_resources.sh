@@ -36,7 +36,6 @@ get_group_names () {
 
 
 for name in $(get_group_names); do
-  echo $name
   cscheme_pattern="^$name=([0-9]+)"
   cores=1
   if [[ $BENCH_TYPE = 'FIXED' ]]; then  # : We don't read from cscheme file

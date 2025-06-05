@@ -102,7 +102,9 @@ func toYaml() {
 	fmt.Println("groups:")
 	for _, g := range gs {
 		fmt.Print(string(g.GetText()))
+		fmt.Fprintf(os.Stderr, "%v=1\n", g.Name)
 	}
+
 }
 
 func fromYaml() {

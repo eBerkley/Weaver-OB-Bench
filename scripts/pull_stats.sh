@@ -56,7 +56,7 @@ echo $strs
 # usage: loop_continue SIZE
 #   we should terminate => echo 0
 #   else => echo 1
-if [[ $LOCUST_SHAPE = 'scaleload' ]]; then
+if [[ $BENCH_TYPE = 'CUSTOM' ]]; then
   loop_continue () {
     local size=$1
 
