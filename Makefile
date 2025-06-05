@@ -92,6 +92,17 @@ else ifeq ($(BENCH_TYPE), CPU_UTIL)
 	LOCUST_SHAPE       := constload
 	LOCUST_CONST_USERS := $(CPU_UTIL_USERS)
 
+else ifeq ($(BENCH_TYPE), ALLOC)
+	METRIC_ENABLE   := false
+	TRACE_ENABLE    := false
+	INSTFP_ENABLE   := false
+	CPU_UTIL_ENABLE := false
+	VERTICAL_PROF   := false
+	RUNTIME_METRIC_ENABLE := false
+
+	LOCUST_SHAPE         := slowerload
+	LOCUST_SLOWLOAD_RAMP := 5000
+	LOCUST_SLOWER_PAUSE  := 30
 else # ifeq ($(BENCH_TYPE), CUSTOM)
 # ...
 endif

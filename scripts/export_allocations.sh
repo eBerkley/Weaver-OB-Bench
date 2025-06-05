@@ -17,7 +17,7 @@ write_alloc () {
     name=${BASH_REMATCH[1]}
     replicas=${BASH_REMATCH[2]}
 
-    if [[ $name = 'loadgenerator' ]] then continue; fi
+    if [[ $name = 'loadgenerator' ]] || [[ $name = 'aggregate' ]] then continue; fi
     
     echo $name=$replicas >>$out
     
@@ -26,12 +26,8 @@ write_alloc () {
 }
 
 get () {
-    $f=$1
-    $scheme=$f
-    # scheme=${BASH_REMATCH[1]}
-
-    # cscheme=${BASH_REMATCH[2]}
-    # cores_total=${BASH_REMATCH[3]}
+    f=$1
+    scheme=$f
 
     cscheme=groups_height
     cores_total=36

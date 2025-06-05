@@ -56,7 +56,7 @@ echo $strs
 # usage: loop_continue SIZE
 #   we should terminate => echo 0
 #   else => echo 1
-if [[ $BENCH_TYPE = 'CUSTOM' ]]; then
+if [[ $BENCH_TYPE = 'ALLOC' ]]; then
   loop_continue () {
     local size=$1
 

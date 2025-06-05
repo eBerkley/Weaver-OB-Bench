@@ -13,5 +13,5 @@ fi
 
 minikube start $flags
 
-minikube addons enable metrics-server
-# kubectl apply -f release/base/metrics-server.yaml
+# minikube addons enable metrics-server
+kubectl apply -f release/base/metrics-server.yaml

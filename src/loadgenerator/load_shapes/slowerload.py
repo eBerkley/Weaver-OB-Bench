@@ -17,7 +17,7 @@ class SlowLoad(LoadTestShape):
     ramp_amount: Final = RAMP_AMOUNT # users
     """What is the first target to hit?"""
     
-    slow_thresh: Final = 20_000
+    slow_thresh: Final = 30_000
     slow_ramp_amount: Final = ramp_amount // 5
 
     ramp_rate: Final = RAMP_RATE
