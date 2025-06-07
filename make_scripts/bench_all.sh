@@ -19,10 +19,10 @@ DOCKER_CACHE_CLEAR_FREQ=7
 i=0
 
 maybe_clear_cache () {
+  (( i++ ))
   if [ $(( i % $DOCKER_CACHE_CLEAR_FREQ )) -eq 0 ]; then
     docker system prune -f
   fi
-  (( i++ ))
 }
 
 
