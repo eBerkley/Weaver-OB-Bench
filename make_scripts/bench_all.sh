@@ -12,12 +12,27 @@ if [[ $BENCH_TYPE = "STATIC" ]]; then
   sudo echo
 fi
 
+# Once every n benchmarks, clear docker cache 
+# prevents running out of space.
+DOCKER_CACHE_CLEAR_FREQ=7
+
+i=0
+
+maybe_clear_cache () {
+  if [ $(( i % $DOCKER_CACHE_CLEAR_FREQ )) -eq 0 ]; then
+    docker system prune -f
+  fi
+  (( i++ ))
+}
+
 
 loop_body () {
 
   local fname=$1
   local name=$2
   local cfg=$3
+
+  maybe_clear_cache
 
   
   # Create the dir that the next batch of stats will use

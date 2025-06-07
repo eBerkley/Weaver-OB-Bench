@@ -3,7 +3,10 @@ release/generated/*
 test/weaverOut
 test/gRPCOut
 test/inputs.txt
-benchmark/*/*
+benchmark/out
+benchmark/out_old
+benchmark/imgs
+
 logs.txt
 tmp_logs.txt
 notes.md
