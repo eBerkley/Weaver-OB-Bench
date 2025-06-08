@@ -69,6 +69,8 @@ sed -i "s#<LOCUST_SLOWER_PAUSE>#\"$LOCUST_SLOWER_PAUSE\"#g" $LOAD_GEN_YAML
 
 sed -i "s#<LOCUST_RAMP_RATE>#\"$LOCUST_RAMP_RATE\"#g" $LOAD_GEN_YAML
 
+sed -i "s#<LOCUST_PHASE2_USERS>#\"$LOCUST_PHASE2_USERS\"#g" $LOAD_GEN_YAML
+sed -i "s#<LOCUST_SLOWLOAD_RAMP2>#\"$LOCUST_SLOWLOAD_RAMP2\"#g" $LOAD_GEN_YAML
 
 # If we are going to be adding replicas, 
 # ensure connections are periodically reset to route traffic to new main components.

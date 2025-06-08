@@ -43,6 +43,17 @@ class Env:
         self.p99: List[float] = []
         self.cpu: List[float] = []
 
+# Assume that if test dir format is `<groupname>_<c1>_<c2>_<c3>_...`
+# testname is just a groupname.
+def find_best_match(groupname: str, outdir: str) -> str:
+    tests = os.listdir(outdir)
+    for t in tests:
+        if t.split('_')[0] == groupname:
+            
+            return os.path.join(outdir, t)
+    
+    raise ValueError(f"scheme {groupname} has no results")
+
 
 def init_env(testname: str, alloc_ok: bool) -> Env:
     
@@ -50,9 +61,12 @@ def init_env(testname: str, alloc_ok: bool) -> Env:
     # Make sure testname is a valid test
     # ==================================
     THISDIR = os.path.dirname(__file__)
-    dirname = os.path.join(THISDIR, "..", "out", testname)
+    outdir = os.path.normpath(
+        os.path.join(THISDIR, "..", "out"))
+    
+    dirname = os.path.join(outdir, testname)
     if not os.path.exists(dirname):
-        raise ValueError(f"scheme {testname} has no results")
+        dirname = find_best_match(testname, outdir) # May raise ValueError if no such test can be found
     
     infoname = os.path.join(dirname, "info.txt")
     with open(infoname, "r") as info:
@@ -60,7 +74,6 @@ def init_env(testname: str, alloc_ok: bool) -> Env:
             if not alloc_ok:
                 raise ValueError(f"scheme {testname} is not a full benchmark!")
             
-    
     lat_csv = os.path.join(dirname, "stats", "aggregated.csv")
     cpu_csv = os.path.join(dirname, "stats", "cpu.csv")
 

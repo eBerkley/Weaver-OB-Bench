@@ -12,13 +12,15 @@ MAX_TAIL = int(getenv("LOCUST_MAX_TAIL", 200))
 RAMP_RATE = float(getenv("LOCUST_RAMP_RATE", "10.0")) # users / second
 RAMP_AMOUNT = int(getenv("LOCUST_SLOWLOAD_RAMP", 750))
 PAUSE_TIME = int(getenv("LOCUST_SLOWER_PAUSE", 60)) # seconds
+PHASE2_USERS = int(getenv("LOCUST_PHASE2_USERS", 25_000))
+RAMP2_AMOUNT = int(getenv("LOCUST_SLOWLOAD_RAMP2", 2_000))
 
 class SlowLoad(LoadTestShape):
     ramp_amount: Final = RAMP_AMOUNT # users
     """What is the first target to hit?"""
     
-    slow_thresh: Final = 25_000
-    slow_ramp_amount: Final = ramp_amount // 5
+    slow_thresh: Final = PHASE2_USERS
+    slow_ramp_amount: Final = RAMP2_AMOUNT
 
     ramp_rate: Final = RAMP_RATE
 
@@ -71,8 +73,10 @@ class SlowLoad(LoadTestShape):
             self._slo_timer -= 1
             self._target = cur_users
             
-
-        elif self._user_secs >= self.pause_time:
+        # First two ramps take 3x as long.
+        elif (cur_users <= self.ramp_amount*2 and 
+                self._user_secs >= self.pause_time * 3) or (
+                self._user_secs >= self.pause_time):
             self._slo_timer = WAIT_TIME
             
             if cur_users < self.slow_thresh:    

@@ -119,6 +119,12 @@ spec:
         - name: LOCUST_RAMP_RATE
           value: <LOCUST_RAMP_RATE>
 
+        - name: LOCUST_SLOWLOAD_RAMP2
+          value: <LOCUST_SLOWLOAD_RAMP2>
+
+        - name: LOCUST_PHASE2_USERS
+          value: <LOCUST_PHASE2_USERS>
+
         resources:
           requests:
             cpu: 1
@@ -236,6 +242,12 @@ spec:
 
         - name: LOCUST_RAMP_RATE
           value: <LOCUST_RAMP_RATE>
+
+        - name: LOCUST_SLOWLOAD_RAMP2
+          value: <LOCUST_SLOWLOAD_RAMP2>
+
+        - name: LOCUST_PHASE2_USERS
+          value: <LOCUST_PHASE2_USERS>  
 
         resources:
           requests: 
