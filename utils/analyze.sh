@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# For vtune analysis.
+
 cd $(dirname $0)
 
 print_usage() {
