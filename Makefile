@@ -100,6 +100,8 @@ else ifeq ($(BENCH_TYPE), ALLOC)
 	VERTICAL_PROF   := false
 	RUNTIME_METRIC_ENABLE := false
 
+	LOCUST_RESET_CONN := 1
+
 	LOCUST_SHAPE         := slowerload
 	LOCUST_SLOWLOAD_RAMP := 5000
 	LOCUST_SLOWER_PAUSE  := 30
@@ -147,6 +149,8 @@ results_all:
 			make S=$$a results >/dev/null; \
 		fi; \
 	done
+
+
 
 status:
 	./utils/print_status.sh

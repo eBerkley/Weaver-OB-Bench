@@ -31,7 +31,8 @@ log_debug_info() {
     # echo "=*=*=*=*=*=*=*=*= DEBUG INFO =*=*=*=*=*=*=*=*="
     
     date -d@$SECONDS -u +%H:%M:%S
-    
+    kubectl top po 2>/dev/null | awk 'NR==1 || $1 !~ /^loadgenerator/'
+    echo
     ./get_replicas.sh
     code=$?
     if [[ $code = 0 ]]; then
@@ -48,10 +49,10 @@ log_debug_info() {
 
 iterations=0
 
-strs=$(get_lines $timestamp_file 3)
+strs=$(get_lines $timestamp_file 30)
 str=$(echo "$strs" | tail -1)
 size=${#str}
-echo $strs
+echo "$strs" | tee -a $logfile
 
 # usage: loop_continue SIZE
 #   we should terminate => echo 0

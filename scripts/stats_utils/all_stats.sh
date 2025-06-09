@@ -8,13 +8,7 @@ full_podname=$(kubectl get pod -o name --selector app=loadgenerator )
 
 export podname="${full_podname#*/}"
 
-mainpod=$(kubectl get deploy | grep '[mM]ain' | head -1 | awk '{print $1}')
-if [[ -z "$mainpod" ]]; then
-  mainpod=$(kubectl get deploy | grep 'all' | head -1 | awk '{print $1}')
-  if [[ -z "$mainpod" ]]; then
-    mainpod=$(kubectl get deploy | grep 'front' | head -1 | awk '{print $1}')
-  fi
-fi
+mainpod=$(kubectl get po | grep 'ob-m' | head -1 | awk '{print $1}')
 
 export mainpod
 

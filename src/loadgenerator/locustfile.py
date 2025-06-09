@@ -31,13 +31,15 @@ REQ_RATE = float(os.getenv("LOCUST_REQ_RATE", "1"))
 
 def get_conn_pool():
     if CONN_POOL:
+        print("[YYYY-MM-DD HH:MM:SS,000] loadgenerator-xxxxxxxxxxx-xxxxx/INFO/root: LOCUST DEBUG: CONNECTION POOLING ENABLED")
         return PoolManager(maxsize=2500, block=False)
     else:
+        print("[YYYY-MM-DD HH:MM:SS,000] loadgenerator-xxxxxxxxxxx-xxxxx/INFO/root: LOCUST DEBUG: CONNECTION POOLING DISABLED")
         return None
 
 
 RESET_CONN = int(os.getenv("LOCUST_RESET_CONN", "0")) # 1 = True, 0 = False
-
+print(f"[YYYY-MM-DD HH:MM:SS,001] loadgenerator-xxxxxxxxxxx-xxxxx/INFO/root: LOCUST DEBUG: RESET_CONN: {RESET_CONN}")
 RESET_FREQ      = 5 * RESET_CONN # 5 if HPA is enabled, 0 otherwise. 
 INDEX_FREQ      = 20 # GET /
 CURRENCY_FREQ   = 10 # POST /setCurrency

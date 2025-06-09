@@ -124,6 +124,9 @@ spec:
 
         - name: LOCUST_PHASE2_USERS
           value: <LOCUST_PHASE2_USERS>
+        
+        - name: LOCUST_RAMP_RATE2
+          value: <LOCUST_RAMP_RATE2>
 
         resources:
           requests:
@@ -248,6 +251,9 @@ spec:
 
         - name: LOCUST_PHASE2_USERS
           value: <LOCUST_PHASE2_USERS>  
+
+        - name: LOCUST_RAMP_RATE2
+          value: <LOCUST_RAMP_RATE2>
 
         resources:
           requests: 

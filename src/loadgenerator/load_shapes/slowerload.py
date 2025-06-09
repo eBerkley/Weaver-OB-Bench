@@ -1,4 +1,5 @@
 from locust import LoadTestShape
+from locust.runners import Runner
 from typing import Tuple, Optional, List, Final
 
 import logging
@@ -14,6 +15,7 @@ RAMP_AMOUNT = int(getenv("LOCUST_SLOWLOAD_RAMP", 750))
 PAUSE_TIME = int(getenv("LOCUST_SLOWER_PAUSE", 60)) # seconds
 PHASE2_USERS = int(getenv("LOCUST_PHASE2_USERS", 25_000))
 RAMP2_AMOUNT = int(getenv("LOCUST_SLOWLOAD_RAMP2", 2_000))
+RAMP_RATE2 = float(getenv("LOCUST_RAMP_RATE2", "10.0")) # users / second
 
 class SlowLoad(LoadTestShape):
     ramp_amount: Final = RAMP_AMOUNT # users
@@ -23,10 +25,10 @@ class SlowLoad(LoadTestShape):
     slow_ramp_amount: Final = RAMP2_AMOUNT
 
     ramp_rate: Final = RAMP_RATE
+    ramp_rate2: Final = RAMP_RATE2
 
     max_tail: Final = MAX_TAIL # ms
     """When p99 latency >= this value, consider it violating."""
-
 
     pause_time: Final = PAUSE_TIME
 
@@ -41,7 +43,7 @@ class SlowLoad(LoadTestShape):
         self._target: int = self.ramp_amount
         "What number of users are we trying to ramp to?"
         
-        self._p99: float = 0
+        self._p99: int = 0
         """tail latency"""
 
         self._user_secs: float = 0.0
@@ -51,18 +53,13 @@ class SlowLoad(LoadTestShape):
     def tick(self) -> Optional[Tuple[int, float]]:
         log_string = ""
         cur_users : int = self.get_current_user_count()
-
-        self._p50: float = self.runner.stats.total.get_current_response_time_percentile(0.50)
-
-        self._p99: float = self.runner.stats.total.get_current_response_time_percentile(0.99)
-
+        
+        self._p50: int = self.runner.stats.total.get_current_response_time_percentile(0.50) or 0
+        self._p99: int = self.runner.stats.total.get_current_response_time_percentile(0.99) or 0
 
         if cur_users < self.ramp_amount:
-            return self.ramp_amount, self.ramp_rate
-
-        if self._p99 == None:
-            self._p99 = 0
-
+            return self.ramp_amount, 10.0 #self.ramp_rate
+        ramp_rate = self.ramp_rate
         if self._slo_timer <= 0:
             return None
 
@@ -72,16 +69,14 @@ class SlowLoad(LoadTestShape):
             log_string += f"SLO Vioilating..."
             self._slo_timer -= 1
             self._target = cur_users
-            
-        # First two ramps take 3x as long.
-        elif (cur_users <= self.ramp_amount*2 and 
-                self._user_secs >= self.pause_time * 3) or (
-                self._user_secs >= self.pause_time):
+
+        elif self._user_secs >= self.pause_time:
             self._slo_timer = WAIT_TIME
-            
+
             if cur_users < self.slow_thresh:    
                 self._target = cur_users + self.ramp_amount
             else:
+                ramp_rate = self.ramp_rate2
                 self._target = cur_users + self.slow_ramp_amount
 
             self._user_secs = 0
@@ -95,4 +90,4 @@ class SlowLoad(LoadTestShape):
             
 
         logging.info(log_string)
-        return self._target, self.ramp_rate
+        return self._target, ramp_rate
