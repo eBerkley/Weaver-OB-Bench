@@ -11,6 +11,7 @@ import (
 const grpFile = "../../grpFile.txt"
 
 var curGroup = flag.String("grp", "", "what group do you want the next groups of?")
+var prevMode = flag.Bool("prev", false, "if set, return the previous group instead of the next groups.")
 
 func main() {
 	flag.Parse()
@@ -33,14 +34,25 @@ func main() {
 	}
 
 	d1 := strings.Count(allGrps[i], "  ")
-	for j := i + 1; j < len(allGrps); j++ {
-		d2 := strings.Count(allGrps[j], "  ")
-		if d1 == d2 {
-			break
+	if *prevMode {
+		for j := i - 1; j >= 0; j-- {
+			d2 := strings.Count(allGrps[j], "  ")
+			if d1-1 == d2 {
+				s := strings.Trim(allGrps[j], " ")
+				fmt.Println(s)
+				break
+			}
 		}
-		if d1+1 == d2 {
-			s := strings.Trim(allGrps[j], " ")
-			fmt.Println(s)
+	} else {
+		for j := i + 1; j < len(allGrps); j++ {
+			d2 := strings.Count(allGrps[j], "  ")
+			if d1 == d2 {
+				break
+			}
+			if d1+1 == d2 {
+				s := strings.Trim(allGrps[j], " ")
+				fmt.Println(s)
+			}
 		}
 	}
 }
