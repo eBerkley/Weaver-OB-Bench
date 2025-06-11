@@ -25,7 +25,6 @@ maybe_clear_cache () {
   fi
 }
 
-
 loop_body () {
 
   local fname=$1
