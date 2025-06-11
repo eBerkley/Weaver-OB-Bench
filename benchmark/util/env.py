@@ -70,7 +70,11 @@ def init_env(testname: str, alloc_ok: bool) -> Env:
     
     infoname = os.path.join(dirname, "info.txt")
     with open(infoname, "r") as info:
-        if info.readlines()[BENCH_TYPE_LINE].strip().endswith(ALLOC_TYPE):
+        lines = info.readlines()
+        if len(lines) <= BENCH_TYPE_LINE:
+           raise ValueError(f"scheme {testname} info.txt is malformed!") 
+           
+        if lines[BENCH_TYPE_LINE].strip().endswith(ALLOC_TYPE):
             if not alloc_ok:
                 raise ValueError(f"scheme {testname} is not a full benchmark!")
             
