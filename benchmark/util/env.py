@@ -5,7 +5,6 @@ import pandas as pd
 from enum import Enum
 from typing import List, Union, Final
 
-
 BENCH_TYPE_LINE=25
 ALLOC_TYPE="ALLOC"
 
@@ -19,7 +18,6 @@ class StatsHead:
 class CPUHead:
     Seconds: Final   ='Seconds'
     Cores: Final     ='CPU Cores'
-    
 
 class Scheme:
     def __init__(self, name: str):
@@ -46,6 +44,7 @@ class Env:
 # Assume that if test dir format is `<groupname>_<c1>_<c2>_<c3>_...`
 # testname is just a groupname.
 def find_best_match(groupname: str, outdir: str) -> str:
+    groupname=groupname.split('_')[0]
     tests = os.listdir(outdir)
     for t in tests:
         if t.split('_')[0] == groupname:
