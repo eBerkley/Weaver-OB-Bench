@@ -155,7 +155,8 @@ func main() {
 	allGrps := strings.Split(string(b), "\n")
 
 	if *rComponent != "" {
-		fmt.Println(makeGroup(strings.Split(*curGroup, "_")[0]).removed(*rComponent).String())
+
+		fmt.Print(makeGroup(strings.Split(*curGroup, "_")[0]).removed(*rComponent).String())
 		os.Exit(0)
 	}
 
