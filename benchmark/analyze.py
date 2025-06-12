@@ -16,7 +16,7 @@ if mode == util.Mode.RANK.value:
         for s in ss.split(" "):
             if s != "":
                 scm = s.split("_")[0]
-                schemes.append(scm)
+                schemes.append(scm.strip())
 
     print("groups: " + " ".join(schemes))
 
@@ -69,9 +69,9 @@ elif mode == util.Mode.COMPARE_MANY.value:
         for s in ss.split(" "):
             if s != "":
                 scm = s.split("_")[0]
-                schemes.append(scm)
+                schemes.append(scm.strip())
     
-    print("groups: " + " ".join(schemes))
+    print("groups: " + " ".join([f"{i}:{schemes[i]}" for i in range(len(schemes))]))
     print()
     if len(schemes) < 2:
         raise ValueError(f"Need to use schemes multiple times. schemes: {schemes}")
@@ -119,9 +119,16 @@ elif mode == util.Mode.COMPARE_MANY.value:
         p99_scheme = schemes[min_p99[0]]
         cpu_scheme = schemes[min_cpu[0]]
 
-        if len(min_p50) > 1: p50_scheme = "..."
-        if len(min_p99) > 1: p99_scheme = "..."
-        if len(min_cpu) > 1: cpu_scheme = "..."
+
+        if   len(min_p50) > 5: p50_scheme = f"({len(min_p50)} schemes)"
+        elif len(min_p50) > 1:  p50_scheme = ",".join([str(x) for x in min_p50]) # = "..."
+        
+        if   len(min_p99) > 5: p99_scheme = f"({len(min_p99)} schemes)"
+        elif len(min_p99) > 1:  p99_scheme = ",".join([str(x) for x in min_p99]) # = "..."
+        
+        if   len(min_cpu) > 5: cpu_scheme = f"({len(min_cpu)} schemes)"
+        elif len(min_cpu) > 1:  cpu_scheme = ",".join([str(x) for x in min_cpu]) # = "..."
+
 
         p50_str = f"{p50_scheme.rjust(15)}: {dls[min_p50[0]][t].p50:6.2f}"
         p99_str = f"{p99_scheme.rjust(15)}: {dls[min_p99[0]][t].p99:7.2f}"
