@@ -104,7 +104,8 @@ else ifeq ($(BENCH_TYPE), ALLOC)
 
 	LOCUST_SHAPE         := slowerload
 	LOCUST_SLOWLOAD_RAMP := 5000
-	LOCUST_SLOWER_PAUSE  := 30
+	LOCUST_SLOWER_PAUSE  := 45
+	LOCUST_WAIT_TIME     := 300		
 else # ifeq ($(BENCH_TYPE), CUSTOM)
 # ...
 endif

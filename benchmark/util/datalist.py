@@ -92,6 +92,7 @@ class DataList:
         s = 'users,rps,p50,p99,cpu\n'
         for d in self.ds:
             s += f"{d.get_users()},{d.get_rps()},{d.get_p50()},{d.get_p99()},{d.get_cpu()}\n"
+        return s[:-1]
 
     def compare(self, other: 'DataList') -> str:
         s = f'{"users".rjust(5)}: {"p50".rjust(6)}, {"p99".rjust(7)}, {"cpu".rjust(5)}\n'
