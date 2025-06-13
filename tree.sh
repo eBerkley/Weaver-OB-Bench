@@ -34,7 +34,7 @@ else
 fi
 
 if [[ $mode = "cmp" ]]; then
-  if [[ -z $rmc ]]; then
+  if [[ ! -z $rmc ]]; then
 
     for a in $(./utils/next_grps.sh $group --full); do
       if $(ls benchmark/results | grep $a >/dev/null); then
@@ -45,7 +45,7 @@ if [[ $mode = "cmp" ]]; then
       fi
     done
 
-  else # [[ ! -z $rmc ]];
+  else # [[ -z $rmc ]];
 
     for a in $(./utils/next_grps.sh $group --full); do
       if $(ls benchmark/results | grep $a >/dev/null); then
@@ -53,7 +53,7 @@ if [[ $mode = "cmp" ]]; then
         schemes+=" $a"
       fi
     done
-    echo $schemes | python3 ./benchmark/analyze.py -m rank -u 10000 -v p50 # cmp_many    
+    echo $schemes | python3 ./benchmark/analyze.py -m rank -u 30000 -v p99 # cmp_many    
 
   fi 
 elif [[ -z $rmc ]]; then 

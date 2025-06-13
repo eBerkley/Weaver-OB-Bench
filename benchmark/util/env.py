@@ -44,12 +44,12 @@ class Env:
 # Assume that if test dir format is `<groupname>_<c1>_<c2>_<c3>_...`
 # testname is just a groupname.
 def find_best_match(groupname: str, outdir: str) -> str:
-    groupname=groupname.split('_')[0]
-    tests = os.listdir(outdir)
-    for t in tests:
-        if t.split('_')[0] == groupname:
-            
-            return os.path.join(outdir, t)
+    # groupname=groupname.split('_')[0]
+    # tests = os.listdir(outdir)
+    # for t in tests:
+    #     if t.split('_')[0] == groupname:
+    return os.path.join(outdir, groupname +".csv")
+            # return os.path.join(outdir, t)
     
     raise ValueError(f"scheme {groupname} has no results")
 

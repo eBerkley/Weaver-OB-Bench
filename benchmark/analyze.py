@@ -61,14 +61,13 @@ if mode == util.Mode.RANK.value:
         i = srted[rank]
         print(f"{rank:3d}:\t{schemes[i].rjust(15)}, {srt(dls[i]):7.2f}")
 
-    
 
 elif mode == util.Mode.COMPARE_MANY.value:
     schemes: List[str] = []
     for ss in sys.stdin:
         for s in ss.split(" "):
             if s != "":
-                scm = s.split("_")[0]
+                scm = s#.split("_")[0]
                 schemes.append(scm.strip())
     
     print("groups: " + " ".join([f"{i}:{schemes[i]}" for i in range(len(schemes))]))
@@ -88,8 +87,8 @@ elif mode == util.Mode.COMPARE_MANY.value:
     for i in range(len(dls)):
         if len(dls[longest]) < len(dls[i]):
             longest = i
-        
-    print(f'{"users".rjust(5)}:\t{"p50".rjust(22)},\t{"p99".rjust(24)},\t{"cpu".rjust(22)}')
+    OFFSET=15
+    print(f'{"users".rjust(5)}:\t{"p50".rjust(22+OFFSET)},\t{"p99".rjust(24+OFFSET)},\t{"cpu".rjust(22+OFFSET)}')
     for t in range(len(dls[longest])):
         min_p50 = [0]
         min_p99 = [0]
@@ -102,17 +101,20 @@ elif mode == util.Mode.COMPARE_MANY.value:
             if cmp_p50 == util.Cmp.LT:
                 min_p50=[i]
             elif cmp_p50 == util.Cmp.EQ:
-                min_p50.append(i)
+                if i != 0:
+                    min_p50.append(i)
             
             if cmp_p99 == util.Cmp.LT:
                 min_p99=[i]
             elif cmp_p99 == util.Cmp.EQ:
-                min_p99.append(i)
+                if i != 0:
+                    min_p99.append(i)
             
             if cmp_cpu == util.Cmp.LT:
                 min_cpu=[i]
             elif cmp_cpu == util.Cmp.EQ:
-                min_cpu.append(i)
+                if i != 0:
+                    min_cpu.append(i)
         
         usr_str = f"{dls[longest].ds[t].users:5d}"
         p50_scheme = schemes[min_p50[0]]
@@ -130,9 +132,9 @@ elif mode == util.Mode.COMPARE_MANY.value:
         elif len(min_cpu) > 1:  cpu_scheme = ",".join([str(x) for x in min_cpu]) # = "..."
 
 
-        p50_str = f"{p50_scheme.rjust(15)}: {dls[min_p50[0]][t].p50:6.2f}"
-        p99_str = f"{p99_scheme.rjust(15)}: {dls[min_p99[0]][t].p99:7.2f}"
-        cpu_str = f"{cpu_scheme.rjust(15)}: {dls[min_cpu[0]][t].cpu:5.2f}"
+        p50_str = f"{p50_scheme.rjust(15+OFFSET)}: {dls[min_p50[0]][t].p50:6.2f}"
+        p99_str = f"{p99_scheme.rjust(15+OFFSET)}: {dls[min_p99[0]][t].p99:7.2f}"
+        cpu_str = f"{cpu_scheme.rjust(15+OFFSET)}: {dls[min_cpu[0]][t].cpu:5.2f}"
         print(f"{usr_str}: {p50_str},\t{p99_str},\t{cpu_str}")
     
     exit(0)
