@@ -129,27 +129,29 @@ all:
 include auto/scripts.mk
 
 analyze:
-	@if [ -z "$(S)" ]; then \
+	@if [ -z "$(S)" ]; then                                                    \
 		echo "Error: Need to define scheme name. ex: 'make S=MCu analyze'" >&2 ; \
-		exit 1 ; \
-	else \
-		python3 ./benchmark/analyze.py -m term -n $(S); \
+		exit 1;                                                                  \
+	else                                                                       \
+		python3 ./benchmark/analyze.py -m term -n $(S);                          \
 	fi
 
 results:
-	@if [ -z "$(S)" ]; then \
-		echo "Error: Need to define scheme name. ex: 'make S=MCu results'" >&2 ; \
-		exit 1 ; \
-	else \
+	@if [ -z "$(S)" ]; then                                                      \
+		echo "Error: Need to define scheme name. ex: 'make S=MCu results'" >&2 ;   \
+		exit 1;                                                                    \
+	else                                                                         \
 		python3 ./benchmark/analyze.py -m csv -n $(S) >benchmark/results/$(S).csv; \
 	fi
 
 results_all:
-	@for a in $(shell ls benchmark/out); do \
+	@for a in $(shell ls benchmark/out); do                                     \
 		if ! grep "BENCH_TYPE=ALLOC" benchmark/out/$$a/info.txt &>/dev/null; then \
-		  echo $$a; \
-			make S=$$a results >/dev/null; \
-		fi; \
+			if [[ ! -e benchmark/results/$$a.csv ]]; then                           \
+		  	echo $$a;                                                             \
+				make S=$$a results >/dev/null;                                        \
+			fi;                                                                     \
+		fi;                                                                       \
 	done
 
 status:
