@@ -58,7 +58,10 @@ class SlowLoad(LoadTestShape):
         self._p99: int = self.runner.stats.total.get_current_response_time_percentile(0.99) or 0
 
         if cur_users < self.ramp_amount:
+            if getenv("LOCUST_RESET_CONN", "0") == "1":
+                return self.ramp_amount, self.ramp_rate
             return self.ramp_amount, 10.0 #self.ramp_rate
+            
         ramp_rate = self.ramp_rate
         if self._slo_timer <= 0:
             return None
