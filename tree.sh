@@ -25,18 +25,20 @@ schemes=$group
 
 
 if [[ $group = "Ch" ]]; then
-  schemes="M"
+  schemes="M_Ch_R_S_A_Cu_Ca_E_Pa_Cc_Pr"
 else
   res=$(basename $(ls benchmark/results | grep ^$group"_") .csv)
   if [[ $? != 0 ]] || [[ $res = ".csv" ]]; then
     schemes="" 
+  else
+    schemes=$res
   fi
 fi
 
 if [[ $mode = "cmp" ]]; then
   if [[ ! -z $rmc ]]; then
 
-    for a in $(./utils/next_grps.sh $group --full); do
+    for a in $(./utils/next_grps.sh $group --full --all); do
       if $(ls benchmark/results | grep $a >/dev/null); then
         rmed=$(./utils/rm_comp.sh $a $rmc)
         if $(ls benchmark/results | grep $rmed >/dev/null); then
@@ -47,7 +49,7 @@ if [[ $mode = "cmp" ]]; then
 
   else # [[ -z $rmc ]];
 
-    for a in $(./utils/next_grps.sh $group --full); do
+    for a in $(./utils/next_grps.sh $group --all --full); do
       if $(ls benchmark/results | grep $a >/dev/null); then
         # python3 ./benchmark/analyze.py -m cmp -n $1 -n2 $a
         schemes+=" $a"
@@ -58,7 +60,7 @@ if [[ $mode = "cmp" ]]; then
   fi 
 elif [[ -z $rmc ]]; then 
 
-  for a in $(./utils/next_grps.sh $group --full); do
+  for a in $(./utils/next_grps.sh $group --full --all); do
     if $(ls benchmark/results | grep $a >/dev/null); then
       # python3 ./benchmark/analyze.py -m cmp -n $1 -n2 $a
       schemes+=" $a"
@@ -72,7 +74,7 @@ else # tree but with some components banished
   schemes=$(./utils/rm_comp.sh $group $rmc)
   if ! $(ls benchmark/results | grep $schemes >/dev/null); then schemes=""; fi
 
-  for a in $(./utils/next_grps.sh $group --full); do
+  for a in $(./utils/next_grps.sh $group --full --all); do
     rmed=$(./utils/rm_comp.sh $a $rmc) # Technically doing this with rmc = Ch would result in fake schemes, e.g. ME.
     if $(ls benchmark/results | grep $rmed >/dev/null); then # This line fixes that.
       found=0

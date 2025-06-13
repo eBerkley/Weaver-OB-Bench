@@ -113,6 +113,14 @@ func (g grp_t) canDerive(g2 grp_t) bool {
 	return true
 }
 
+func (g grp_t) canDeriveNext(g2 grp_t) bool {
+	if g[0] != g2[0] {
+		return false
+	}
+
+	return g.canDerive(g2) && len(g2) == len(g)+1
+}
+
 func makeGroup(s string) grp_t {
 	return SplitFunc(s, unicode.IsUpper)
 }
@@ -131,8 +139,14 @@ func getFull(allGrps []string, group string) []string {
 		}
 		ncs := makeGroup(n)
 
-		if gcs.canDerive(ncs) {
-			ret = append(ret, nxt)
+		if *allMode {
+			if gcs.canDerive(ncs) {
+				ret = append(ret, nxt)
+			}
+		} else {
+			if gcs.canDeriveNext(ncs) {
+				ret = append(ret, nxt)
+			}
 		}
 	}
 

@@ -41,17 +41,32 @@ class Env:
         self.p99: List[float] = []
         self.cpu: List[float] = []
 
-# Assume that if test dir format is `<groupname>_<c1>_<c2>_<c3>_...`
-# testname is just a groupname.
-def find_best_match(groupname: str, outdir: str) -> str:
-    # groupname=groupname.split('_')[0]
-    # tests = os.listdir(outdir)
-    # for t in tests:
-    #     if t.split('_')[0] == groupname:
-    return os.path.join(outdir, groupname +".csv")
-            # return os.path.join(outdir, t)
+def shorten_scheme(s: str):
+    gs = s.split("_")
     
-    raise ValueError(f"scheme {groupname} has no results")
+    for i in range(len(gs)):
+        n = 0
+        for c in gs[i]:
+            if c.isupper():
+                n+=1
+        if n > 1:
+            continue
+        if i == 0:
+            return gs[0]
+        return "_".join(gs[:i])
+    return s
+
+def find_best_match(name: str, outdir: str) -> str:
+    
+    shortened=shorten_scheme(name)
+    
+    tests = os.listdir(outdir)
+    for t in tests:
+        if shortened == shorten_scheme(t):
+            return os.path.join(outdir, t)
+    
+    raise ValueError(f"scheme {name} has no results")
+    # return os.path.join(outdir, name +".csv")
 
 
 def init_env(testname: str, alloc_ok: bool) -> Env:

@@ -67,7 +67,7 @@ elif mode == util.Mode.COMPARE_MANY.value:
     for ss in sys.stdin:
         for s in ss.split(" "):
             if s != "":
-                scm = s#.split("_")[0]
+                scm = util.shorten_scheme(s)
                 schemes.append(scm.strip())
     
     print("groups: " + " ".join([f"{i}:{schemes[i]}" for i in range(len(schemes))]))
@@ -87,8 +87,9 @@ elif mode == util.Mode.COMPARE_MANY.value:
     for i in range(len(dls)):
         if len(dls[longest]) < len(dls[i]):
             longest = i
-    OFFSET=15
-    print(f'{"users".rjust(5)}:\t{"p50".rjust(22+OFFSET)},\t{"p99".rjust(24+OFFSET)},\t{"cpu".rjust(22+OFFSET)}')
+    
+    OFFSET=max([len(s) for s in schemes])
+    print(f'{"users".rjust(5)}:\t{"p50".rjust(OFFSET+7)},\t{"p99".rjust(OFFSET+9)},\t{"cpu".rjust(OFFSET+7)}')
     for t in range(len(dls[longest])):
         min_p50 = [0]
         min_p99 = [0]
@@ -132,9 +133,9 @@ elif mode == util.Mode.COMPARE_MANY.value:
         elif len(min_cpu) > 1:  cpu_scheme = ",".join([str(x) for x in min_cpu]) # = "..."
 
 
-        p50_str = f"{p50_scheme.rjust(15+OFFSET)}: {dls[min_p50[0]][t].p50:6.2f}"
-        p99_str = f"{p99_scheme.rjust(15+OFFSET)}: {dls[min_p99[0]][t].p99:7.2f}"
-        cpu_str = f"{cpu_scheme.rjust(15+OFFSET)}: {dls[min_cpu[0]][t].cpu:5.2f}"
+        p50_str = f"{p50_scheme.rjust(OFFSET)}: {dls[min_p50[0]][t].p50:6.2f}"
+        p99_str = f"{p99_scheme.rjust(OFFSET)}: {dls[min_p99[0]][t].p99:7.2f}"
+        cpu_str = f"{cpu_scheme.rjust(OFFSET)}: {dls[min_cpu[0]][t].cpu:5.2f}"
         print(f"{usr_str}: {p50_str},\t{p99_str},\t{cpu_str}")
     
     exit(0)
@@ -143,7 +144,6 @@ elif mode == util.Mode.COMPARE_MANY.value:
 elif mode == util.Mode.COMPARE.value:
     if scheme2 == "":
         raise ValueError("Need to define --name2 for --mode=cmp")
-
     
     res1 = util.find_best_match(scheme, resdir)
     res2 = util.find_best_match(scheme2, resdir)
@@ -158,6 +158,26 @@ elif mode == util.Mode.COMPARE.value:
     print(dl1.compare(dl2))
     exit(0)
     
+elif mode == util.Mode.GRAPH_MANY.value:
+    schemes: List[str] = []
+    for ss in sys.stdin:
+        for s in ss.split(" "):
+            if s != "":
+                scm = util.shorten_scheme(s)
+                schemes.append(scm.strip())
+    if len(schemes) < 2:
+        raise ValueError(f"Need to use schemes multiple times. schemes: {schemes}")
+    
+    dls: List[util.DataList] = []
+    for s in schemes:
+        res = util.find_best_match(s, resdir)
+        dl = util.DataList()
+        dl.from_results(res)
+        dls.append(dl)
+    dirname=os.path.join(THISDIR, "imgs", scheme)
+    os.makedirs(dirname, exist_ok=True)
+    util.plot_data(dls, scheme, dirname)
+
 elif mode == util.Mode.GRAPH.value:
     dl = util.DataList()
     try:
@@ -170,6 +190,7 @@ elif mode == util.Mode.GRAPH.value:
         dl.from_out(env)
     name=scheme.split("_")[0]
     dl.graph(name, os.path.join(THISDIR, "imgs", name))
+
 elif mode == util.Mode.TERM.value:
     dl = util.DataList()
     try:

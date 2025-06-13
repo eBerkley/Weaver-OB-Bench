@@ -1,10 +1,10 @@
 #!/bin/python3
 
-from typing import List, Final, NamedTuple
+from typing import List, Final, TypeAlias, Tuple
 from . import DataPoint, Env, get_hold_idxs
 import pandas as pd
 from matplotlib import pyplot as plt
-
+import os
 class ResultsHead:
     Users: Final = 'users'
     RPS: Final   = 'rps'
@@ -44,12 +44,13 @@ class Val:
             return Cmp.EQ
         return Cmp.GT
 
-fake_val = Val(99999999.9, 999999999999.9, 999.9)
-
+SATURATED = 9999.9
+fake_val = Val(SATURATED, SATURATED, SATURATED)
 
 class DataList:
     def __init__(self):
         self.ds: List[DataPoint] = []
+        self.name: str = ""
 
     def __len__(self):
         return len(self.ds) - 1
@@ -64,6 +65,7 @@ class DataList:
         return Val(p.get_p50(), p.get_p99(), p.get_cpu())
     
     def from_out(self, env: Env):
+        self.name = env.name.name
         idxs = get_hold_idxs(env.users)
         for s, e in idxs:
             usr = env.users[s]
@@ -71,6 +73,7 @@ class DataList:
             self.ds.append(d)
 
     def from_results(self, fname: str):
+        self.name = os.path.basename(fname).split(".")[0]
         csv = pd.read_csv(fname)
         # users = csv[ResultsHead.Users].astype(int).to_list()
         # p50 = csv[ResultsHead.P50].astype(float).to_list()
@@ -119,3 +122,38 @@ class DataList:
         plt.xlim(0, 45_000)
         plt.ylim(0, 250)
         plt.savefig(dest)
+
+markers=["o",       "^",            "d",            "x"]
+colors=["tab:blue", "tab:orange",   "tab:green",    "tab:red"]
+graphable: TypeAlias = Tuple[List[int], List[float], List[float], List[float]]
+
+def plot_data(dls: List[DataList], name: str, outdir: str):
+
+    datas: List[graphable] = [(
+            [dl.ds[i].get_users() for i in range(len(dl))],
+            [dl.ds[i].get_p50() for i in range(len(dl))],
+            [dl.ds[i].get_p99() for i in range(len(dl))],
+            [dl.ds[i].get_cpu() for i in range(len(dl))]
+        ) for dl in dls]
+    
+    def plot_once(metric: str, metric_i: int, units: str):
+        plt.cla()
+        for i in range(len(dls)):
+            plt.plot(datas[i][0], datas[i][metric_i], 
+                label=dls[i].name, linestyle='--', marker=markers[i], color=colors[i])
+        plt.legend()
+        plt.ylabel(units)
+        plt.xlabel('Requests per Second')
+        plt.title(f"{name} - {metric}")
+        plt.xlim(0, 45_000)
+        if   metric=="p50": plt.ylim(0, 50)
+        elif metric=="p99": plt.ylim(0, 150)
+        else              : plt.ylim(0, 36)
+
+        plt.savefig(os.path.join(outdir, f"{name}-{metric}"))
+
+
+    plot_once('p50', 1, 'Latency (ms)')
+    plot_once('p99', 2, 'Latency (ms)')
+    plot_once('cpu', 3, 'Total Utilization (cores)')
+    

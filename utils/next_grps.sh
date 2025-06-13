@@ -9,11 +9,11 @@ mode=""
 for i in "$@"; do
   case $i in
     full|--full|-f)
-      mode=full
+      mode="--full $mode"
       ;;
 
     all|--all|-a)
-      if [[ -z $mode ]]; then mode=all; fi
+      mode="--all $mode"
       ;;
 
     *)
@@ -26,10 +26,6 @@ if [[ -z $scheme ]]; then
   exit 1
 fi
 
-if [[ $mode = "full" ]]; then
-  ./next_grps --grp $scheme --full
-elif [[ $mode = "all" ]]; then
-  ./next_grps --grp $scheme --all
-else
-  ./next_grps --grp $scheme 
-fi
+
+./next_grps --grp $scheme $mode
+
