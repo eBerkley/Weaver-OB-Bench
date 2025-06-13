@@ -24,5 +24,5 @@ echo "PREPARING TO RUN STATIC BENCHMARKS" >>DELETE.txt
 echo "----------------------------------" >>DELETE.txt
 echo                                      >>DELETE.txt
 sed -i -E 's/BENCH_TYPE=[A-Z]+/BENCH_TYPE=CUSTOM/' .env
-./
+
 make bench_all &>>DELETE.txt
