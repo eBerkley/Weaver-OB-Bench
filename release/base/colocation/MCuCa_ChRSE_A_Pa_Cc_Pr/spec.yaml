@@ -1,0 +1,49 @@
+groups:
+  - name: m-cu-ca
+    components:
+    - github.com/eberkley/weaver/Main
+    - github.com/eBerkley/Weaver-OB-Bench/currencyservice/CurrencyService
+    - github.com/eBerkley/Weaver-OB-Bench/cartservice/CartService
+    
+<m-cu-ca_RESOURCE_SPEC>
+<m-cu-ca_SCALING_SPEC>
+
+  - name: ch-r-s-e
+    components:
+    - github.com/eBerkley/Weaver-OB-Bench/checkoutservice/CheckoutService
+    - github.com/eBerkley/Weaver-OB-Bench/recommendationservice/RecService
+    - github.com/eBerkley/Weaver-OB-Bench/shippingservice/ShippingService
+    - github.com/eBerkley/Weaver-OB-Bench/emailservice/EmailService
+    
+<ch-r-s-e_RESOURCE_SPEC>
+<ch-r-s-e_SCALING_SPEC>
+
+  - name: a
+    components:
+    - github.com/eBerkley/Weaver-OB-Bench/adservice/AdService
+    
+<a_RESOURCE_SPEC>
+<a_SCALING_SPEC>
+
+  - name: pa
+    components:
+    - github.com/eBerkley/Weaver-OB-Bench/paymentservice/PaymentService
+    
+<pa_RESOURCE_SPEC>
+<pa_SCALING_SPEC>
+
+  - name: cc
+    components:
+    - github.com/eBerkley/Weaver-OB-Bench/cartservice/cartCache
+    
+<cc_RESOURCE_SPEC>
+<cc_SCALING_SPEC>
+
+  - name: pr
+    components:
+    - github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService
+    
+<pr_RESOURCE_SPEC>
+<pr_SCALING_SPEC>
+<pr_STATEFUL_SPEC>
+
