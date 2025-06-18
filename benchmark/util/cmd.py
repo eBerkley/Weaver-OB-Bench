@@ -3,6 +3,8 @@
 import argparse
 from typing import Tuple, List
 from enum import Enum
+from sys import stdin
+from . import shorten_scheme
 
 class Mode(Enum):
     GRAPH='graph'
@@ -12,16 +14,28 @@ class Mode(Enum):
     COMPARE='cmp'
     COMPARE_MANY='cmp_many'
     RANK='rank'
+    AVG='avg'
 
     def __str__(self):
         return self.value
 
-def get_args() -> Tuple[Mode, str, bool, str, int, str, int]: 
-    "mode, scheme_name, allow_alloc, scheme2_name, user_count, value, breadth"
+def get_schemes() -> List[str]:
+    schemes: List[str] = []
+    for ss in stdin:
+        for s in ss.split(" "):
+            if s.strip() != "":
+                scm = shorten_scheme(s)
+                schemes.append(scm.strip())
+
+    return schemes
+
+def get_args() -> Tuple[Mode, str, bool, str, int, str, int, bool]: 
+    "mode, scheme_name, allow_alloc, scheme2_name, user_count, value, breadth, prune"
     parser = argparse.ArgumentParser(
         description='analyze results')
 
-    parser.add_argument("-m", "--mode", metavar="MODE", choices=[str(Mode.GRAPH), str(Mode.CSV), str(Mode.TERM), str(Mode.COMPARE), str(Mode.COMPARE_MANY), str(Mode.GRAPH_MANY), str(Mode.RANK)])
+    parser.add_argument("-m", "--mode", default=str(Mode.TERM), metavar="MODE", choices=[
+        str(Mode.GRAPH), str(Mode.CSV), str(Mode.TERM), str(Mode.COMPARE), str(Mode.COMPARE_MANY), str(Mode.GRAPH_MANY), str(Mode.RANK), str(Mode.AVG)])
     parser.add_argument("-n", "--name", metavar="NAME", type=str, help="name of scheme / group")
     parser.add_argument('-a', '--alloc', action='store_true', help='if specified, disable check for alloc bench type')
     parser.add_argument("-n2", "--name2", default="", metavar="NAME2", type=str, help="Name of the second scheme. to be used with --mode=COMPARE")
@@ -29,7 +43,8 @@ def get_args() -> Tuple[Mode, str, bool, str, int, str, int]:
     parser.add_argument("-v", "--value", choices=["p50", "p99", "cpu"], help="For use with --mode=rank.")
     
     parser.add_argument('-b', "--breadth", default=3, type=int, help="for use with walk.py")
+    parser.add_argument('-p', '--prune', action='store_true')
 
     args = parser.parse_args()
 
-    return args.mode, args.name, args.alloc, args.name2, args.users, args.value, args.breadth
+    return args.mode, args.name, args.alloc, args.name2, args.users, args.value, args.breadth, args.prune

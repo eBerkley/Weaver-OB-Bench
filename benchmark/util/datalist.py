@@ -1,10 +1,14 @@
 #!/bin/python3
 
-from typing import List, Final, TypeAlias, Tuple
+from typing import List, Final, TypeAlias, Tuple, Callable
 from . import DataPoint, Env, get_hold_idxs
 import pandas as pd
 from matplotlib import pyplot as plt
 import os
+from statistics import median
+
+
+
 class ResultsHead:
     Users: Final = 'users'
     RPS: Final   = 'rps'
@@ -17,11 +21,34 @@ class Cmp:
     EQ = 1
     GT = 0
 
+_USERS = {
+    5_000:   0, 10_000:  1, 15_000:  2, 
+    20_000:  3, 25_000:  4, 30_000:  5, 
+    31_000:  6, 32_000:  7, 33_000:  8, 
+    34_000:  9, 35_000: 10, 36_000: 11, 
+    37_000: 12, 38_000: 13, 39_000: 14, 
+    40_000: 15, 41_000: 16, 42_000: 17, 
+    43_000: 18, 44_000: 19, 45_000: 20, 
+    46_000: 21, 47_000: 21, 48_000: 23
+}
+def user_idx(users: int) -> int:
+    return _USERS[users]
+
+def idx_user(idx: int) -> int:
+    return list(_USERS.keys())[list(_USERS.values()).index(idx)]
+
+
 class Val:
     def __init__(self, p50: float, p99: float, cpu: float):
         self.p50 = p50
         self.p99 = p99
         self.cpu = cpu
+
+    def ___str__(self):
+        return f"({self.p50},{self.p99},{self.cpu})"
+    
+    def __repr__(self):
+        return f"Val({self.p50},{self.p99},{self.cpu})"
     
     def low_p50(self, other: 'Val'):
         if self.p50 < other.p50:
@@ -45,7 +72,7 @@ class Val:
         return Cmp.GT
 
 SATURATED = 9999.9
-fake_val = Val(SATURATED, SATURATED, SATURATED)
+fake_val: Final[Val] = Val(SATURATED, SATURATED, SATURATED)
 
 class DataList:
     def __init__(self):
@@ -75,16 +102,42 @@ class DataList:
     def from_results(self, fname: str):
         self.name = os.path.basename(fname).split(".")[0]
         csv = pd.read_csv(fname)
-        # users = csv[ResultsHead.Users].astype(int).to_list()
-        # p50 = csv[ResultsHead.P50].astype(float).to_list()
-        # p99 = csv[ResultsHead.P99].astype(float).to_list()
-        # rps = csv[ResultsHead.RPS].astype(float).to_list()
-        # cpu = csv[ResultsHead.CPU].astype(float).to_list()
         
         for i in range(len(csv[ResultsHead.Users])):
             d = DataPoint(csv[ResultsHead.Users][i], [csv[ResultsHead.P50][i]]*10, [csv[ResultsHead.P99][i]]*10, [csv[ResultsHead.RPS][i]]*10, [csv[ResultsHead.CPU][i]]*10)
             self.ds.append(d)
     
+    # We say that our simulated "random scheme" 
+    # saturates at this point. Then, when creating
+    # an expected latency for different user counts,
+    # we only include vals up to that point.
+    # Note that since we say our simulated scheme
+    # does not saturate until this point, data we 
+    # pull from for each user count will NOT include 
+    # schemes that are saturated at this count.
+    def from_others(self, dls: List['DataList']):
+        self.name = "average"
+        srt_t: TypeAlias = Callable[[DataList], float]
+        
+        def get_srts(idx: int) -> Tuple[srt_t, srt_t, srt_t]:
+            p50: srt_t = lambda x: x[idx].p50
+            p99: srt_t = lambda x: x[idx].p99
+            cpu: srt_t = lambda x: x[idx].cpu
+            return p50, p99, cpu
+
+        for usrs in list(_USERS.keys()):
+            idx = user_idx(usrs)
+            srtp50, srtp99, srtcpu = get_srts(idx)
+
+            p50 = median([srtp50(dl) for dl in dls])
+            p99 = median([srtp99(dl) for dl in dls])
+            cpu = median([srtcpu(dl) for dl in dls])
+            
+            d = DataPoint(usrs, [p50], [p99], [usrs], [cpu])
+            self.ds.append(d)
+            if p50 > 5_000 or p99 > 5_000 or cpu > 5_000:
+                break
+
     def term(self) -> str:
         s = f'{"users".rjust(5)}: {"rps".rjust(8)}, {"p50".rjust(6)}, {"p99".rjust(7)}, {"cpu".rjust(5)}\n'
         for d in self.ds:
@@ -98,7 +151,7 @@ class DataList:
         return s[:-1]
 
     def compare(self, other: 'DataList') -> str:
-        s = f'{"users".rjust(5)}: {"p50".rjust(6)}, {"p99".rjust(7)}, {"cpu".rjust(5)}\n'
+        s = f'{"users".rjust(5)}: {"p50".rjust(6)}, {"p99".rjust(7)}, {"cpu".rjust(5)}; {"dp50".rjust(5)}, {"dp99".rjust(5)}, {"dcpu".rjust(5)}\n'
         for i in range(min(len(self.ds), len(other.ds))):
             usrs = self.ds[i].get_users()
             p50 = self.ds[i].get_p50() - other.ds[i].get_p50()
@@ -123,11 +176,21 @@ class DataList:
         plt.ylim(0, 250)
         plt.savefig(dest)
 
-markers=["o",       "^",            "d",            "x"]
-colors=["tab:blue", "tab:orange",   "tab:green",    "tab:red"]
+def longest_idx(dls: List[DataList]) -> int:
+    longest = 0
+    for i in range(len(dls)):
+        if len(dls[longest]) < len(dls[i]):
+            longest = i
+    return longest
+
+
+markers=["o",       "^",            "d",            "X",        "*"]
+colors=["tab:blue", "tab:orange",   "tab:green",    "tab:red",  "tab:purple"]
 graphable: TypeAlias = Tuple[List[int], List[float], List[float], List[float]]
 
 def plot_data(dls: List[DataList], name: str, outdir: str):
+    if len(dls) > len(markers):
+        raise ValueError(f"Max num schemes supported: {len(markers)}, entered: {len(dls)}")
 
     datas: List[graphable] = [(
             [dl.ds[i].get_users() for i in range(len(dl))],
@@ -141,7 +204,7 @@ def plot_data(dls: List[DataList], name: str, outdir: str):
         for i in range(len(dls)):
             plt.plot(datas[i][0], datas[i][metric_i], 
                 label=dls[i].name, linestyle='--', marker=markers[i], color=colors[i])
-        plt.legend()
+        plt.legend(loc="upper left")
         plt.ylabel(units)
         plt.xlabel('Requests per Second')
         plt.title(f"{name} - {metric}")
@@ -152,8 +215,63 @@ def plot_data(dls: List[DataList], name: str, outdir: str):
 
         plt.savefig(os.path.join(outdir, f"{name}-{metric}"))
 
+    plot_once('p50', 1, 'Latency (ms)')
+    plot_once('p99', 2, 'Latency (ms)')
+    plot_once('cpu', 3, 'Total Utilization (cores)')
+
+TRIVIAL_COLOR   = 0
+M_COLOR         = 1
+MCH_COLOR       = 2
+CH_COLOR        = 3
+
+def plot_all(fused: List[DataList], not_fused: DataList, name: str, outdir: str):
+    datas: List[graphable] = [(
+            [dl.ds[i].get_users() for i in range(len(dl))],
+            [dl.ds[i].get_p50() for i in range(len(dl))],
+            [dl.ds[i].get_p99() for i in range(len(dl))],
+            [dl.ds[i].get_cpu() for i in range(len(dl))]
+        ) for dl in fused]
+    
+    nf_data: graphable = (
+        [not_fused.ds[i].get_users() for i in range(len(not_fused))],
+        [not_fused.ds[i].get_p50() for i in range(len(not_fused))],
+        [not_fused.ds[i].get_p99() for i in range(len(not_fused))],
+        [not_fused.ds[i].get_cpu() for i in range(len(not_fused))],
+    )
+    
+    def plot_once(metric: str, metric_i: int, units: str):
+        plt.cla()
+        for i in range(len(fused)):
+            c_idx = 0
+            if fused[i].name.startswith("M"):
+                if fused[i].name.startswith("MCh"):
+                    c_idx = MCH_COLOR
+                else:
+                    c_idx = M_COLOR
+            else:
+                c_idx = CH_COLOR
+
+            plt.plot(datas[i][0], datas[i][metric_i], 
+                linestyle='--', marker=None, color=colors[c_idx], alpha=0.1)
+
+        plt.plot(nf_data[0], nf_data[metric_i],
+            label="microservices", linestyle='--', marker=None, color=colors[TRIVIAL_COLOR])
+        
+        plt.plot([], linestyle='--', marker=None, color=colors[M_COLOR], label='fusion-M')
+        plt.plot([], linestyle='--', marker=None, color=colors[MCH_COLOR], label='fusion-MCh')
+        plt.plot([], linestyle='--', marker=None, color=colors[CH_COLOR], label='fusion-Ch')
+        
+        plt.legend(loc="upper left")
+        plt.ylabel(units)
+        plt.xlabel('Requests per Second')
+        plt.title(f"{name} - {metric}")
+        plt.xlim(0, 45_000)
+        if   metric=="p50": plt.ylim(0, 50)
+        elif metric=="p99": plt.ylim(0, 150)
+        else              : plt.ylim(0, 36)
+
+        plt.savefig(os.path.join(outdir, f"{name}-{metric}"))
 
     plot_once('p50', 1, 'Latency (ms)')
     plot_once('p99', 2, 'Latency (ms)')
     plot_once('cpu', 3, 'Total Utilization (cores)')
-    

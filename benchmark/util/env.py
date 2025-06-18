@@ -62,10 +62,10 @@ def find_best_match(name: str, outdir: str) -> str:
     
     tests = os.listdir(outdir)
     for t in tests:
-        if shortened == shorten_scheme(t):
+        if shortened == shorten_scheme(t.split(".")[0]):
             return os.path.join(outdir, t)
     
-    raise ValueError(f"scheme {name} has no results")
+    raise ValueError(f"scheme {name} has no results. (shortened: {shortened})")
     # return os.path.join(outdir, name +".csv")
 
 

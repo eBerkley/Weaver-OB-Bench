@@ -1,27 +1,41 @@
 #!/bin/python3
 
 import util
-from typing import List, Callable
+from typing import List, Callable, Optional
 import os
 import sys
 
-mode, scheme, alloc_ok, scheme2, user_count, value = util.get_args()
+mode, scheme, alloc_ok, scheme2, user_count, value, _, _ = util.get_args()
 
 THISDIR = os.path.dirname(__file__)
 resdir = os.path.normpath(os.path.join(THISDIR, "results"))
 
-if mode == util.Mode.RANK.value:
-    schemes: List[str] = []
-    for ss in sys.stdin:
-        for s in ss.split(" "):
-            if s != "":
-                scm = s.split("_")[0]
-                schemes.append(scm.strip())
+if mode == util.Mode.AVG.value:
+    schemes = util.get_schemes()
+    print("groups: " + " ".join(schemes))
+    if len(schemes) < 2:
+        raise ValueError(f"Error: not enough input schemes: {schemes}")
+    
+    dls: List[util.DataList] = []
+    for s in schemes:
+        res = util.find_best_match(s, resdir)
+        dl = util.DataList()
+        dl.from_results(res)
+        dls.append(dl)
 
+    avg = util.DataList()
+    avg.from_others(dls)
+
+    print(avg.term())
+    print(avg.csv(), file=sys.stderr)
+    exit(0)
+
+elif mode == util.Mode.RANK.value:
+    schemes = util.get_schemes()
     print("groups: " + " ".join(schemes))
 
     if len(schemes) < 2:
-        raise ValueError(f"Need to use schemes multiple times. schemes: {schemes}")
+        raise ValueError(f"Error: not enough input schemes: {schemes}")
 
     dls: List[util.DataList] = []
     for s in schemes:
@@ -30,19 +44,12 @@ if mode == util.Mode.RANK.value:
         dl.from_results(res)
         dls.append(dl)
 
-    idx = -1
-    for i in range(len(dls)):
-        if dls[i].ds[-1].get_users() < user_count:
-            continue
-        for j in range(len(dls[i])):
-            if dls[i].ds[j].get_users() == user_count:
-                idx = j
-                break
-        if idx != -1:
-            break
-    
-    if idx == -1:
+    idx = util.user_idx(user_count)
+
+    if not any(len(dl) >= idx for dl in dls):
         raise ValueError(f"Can not find any idx that has user count = {user_count}")
+
+
     srted = [i for i in range(len(dls))]
 
     srt: Callable[[util.DataList], float] = None
@@ -61,35 +68,37 @@ if mode == util.Mode.RANK.value:
         i = srted[rank]
         print(f"{rank:3d}:\t{schemes[i].rjust(15)}, {srt(dls[i]):7.2f}")
 
-
 elif mode == util.Mode.COMPARE_MANY.value:
-    schemes: List[str] = []
-    for ss in sys.stdin:
-        for s in ss.split(" "):
-            if s != "":
-                scm = util.shorten_scheme(s)
-                schemes.append(scm.strip())
+    schemes = util.get_schemes()
+    if "best" in schemes:
+        schemes.remove("best")
+    if "optimal" in schemes:
+        schemes.remove("optimal")
     
-    print("groups: " + " ".join([f"{i}:{schemes[i]}" for i in range(len(schemes))]))
-    print()
+    if not value:
+        print("groups: " + " ".join([f"{i}:{schemes[i]}" for i in range(len(schemes))]))
+        print()
+    
     if len(schemes) < 2:
-        raise ValueError(f"Need to use schemes multiple times. schemes: {schemes}")
+        raise ValueError(f"Error: not enough input schemes: {schemes}")
 
-    
     dls: List[util.DataList] = []
     for s in schemes:
         res = util.find_best_match(s, resdir)
         dl = util.DataList()
         dl.from_results(res)
         dls.append(dl)
-        
-    longest = 0
-    for i in range(len(dls)):
-        if len(dls[longest]) < len(dls[i]):
-            longest = i
     
-    OFFSET=max([len(s) for s in schemes])
-    print(f'{"users".rjust(5)}:\t{"p50".rjust(OFFSET+7)},\t{"p99".rjust(OFFSET+9)},\t{"cpu".rjust(OFFSET+7)}')
+    longest = util.longest_idx(dls)
+    # arbitrary way of deciding to output in csv form
+    OFFSET=max(max([len(s) for s in schemes]), 15)
+    if value:
+        print("users,rps,p50,p99,cpu")
+    else:
+        print(f'{"users".rjust(5)}:\t{"p50".rjust(OFFSET+7)},\t{"p99".rjust(OFFSET+9)},\t{"cpu".rjust(OFFSET+7)}')
+    
+    unique: set[str] = set()
+    best: set[str] = set()
     for t in range(len(dls[longest])):
         min_p50 = [0]
         min_p99 = [0]
@@ -122,24 +131,43 @@ elif mode == util.Mode.COMPARE_MANY.value:
         p99_scheme = schemes[min_p99[0]]
         cpu_scheme = schemes[min_cpu[0]]
 
-
-        if   len(min_p50) > 5: p50_scheme = f"({len(min_p50)} schemes)"
-        elif len(min_p50) > 1:  p50_scheme = ",".join([str(x) for x in min_p50]) # = "..."
+        if   len(min_p50) > 5: p50_scheme = f"({len(min_p50)}schemes)"
+        elif len(min_p50) > 1:  
+            p50_scheme = ",".join([str(x) for x in min_p50]) # = "..."
+            for x in min_p50: best.add(schemes[x])
+        else: 
+            best.add(p50_scheme)
+            unique.add(p50_scheme)
         
-        if   len(min_p99) > 5: p99_scheme = f"({len(min_p99)} schemes)"
-        elif len(min_p99) > 1:  p99_scheme = ",".join([str(x) for x in min_p99]) # = "..."
+        if   len(min_p99) > 5: p99_scheme = f"({len(min_p99)}schemes)"
+        elif len(min_p99) > 1:  
+            p99_scheme = ",".join([str(x) for x in min_p99]) # = "..."
+            for x in min_p99: best.add(schemes[x])            
+        else: 
+            best.add(p99_scheme)
+            unique.add(p99_scheme)
         
-        if   len(min_cpu) > 5: cpu_scheme = f"({len(min_cpu)} schemes)"
-        elif len(min_cpu) > 1:  cpu_scheme = ",".join([str(x) for x in min_cpu]) # = "..."
+        if   len(min_cpu) > 5: cpu_scheme = f"({len(min_cpu)}schemes)"
+        elif len(min_cpu) > 1: 
+            cpu_scheme = ",".join([str(x) for x in min_cpu]) # = "..."
+            for x in min_cpu: best.add(schemes[x])
 
+        else: 
+            best.add(cpu_scheme)
+            unique.add(cpu_scheme)
 
         p50_str = f"{p50_scheme.rjust(OFFSET)}: {dls[min_p50[0]][t].p50:6.2f}"
         p99_str = f"{p99_scheme.rjust(OFFSET)}: {dls[min_p99[0]][t].p99:7.2f}"
         cpu_str = f"{cpu_scheme.rjust(OFFSET)}: {dls[min_cpu[0]][t].cpu:5.2f}"
-        print(f"{usr_str}: {p50_str},\t{p99_str},\t{cpu_str}")
+        
+        if value:
+            print(f"{dls[longest].ds[t].users},{dls[longest].ds[t].users},{dls[min_p50[0]][t].p50:.2f},{dls[min_p99[0]][t].p99:.2f},{dls[min_cpu[0]][t].cpu:.2f}")
+        else:
+            print(f"{usr_str}: {p50_str},\t{p99_str},\t{cpu_str}")
     
+    print(f"best ({len(best)}): {best}", file=sys.stderr)
+    print(f"unique ({len(unique)}): {unique}", file=sys.stderr)
     exit(0)
-
 
 elif mode == util.Mode.COMPARE.value:
     if scheme2 == "":
@@ -157,26 +185,28 @@ elif mode == util.Mode.COMPARE.value:
     print(f"{scheme} - {scheme2}")
     print(dl1.compare(dl2))
     exit(0)
-    
+
 elif mode == util.Mode.GRAPH_MANY.value:
-    schemes: List[str] = []
-    for ss in sys.stdin:
-        for s in ss.split(" "):
-            if s != "":
-                scm = util.shorten_scheme(s)
-                schemes.append(scm.strip())
+    schemes = util.get_schemes()
     if len(schemes) < 2:
         raise ValueError(f"Need to use schemes multiple times. schemes: {schemes}")
     
+    micro: Optional[util.DataList] = None
     dls: List[util.DataList] = []
     for s in schemes:
         res = util.find_best_match(s, resdir)
         dl = util.DataList()
         dl.from_results(res)
-        dls.append(dl)
+        if os.path.basename(res).split(".")[0] == "M_Ch_R_S_A_Cu_Ca_E_Pa_Cc_Pr":
+            micro = dl
+        else:
+            dls.append(dl)
     dirname=os.path.join(THISDIR, "imgs", scheme)
     os.makedirs(dirname, exist_ok=True)
-    util.plot_data(dls, scheme, dirname)
+    if micro != None:
+        util.plot_all(dls, micro, scheme, dirname)
+    else:
+        util.plot_data(dls, scheme, dirname)
 
 elif mode == util.Mode.GRAPH.value:
     dl = util.DataList()
@@ -202,7 +232,7 @@ elif mode == util.Mode.TERM.value:
         env = util.init_env(scheme, alloc_ok)
         dl.from_out(env)
     print(dl.term())
-    
+
 elif mode == util.Mode.CSV.value:
     dl = util.DataList()
     env = util.init_env(scheme, alloc_ok)

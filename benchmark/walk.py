@@ -39,7 +39,7 @@ class Group:
             if a not in self.comps:
                 return a
 
-_, scheme, _, _, user_count, value, breadth = util.get_args()
+mode, scheme, _, _, user_count, value, breadth, prune = util.get_args()
 scheme = Group(scheme)
 
 user_count  = user_count or 25_000
@@ -111,8 +111,6 @@ def get_val(s: Group) -> float:
     _cache[str(s)] = dl
     return srt(dl)
 
-
-
 def walk(init: Group, bad_list: List[str]) -> Group:
 
     children = get_next(init)
@@ -135,7 +133,10 @@ def walk(init: Group, bad_list: List[str]) -> Group:
     best = children[next_batch[0]]
     for i in range(min(len(next_batch), breadth)):
         n = next_batch[i]
-        b = walk(children[n], bad_list.copy())
+        if prune:
+            b = walk(children[n], bad_list.copy())
+        else:
+            b = walk(children[n], [])
         if get_val(b) < get_val(best):
             best = b
     return best
@@ -143,10 +144,19 @@ def walk(init: Group, bad_list: List[str]) -> Group:
 if __name__ == '__main__':
     winner = walk(scheme, [])
     v = get_val(winner)
+    if mode == util.Mode.TERM.value:
+        if v > 9_000:
+            print(f'"Winner": {str(winner)}, MST = {_cache[str(winner)].ds[-2].users}"')
+        else:
+            print(f'Winner: {str(winner)} = {v}')
     
-    if v > 9_000:
-        print(f'"Winner": {str(winner)}, MST = {_cache[str(winner)].ds[-2].users}"')
-    else:
-        print(f'Winner: {str(winner)} = {v}')
+    elif mode == util.Mode.CSV.value: 
+        print(f"{user_count},{prune},{breadth},{value},{_benchmarks},{get_val(winner)}")
+    elif mode == util.Mode.AVG.value: 
+        # not really doing any average, but we use this when
+        # we want to compare walk results with an average.
+        print(v, end="")
     
-    print("total benchmarks =", _benchmarks)
+    import sys
+    print("total benchmarks =", _benchmarks, file=sys.stderr)
+    

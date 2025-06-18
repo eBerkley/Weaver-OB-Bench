@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #################################################################################
-# Use `kubectl top po` to get #replicas, cumulative cpu utilization, 
+# Uses `kubectl top po` to get #replicas, cumulative cpu utilization, 
 # and average cpu utilization for each of the loadgen workers and OB pods.
 # if running this command with a parameter (e.g. `./scripts/get_replicas.sh 1`), 
 # output will be formatted in csv form.
