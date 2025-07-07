@@ -30,14 +30,14 @@ def get_schemes() -> List[str]:
     return schemes
 
 def get_args() -> Tuple[Mode, str, bool, str, int, str, int, bool]: 
-    "mode, scheme_name, allow_alloc, scheme2_name, user_count, value, breadth, prune"
+    "mode, scheme_name, allow_alloc|SLA mode, scheme2_name, user_count, value, breadth, prune"
     parser = argparse.ArgumentParser(
         description='analyze results')
 
     parser.add_argument("-m", "--mode", default=str(Mode.TERM), metavar="MODE", choices=[
         str(Mode.GRAPH), str(Mode.CSV), str(Mode.TERM), str(Mode.COMPARE), str(Mode.COMPARE_MANY), str(Mode.GRAPH_MANY), str(Mode.RANK), str(Mode.AVG)])
     parser.add_argument("-n", "--name", metavar="NAME", type=str, help="name of scheme / group")
-    parser.add_argument('-a', '--alloc', action='store_true', help='if specified, disable check for alloc bench type')
+    parser.add_argument('-a', '--alloc', action='store_true', help='if specified, analyze.py: disable check for alloc bench type. walk.py: run algorithm to maximize throughput instead of minimizing latency.')
     parser.add_argument("-n2", "--name2", default="", metavar="NAME2", type=str, help="Name of the second scheme. to be used with --mode=COMPARE")
     parser.add_argument("-u", "--users", metavar="USERS", type=int, help="For use with --mode=rank. specify the user count to rank at.")
     parser.add_argument("-v", "--value", choices=["p50", "p99", "cpu"], help="For use with --mode=rank.")
