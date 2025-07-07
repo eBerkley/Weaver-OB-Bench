@@ -18,6 +18,7 @@ import (
 	"github.com/eBerkley/Weaver-OB-Bench/types"
 	"github.com/eBerkley/Weaver-OB-Bench/types/money"
 	"github.com/eberkley/weaver"
+	imetrics "github.com/eberkley/weaver/runtime/codegen"
 	"github.com/google/uuid"
 )
 

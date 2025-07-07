@@ -22,11 +22,11 @@ import (
 	"net"
 	"net/http"
 	"os"
+	goruntime "runtime"
 	"slices"
 	"strings"
 	"sync"
 	"time"
-	goruntime "runtime"
 
 	"github.com/eBerkley/Weaver-OB-Bench/adservice"
 	"github.com/eBerkley/Weaver-OB-Bench/cartservice"

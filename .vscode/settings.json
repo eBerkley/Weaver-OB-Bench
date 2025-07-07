@@ -1,0 +1,8 @@
+// Deliberately pushing vscode settings upstream to 
+// allow for go's lsp to not raise a bunch of errors 
+// due to our conditional compilation settings.
+{
+  "go.buildFlags": [
+    "-tags=full_checkout" 
+  ]
+}

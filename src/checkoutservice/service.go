@@ -17,9 +17,9 @@ package checkoutservice
 import (
 	"context"
 	"fmt"
+	goruntime "runtime"
 	"strings"
 	"time"
-	goruntime "runtime"
 
 	"github.com/eBerkley/Weaver-OB-Bench/cartservice"
 	"github.com/eBerkley/Weaver-OB-Bench/paymentservice"
@@ -71,7 +71,6 @@ func (s *impl) Init(ctx context.Context) error {
 			}
 		}
 	}()
-
 
 	return nil
 }
