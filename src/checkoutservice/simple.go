@@ -23,7 +23,7 @@ import (
 )
 
 type CheckoutService interface {
-	FullCheckoutService
+	SimpleCheckoutService
 }
 
 type impl struct {
