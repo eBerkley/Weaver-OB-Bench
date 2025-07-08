@@ -40,14 +40,16 @@ def get_conn_pool():
 
 RESET_CONN = int(os.getenv("LOCUST_RESET_CONN", "0")) # 1 = True, 0 = False
 print(f"[YYYY-MM-DD HH:MM:SS,001] loadgenerator-xxxxxxxxxxx-xxxxx/INFO/root: LOCUST DEBUG: RESET_CONN: {RESET_CONN}")
-RESET_FREQ      = 5 * RESET_CONN # 5 if HPA is enabled, 0 otherwise. 
-INDEX_FREQ      = 20 # GET /
-CURRENCY_FREQ   = 10 # POST /setCurrency
-BROWSE_FREQ     = 20 # GET /product/<product_id>
-VIEW_CART_FREQ  = 20 # GET /cart
-ADD_CART_FREQ   = 30 # POST /cart
-EMPTY_CART_FREQ = 10 # POST /cart/empty
-CHECKOUT_FREQ   = 10 # POST /cart/checkout
+CHECKOUT_MOD 		= int(os.getenv("LOCUST_CHECKOUT_MOD", "1")) 
+
+RESET_FREQ      = 5 * RESET_CONN 		# 5 if HPA is enabled, 0 otherwise. 
+INDEX_FREQ      = 20 								# GET /
+CURRENCY_FREQ   = 10 								# POST /setCurrency
+BROWSE_FREQ     = 20 								# GET /product/<product_id>
+VIEW_CART_FREQ  = 20 								# GET /cart
+ADD_CART_FREQ   = 30 								# POST /cart
+EMPTY_CART_FREQ = 10 								# POST /cart/empty
+CHECKOUT_FREQ   = 10 * CHECKOUT_MOD # POST /cart/checkout
 
 
 fake = Faker()

@@ -17,8 +17,9 @@ if [[ -n $1 ]]; then
   sed -i -E 's/CHECKOUT_FUNCTIONALITY=[a-z\_]+/CHECKOUT_FUNCTIONALITY=simple_checkout/' .env
   for a in $(cat todo.txt); do
     ./utils/make_template.sh $a
-    ./utils/make_cfg.sh $a
-    mv cfgs/$a.cfg cfgs/$a-simple_checkout.cfg
+    cp -r release/base/colocation/$a release/base/colocation/$a-simple_checkout
+    ./utils/make_cfg.sh $a-simple_checkout
+    # mv cfgs/$a.cfg cfgs/$a-simple_checkout.cfg
   done
 
 else

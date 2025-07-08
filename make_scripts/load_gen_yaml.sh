@@ -81,6 +81,7 @@ else # $BENCH_TYPE != "STATIC"
   sed -i "s#<LOCUST_RESET_CONN>#\"1\"#g" $LOAD_GEN_YAML
 fi
 
+sed -i "s#<LOCUST_CHECKOUT_MOD>#\"$LOCUST_CHECKOUT_MOD\"#g" $LOAD_GEN_YAML
 
 # Build the image and push it to docker
 docker build $LOAD_SRC -t $DOCKER/loadgen:$version >>$DEBUG_OUTPUT 2>&1

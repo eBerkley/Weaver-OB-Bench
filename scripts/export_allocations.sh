@@ -1,8 +1,9 @@
 #!/bin/bash
 
+echo export_allocations.sh
+
 ALLOC_DIR="alloc"
 mkdir -p $ALLOC_DIR
-
 
 # bench_type_pattern="([a-z_\-]+)_([a-z0-9\-]+)_([0-9]+)"
 stats_pattern="^([a-z_\-]+),([0-9]+)"
@@ -35,6 +36,7 @@ get () {
     pod_stats_path=benchmark/out/$f/stats/pod_stats.csv
     if [[ ! -r $pod_stats_path ]]; then
       >&2 echo Error: $pod_stats_path does not exist. Skipping...
+      continue
     fi
     echo $f
 

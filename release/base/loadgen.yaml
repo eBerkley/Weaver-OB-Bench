@@ -95,6 +95,9 @@ spec:
         - name: LOCUST_RESET_CONN
           value: <LOCUST_RESET_CONN>
 
+        - name: LOCUST_CHECKOUT_MOD
+          value: <LOCUST_CHECKOUT_MOD>
+
         - name: LOCUST_MAX_TAIL
           value: <LOCUST_MAX_TAIL>
 
@@ -221,6 +224,9 @@ spec:
         
         - name: LOCUST_RESET_CONN
           value: <LOCUST_RESET_CONN>
+
+        - name: LOCUST_CHECKOUT_MOD
+          value: <LOCUST_CHECKOUT_MOD>
 
         - name: LOCUST_MAX_TAIL
           value: <LOCUST_MAX_TAIL>
