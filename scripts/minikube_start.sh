@@ -4,6 +4,7 @@
 flags=""
 flags+=' --cpus=max'
 flags+=' --disk-size=20g'
+flags+=' --extra-config=kubelet.max-pods=200'
 if [[ $BENCH_TYPE != "STATIC" ]]; then # If we are NOT static, let kubernetes handle pinning to cores.
   flags+=' --feature-gates=CPUManagerPolicyAlphaOptions=true'
   flags+=' --extra-config=kubelet.cpu-manager-policy-options=align-by-socket=true'

@@ -10,7 +10,8 @@ cd $(dirname $0)/..
 CUR_STATS=${1:-'scripts/pod_stats.csv'}
 SCHEME=${2:-$SCHEME}
 C_SCHEME=${3:-$C_SCHEME}
-MAX_CORES=${4:-36}
+MAX_CORES=${MAX_CORES:-$4}
+MAX_CORES=${MAX_CORES:-36}
 
 # If $CUR_STATS does not exist / isn't readable
 if [[ ! -r $CUR_STATS ]]; then

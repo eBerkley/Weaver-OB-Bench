@@ -7,8 +7,9 @@ if [[ $status = 'on' ]]; then
 elif [[ $status = 'off' ]]; then
   echo hyperthreading is disabled.
   
+elif [[ $status = 'notimplemented' ]]; then
+  echo hyperthreading not implemented.
 else
   >&2 echo Error: unknown smt setting: $status
-  >&2 echo ???????????????????????????????
   exit 1
 fi

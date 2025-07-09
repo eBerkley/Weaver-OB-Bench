@@ -263,8 +263,8 @@ spec:
 
         resources:
           requests: 
-            cpu: "1"
+            cpu: "2"
             memory: "1024Mi"
           limits:
-            cpu: "1"
+            cpu: "2"
             memory: "1024Mi"

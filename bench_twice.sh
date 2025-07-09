@@ -11,17 +11,30 @@ minikube delete
 
 sed -i -E 's/BENCH_TYPE=[A-Z]+/BENCH_TYPE=ALLOC/' .env
 
-if [[ -n $1 ]]; then
-  echo "Warning: Preparing to run benchmarks in simple mode."
+if [[ $1 = "simple" ]]; then
+  echo "Preparing to run benchmarks in simple mode."
 
   sed -i -E 's/CHECKOUT_FUNCTIONALITY=[a-z\_]+/CHECKOUT_FUNCTIONALITY=simple_checkout/' .env
   for a in $(cat todo.txt); do
     ./utils/make_template.sh $a
     cp -r release/base/colocation/$a release/base/colocation/$a-simple_checkout
     ./utils/make_cfg.sh $a-simple_checkout
-    # mv cfgs/$a.cfg cfgs/$a-simple_checkout.cfg
   done
 
+elif [[ $1 = "arm" ]]; then
+
+  echo "Preparing to run benchmarks in ARM mode."
+
+  sed -i -E 's/CHECKOUT_FUNCTIONALITY=[a-z\_]+/CHECKOUT_FUNCTIONALITY=full_checkout/' .env
+  for a in $(cat todo.txt); do
+    ./utils/make_template.sh $a
+    
+    rm -rf release/base/colocation/$a-arm/
+    cp -r release/base/colocation/$a/ release/base/colocation/$a-arm/
+    sed -i 's/pr=1/pr=2/' release/base/colocation/$a-arm/groups_height.cfg
+    ./utils/make_cfg.sh $a-arm
+  done
+  
 else
 
   sed -i -E 's/CHECKOUT_FUNCTIONALITY=[a-z\_]+/CHECKOUT_FUNCTIONALITY=full_checkout/' .env

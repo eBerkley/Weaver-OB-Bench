@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/eBerkley/Weaver-OB-Bench/paymentservice"
+	"github.com/eBerkley/Weaver-OB-Bench/productcatalogservice"
 	"github.com/eBerkley/Weaver-OB-Bench/shippingservice"
 	"github.com/eBerkley/Weaver-OB-Bench/types"
 	"github.com/eberkley/weaver"
@@ -37,7 +38,7 @@ func init() {
 		RoutedLocalStubFn: func(impl any, stub codegen.Stub, caller string, tracer trace.Tracer, isLocal func(shardKey uint64) bool) any {
 			return checkoutService_routed_local_stub{impl: impl.(CheckoutService), stub: stub, tracer: tracer, isLocal: isLocal, placeOrderMetrics: codegen.MethodMetricsFor(codegen.MethodLabels{Caller: caller, Component: "github.com/eBerkley/Weaver-OB-Bench/checkoutservice/CheckoutService", Method: "PlaceOrder", Remote: true, Generated: true})}
 		},
-		RefData: "⟦f5de912c:wEaVeReDgE:github.com/eBerkley/Weaver-OB-Bench/checkoutservice/CheckoutService→github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService⟧\n⟦4d27fb24:wEaVeReDgE:github.com/eBerkley/Weaver-OB-Bench/checkoutservice/CheckoutService→github.com/eBerkley/Weaver-OB-Bench/cartservice/CartService⟧\n⟦1e6f18f9:wEaVeReDgE:github.com/eBerkley/Weaver-OB-Bench/checkoutservice/CheckoutService→github.com/eBerkley/Weaver-OB-Bench/currencyservice/CurrencyService⟧\n⟦9789d5cc:wEaVeReDgE:github.com/eBerkley/Weaver-OB-Bench/checkoutservice/CheckoutService→github.com/eBerkley/Weaver-OB-Bench/shippingservice/ShippingService⟧\n⟦839a6065:wEaVeReDgE:github.com/eBerkley/Weaver-OB-Bench/checkoutservice/CheckoutService→github.com/eBerkley/Weaver-OB-Bench/emailservice/EmailService⟧\n⟦6c526366:wEaVeReDgE:github.com/eBerkley/Weaver-OB-Bench/checkoutservice/CheckoutService→github.com/eBerkley/Weaver-OB-Bench/paymentservice/PaymentService⟧\n",
+		RefData: "⟦f5de912c:wEaVeReDgE:github.com/eBerkley/Weaver-OB-Bench/checkoutservice/CheckoutService→github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService⟧\n⟦4d27fb24:wEaVeReDgE:github.com/eBerkley/Weaver-OB-Bench/checkoutservice/CheckoutService→github.com/eBerkley/Weaver-OB-Bench/cartservice/CartService⟧\n⟦1e6f18f9:wEaVeReDgE:github.com/eBerkley/Weaver-OB-Bench/checkoutservice/CheckoutService→github.com/eBerkley/Weaver-OB-Bench/currencyservice/CurrencyService⟧\n⟦9789d5cc:wEaVeReDgE:github.com/eBerkley/Weaver-OB-Bench/checkoutservice/CheckoutService→github.com/eBerkley/Weaver-OB-Bench/shippingservice/ShippingService⟧\n⟦839a6065:wEaVeReDgE:github.com/eBerkley/Weaver-OB-Bench/checkoutservice/CheckoutService→github.com/eBerkley/Weaver-OB-Bench/emailservice/EmailService⟧\n⟦6c526366:wEaVeReDgE:github.com/eBerkley/Weaver-OB-Bench/checkoutservice/CheckoutService→github.com/eBerkley/Weaver-OB-Bench/paymentservice/PaymentService⟧\n⟦5e90e089:wEaVeReDgE:github.com/eBerkley/Weaver-OB-Bench/checkoutservice/CheckoutService→github.com/eBerkley/Weaver-OB-Bench/recommendationservice/RecService⟧\n",
 	})
 }
 
@@ -58,7 +59,7 @@ type checkoutService_local_stub struct {
 // Check that checkoutService_local_stub implements the CheckoutService interface.
 var _ CheckoutService = (*checkoutService_local_stub)(nil)
 
-func (s checkoutService_local_stub) PlaceOrder(ctx context.Context, a0 PlaceOrderRequest) (r0 types.Order, err error) {
+func (s checkoutService_local_stub) PlaceOrder(ctx context.Context, a0 PlaceOrderRequest) (r0 types.Order, r1 []productcatalogservice.Product, err error) {
 	// Update metrics.
 	begin := s.placeOrderMetrics.Begin()
 	defer func() { s.placeOrderMetrics.End(begin, err != nil, 0, 0) }()
@@ -88,7 +89,7 @@ type checkoutService_client_stub struct {
 // Check that checkoutService_client_stub implements the CheckoutService interface.
 var _ CheckoutService = (*checkoutService_client_stub)(nil)
 
-func (s checkoutService_client_stub) PlaceOrder(ctx context.Context, a0 PlaceOrderRequest) (r0 types.Order, err error) {
+func (s checkoutService_client_stub) PlaceOrder(ctx context.Context, a0 PlaceOrderRequest) (r0 types.Order, r1 []productcatalogservice.Product, err error) {
 	// Update metrics.
 	var requestBytes, replyBytes int
 	begin := s.placeOrderMetrics.Begin()
@@ -135,6 +136,7 @@ func (s checkoutService_client_stub) PlaceOrder(ctx context.Context, a0 PlaceOrd
 	// Decode the results.
 	dec := codegen.NewDecoder(results)
 	(&r0).WeaverUnmarshal(dec)
+	r1 = serviceweaver_dec_slice_Product_447363d0(dec)
 	err = dec.Error()
 	return
 }
@@ -152,7 +154,7 @@ type checkoutService_routed_local_stub struct {
 // Check that checkoutService_routed_local_stub implements the CheckoutService interface.
 var _ CheckoutService = (*checkoutService_routed_local_stub)(nil)
 
-func (s checkoutService_routed_local_stub) PlaceOrder(ctx context.Context, a0 PlaceOrderRequest) (r0 types.Order, err error) {
+func (s checkoutService_routed_local_stub) PlaceOrder(ctx context.Context, a0 PlaceOrderRequest) (r0 types.Order, r1 []productcatalogservice.Product, err error) {
 	err = errors.New("can not call routed local method on unrouted component")
 	err = errors.Join(weaver.RemoteCallError, err)
 	return
@@ -220,11 +222,12 @@ func (s checkoutService_server_stub) placeOrder(ctx context.Context, args []byte
 	// TODO(rgrandl): The deferred function above will recover from panics in the
 	// user code: fix this.
 	// Call the local method.
-	r0, appErr := s.impl.PlaceOrder(ctx, a0)
+	r0, r1, appErr := s.impl.PlaceOrder(ctx, a0)
 
 	// Encode the results.
 	enc := codegen.NewEncoder()
 	(r0).WeaverMarshal(enc)
+	serviceweaver_enc_slice_Product_447363d0(enc, r1)
 	enc.Error(appErr)
 	return enc.Data(), nil
 }
@@ -238,8 +241,8 @@ type checkoutService_reflect_stub struct {
 // Check that checkoutService_reflect_stub implements the CheckoutService interface.
 var _ CheckoutService = (*checkoutService_reflect_stub)(nil)
 
-func (s checkoutService_reflect_stub) PlaceOrder(ctx context.Context, a0 PlaceOrderRequest) (r0 types.Order, err error) {
-	err = s.caller("PlaceOrder", ctx, []any{a0}, []any{&r0})
+func (s checkoutService_reflect_stub) PlaceOrder(ctx context.Context, a0 PlaceOrderRequest) (r0 types.Order, r1 []productcatalogservice.Product, err error) {
+	err = s.caller("PlaceOrder", ctx, []any{a0}, []any{&r0, &r1})
 	return
 }
 
@@ -278,4 +281,29 @@ func (x *PlaceOrderRequest) WeaverUnmarshal(dec *codegen.Decoder) {
 	(&x.Address).WeaverUnmarshal(dec)
 	x.Email = dec.String()
 	(&x.CreditCard).WeaverUnmarshal(dec)
+}
+
+// Encoding/decoding implementations.
+
+func serviceweaver_enc_slice_Product_447363d0(enc *codegen.Encoder, arg []productcatalogservice.Product) {
+	if arg == nil {
+		enc.Len(-1)
+		return
+	}
+	enc.Len(len(arg))
+	for i := 0; i < len(arg); i++ {
+		(arg[i]).WeaverMarshal(enc)
+	}
+}
+
+func serviceweaver_dec_slice_Product_447363d0(dec *codegen.Decoder) []productcatalogservice.Product {
+	n := dec.Len()
+	if n == -1 {
+		return nil
+	}
+	res := make([]productcatalogservice.Product, n)
+	for i := 0; i < n; i++ {
+		(&res[i]).WeaverUnmarshal(dec)
+	}
+	return res
 }

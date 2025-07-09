@@ -5,8 +5,7 @@
 # echo 1 if we are at capacity, 0 otherwise.
 
 
-# change at some point.
-MAX_CORES=36
+MAX_CORES=${MAX_CORES:-36}
 
 CUR_STATS=scripts/pod_stats.csv
 

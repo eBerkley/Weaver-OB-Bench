@@ -216,6 +216,7 @@ deploy: minikube_start pre_deploy
 	@-kubectl delete all --all >>$(LOGS_FILE) 2>&1
 	@echo creating loadgenerator... >> $(LOGS_FILE)
 	@kubectl apply -f $(LOAD_GEN_YAML) >> $(LOGS_FILE) 2>&1
+	@sleep 15
 	@echo creating OB ... >> $(LOGS_FILE)
 	@kubectl apply -f $(WEAVER_GEN_YAML) >> $(LOGS_FILE) 2>&1
 	sleep 10

@@ -7,7 +7,7 @@ from matplotlib import pyplot as plt
 import os
 from statistics import median
 
-
+MAX_CORES=36
 
 class ResultsHead:
     Users: Final = 'users'
@@ -211,7 +211,7 @@ def plot_data(dls: List[DataList], name: str, outdir: str):
         plt.xlim(0, 45_000)
         if   metric=="p50": plt.ylim(0, 50)
         elif metric=="p99": plt.ylim(0, 150)
-        else              : plt.ylim(0, 36)
+        else              : plt.ylim(0, MAX_CORES)
 
         plt.savefig(os.path.join(outdir, f"{name}-{metric}"))
 
@@ -268,7 +268,7 @@ def plot_all(fused: List[DataList], not_fused: DataList, name: str, outdir: str)
         plt.xlim(0, 45_000)
         if   metric=="p50": plt.ylim(0, 50)
         elif metric=="p99": plt.ylim(0, 150)
-        else              : plt.ylim(0, 36)
+        else              : plt.ylim(0, MAX_CORES)
 
         plt.savefig(os.path.join(outdir, f"{name}-{metric}"))
 

@@ -69,6 +69,14 @@ if [[ $BENCH_TYPE = 'ALLOC' ]]; then
       if [[ $size -gt 5 ]] && [[ $size -lt 28 ]]; then
         echo 0
         echo we are not at capacity, but size = $size. Preparing to terminate... >&2
+        # Get last batch of logs, just in case.
+        echo replaying last 3000 logs: 
+        echo
+        kubectl logs --tail 3000 $podname
+        echo
+        echo Sleeping for 2000 seconds to diagnose what happened.
+        sleep 2000
+
       else 
         echo 1
       fi
@@ -95,7 +103,7 @@ while [[ $continue_result = 1 ]]; do
   write_cpu_util
   
   sleep 10
-  strs=$(get_lines $timestamp_file 3)
+  strs=$(get_lines $timestamp_file 10)
   str=$(echo "$strs" | tail -1)
   size=${#str}
   if [[ $size != 0 ]]; then echo "$strs" | tee -a $logfile; fi
