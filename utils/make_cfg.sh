@@ -6,7 +6,7 @@ name=$1
 
 load_replicas=
 
-if [[ $name =~ "-arm"]]; then
+if [[ $name =~ "-arm" ]]; then
   load_replicas=74
 else
   load_replicas=31
