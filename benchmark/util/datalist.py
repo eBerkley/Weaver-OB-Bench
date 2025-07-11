@@ -184,8 +184,15 @@ def longest_idx(dls: List[DataList]) -> int:
     return longest
 
 
+
 markers=["o",       "^",            "d",            "X",        "*"]
-colors=["tab:blue", "tab:orange",   "tab:green",    "tab:red",  "tab:purple"]
+colors=["tab:blue", "tab:orange",   "tab:green",    "tab:red",  "tab:purple", "tab:cyan"]
+BLUE=0
+ORANGE=1
+GREEN=2
+RED=3
+PURPLE=4
+CYAN=5
 graphable: TypeAlias = Tuple[List[int], List[float], List[float], List[float]]
 
 def plot_data(dls: List[DataList], name: str, outdir: str):
@@ -260,6 +267,71 @@ def plot_all(fused: List[DataList], not_fused: DataList, name: str, outdir: str)
         plt.plot([], linestyle='--', marker=None, color=colors[M_COLOR], label='fusion-M')
         plt.plot([], linestyle='--', marker=None, color=colors[MCH_COLOR], label='fusion-MCh')
         plt.plot([], linestyle='--', marker=None, color=colors[CH_COLOR], label='fusion-Ch')
+        
+        plt.legend(loc="upper left")
+        plt.ylabel(units)
+        plt.xlabel('Requests per Second')
+        plt.title(f"{name} - {metric}")
+        plt.xlim(0, 45_000)
+        if   metric=="p50": plt.ylim(0, 50)
+        elif metric=="p99": plt.ylim(0, 150)
+        else              : plt.ylim(0, MAX_CORES)
+
+        plt.savefig(os.path.join(outdir, f"{name}-{metric}"))
+
+    plot_once('p50', 1, 'Latency (ms)')
+    plot_once('p99', 2, 'Latency (ms)')
+    plot_once('cpu', 3, 'Total Utilization (cores)')
+
+def plot_types(base: List[DataList], simple: List[DataList], x4ch: List[DataList], name: str, outdir: str) -> None:
+    get_data: Callable[[List[DataList]],List[graphable]] = lambda dls: [(
+            [dl.ds[i].get_users() for i in range(len(dl))],
+            [dl.ds[i].get_p50() for i in range(len(dl))],
+            [dl.ds[i].get_p99() for i in range(len(dl))],
+            [dl.ds[i].get_cpu() for i in range(len(dl))]
+        ) for dl in dls]
+
+    base_data = get_data(base)
+    simple_data = get_data(simple)
+    x4ch_data = get_data(x4ch)
+    
+    def plot_once(metric: str, metric_i: int, units: str):
+        BASE_M_COLOR=0
+        BASE_MCH_COLOR=2
+        SIMPLE_M_COLOR=3
+        SIMPLE_MCH_COLOR=4
+        X4CH_M_COLOR=1
+        X4CH_MCH_COLOR=5
+
+        ALPHA=0.3
+
+
+        plt.cla()
+        for i in range(len(base)):
+            c_idx = BASE_M_COLOR
+            if base[i].name.startswith("MCh"):
+                c_idx = BASE_MCH_COLOR
+            plt.plot(base_data[i][0], base_data[i][metric_i], 
+                linestyle='--', marker=None, color=colors[c_idx], alpha=ALPHA)
+        
+        for i in range(len(simple)):
+            c_idx = SIMPLE_M_COLOR
+            if simple[i].name.startswith("MCh"):
+                c_idx = SIMPLE_MCH_COLOR
+            plt.plot(simple_data[i][0], simple_data[i][metric_i], 
+                linestyle='--', marker=None, color=colors[c_idx], alpha=ALPHA)
+        
+        for i in range(len(x4ch)):
+            c_idx = X4CH_M_COLOR
+            if x4ch[i].name.startswith("MCh"):
+                c_idx = X4CH_MCH_COLOR
+            plt.plot(x4ch_data[i][0], x4ch_data[i][metric_i], 
+                linestyle='--', marker=None, color=colors[c_idx], alpha=ALPHA)
+        
+        plt.plot([], linestyle='--', marker=None, color=colors[BASE_M_COLOR], label='base-M')
+        plt.plot([], linestyle='--', marker=None, color=colors[BASE_MCH_COLOR], label='base-MCh')
+        plt.plot([], linestyle='--', marker=None, color=colors[SIMPLE_M_COLOR], label='simple-M')
+        plt.plot([], linestyle='--', marker=None, color=colors[SIMPLE_MCH_COLOR], label='simple-MCh')
         
         plt.legend(loc="upper left")
         plt.ylabel(units)

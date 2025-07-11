@@ -121,9 +121,12 @@ all:
 	@echo "toggle_smt           - Toggle hyperthreading. NOTE: May require root."
 	@echo "deploy               - Starts minikube / builds new version of app if necessary, then deploys."
 	@echo "pre_deploy           - Builds new version of app, but does not deploy anything."
-	@echo "bench                - Deploys app, and runs script to collect metrics and terminate when load test is complete."
-	@echo "bench_all            - Run benchmark using every colocation scheme in release/base/colocation"
+	@echo "bench                - Deploys app, and runs script to collect metrics and terminate when load test is complete. Mostly deprecated."
+	@echo "bench_all            - Run benchmark using every file in cfgs/"
 	@echo "stop                 - remove deployments"
+	@echo "analyze S=<scheme>   - pretty-print results for <scheme>"
+	@echo "results S=<scheme>   - extract results for <scheme> and populate benchmarks/results/<scheme>.csv"
+	@echo "results_all          - run \`make results S=<scheme>\` for all newly benchmarked schemes"
 
 
 include auto/scripts.mk
@@ -147,12 +150,19 @@ results:
 results_all:
 	@for a in $(shell ls benchmark/out); do                                     \
 		if ! grep "BENCH_TYPE=ALLOC" benchmark/out/$$a/info.txt &>/dev/null; then \
-			if [[ ! -e benchmark/results/$$a.csv ]]; then                           \
-		  	echo $$a;                                                             \
-				make S=$$a results >/dev/null;                                        \
-			fi;                                                                     \
+			make S=$$a results >/dev/null;                                          \
 		fi;                                                                       \
 	done
+
+results_new:
+	@for a in $(shell ls benchmark/out); do                                     \
+		if ! grep "BENCH_TYPE=ALLOC" benchmark/out/$$a/info.txt &>/dev/null; then \
+	 		if [[ ! -e benchmark/results/$$a.csv ]]; then                           \
+	 	  	echo $$a;                                                             \
+	 			make S=$$a results >/dev/null;                                        \
+	 		fi;                                                                     \
+	 	fi;                                                                       \
+	 done
 
 status:
 	./utils/print_status.sh

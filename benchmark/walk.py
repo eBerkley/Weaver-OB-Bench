@@ -5,6 +5,7 @@ import subprocess
 from typing import List, Callable, Dict
 
 import os
+import sys
 
 THISDIR = os.path.dirname(__file__)
 resdir = os.path.normpath(os.path.join(THISDIR, "results"))
@@ -64,7 +65,7 @@ def get_idx(dl: util.DataList):
         for i in range(len(dl)):
             if extract_metric(dl[i]) >= SLA:
                 return max(i - 1, 0)
-        return len(dl)
+        return len(dl) - 1
 
     else:
         global _idx
@@ -115,15 +116,37 @@ def get_next(s: Group) -> List[Group]:
 
 # In latency minimizing mode, gets the largest throughput that has latency / util < SLA.
 # Else, gets the latency / util at the throughput specified.
+
+_set: set[str] = set()
 _cache: Dict[str, util.DataList] = {}
 _benchmarks = 0
+
+def re_set():
+    global _set
+    global _benchmarks
+    _set = set()
+    _benchmarks = 0
+
+    global extract_metric
+    match value:
+        case "p50":
+            extract_metric = lambda x: x.p50
+        case "p99":
+            extract_metric = lambda x: x.p99
+        case "cpu":
+            extract_metric = lambda x: x.cpu
+
 def get_val(s: Group) -> float:
+    global _benchmarks
+    global _set
+
+    if str(s) not in _set:
+        _benchmarks += 1
+        _set.add(str(s))
+
     if str(s) in _cache:
         return srt(_cache[str(s)])
 
-    global _benchmarks
-    _benchmarks += 1
-    
     dl = util.DataList()
     dl.from_results(util.find_best_match(s.canon_name(), resdir))
     _cache[str(s)] = dl
@@ -159,33 +182,43 @@ def walk_latency(init: Group, bad_list: List[str]) -> Group:
             best = b
     return best
 
-def walk_throughput(init: Group, bad_list: List[str]) -> Group:
+def get_metric(grp: Group) -> float:
+    dl = _cache[str(grp)]
+    return extract_metric(dl[get_idx(dl)])
 
+def walk_throughput(init: Group, bad_list: List[str]) -> Group:
     children = get_next(init)
     next_batch: List[int] = []
+
+    initval = get_val(init)
+    initmet = get_metric(init)
+
     for i in range(len(children)):
         new_c = init.difference(children[i])
 
         if new_c in bad_list:
             continue
+
+        chval = get_val(children[i])
+        chmet = get_metric(children[i])
+
+        print(f"init = {str(init)} w\ {initmet}@{initval}, init = {str(children[i])} w\ {chmet}@{chval}", file=sys.stderr)
         
-        if get_val(children[i]) < get_val(init):
+        if chval < initval:
             bad_list.append(new_c)
-        elif get_val(children[i]) == get_val(init):
+        elif chval == initval:
             
-            chdl=_cache[str(children[i])]
-            initdl=_cache[str(init)]
-            chmet = extract_metric(chdl[get_idx(chdl)])
-            initmet = extract_metric(initdl[get_idx(initdl)])
             if chmet > initmet:
                 bad_list.append(new_c)
+            else:
+                next_batch.append(i)
         else:
             next_batch.append(i)
     
     if len(next_batch) == 0:
         return init
 
-    next_batch.sort(key=lambda i: get_val(children[i]))    
+    next_batch.sort(key=lambda i: get_val(children[i]) + (1 - get_metric(children[i]) / SLA), reverse=True)    
     best = children[next_batch[0]]
     for i in range(min(len(next_batch), breadth)):
         n = next_batch[i]
@@ -196,12 +229,8 @@ def walk_throughput(init: Group, bad_list: List[str]) -> Group:
         if get_val(b) > get_val(best):
             best = b
         elif get_val(b) == get_val(best):
-            
-            bdl=_cache[str(b)]
-            bestdl=_cache[str(best)]
-            bmet = extract_metric(bdl[get_idx(bdl)])
-            bestmet = extract_metric(bestdl[get_idx(bestdl)])
-
+            bmet = get_metric(b)
+            bestmet = get_metric(best)
             # print(f"(@{get_val(best)}) b: {b} = {bmet}, best: {best} = {bestmet}")
             if bmet < bestmet:
                 best = b
@@ -210,11 +239,42 @@ def walk_throughput(init: Group, bad_list: List[str]) -> Group:
 
 if __name__ == '__main__':
     if throughput_mode:
-        winner = walk_throughput(scheme, [])
-        v = get_val(winner)
-        dl=_cache[str(winner)]
-        metric = extract_metric(dl[get_idx(dl)])
-        print(f'Winner: {str(winner)} = {v}, {value} = {metric}')
+        if mode == util.Mode.TERM.value:
+            winner = walk_throughput(scheme, [])
+            v = get_val(winner)
+            dl=_cache[str(winner)]
+            metric = extract_metric(dl[get_idx(dl)])
+            print(f'Winner: {str(winner)} = {v}, {value} = {metric}')
+        elif mode == util.Mode.CSV.value:
+            def print_line():
+                re_set()
+                winner = walk_throughput(scheme, [])
+                v = get_val(winner)
+                metric = get_metric(winner)
+                print(f"{breadth},{prune},{value},{v},{metric},{_benchmarks}")
+                print(f"{breadth},{prune},{value},{v},{metric},{_benchmarks}", file=sys.stderr)
+
+            print("b,pruning,mode,users,latency,benchmarks")
+            FACTOR=3
+            for b in range(1, 6):
+                print("",end="",flush=True)
+                breadth = b
+                for p in [False, True]:
+                    prune = p
+                    value = 'p50'
+                    for p50 in [float(x) / FACTOR for x in range(1, 32*FACTOR)] + [i for i in range(32, 60)]:
+                        SLA = p50
+                        print_line()
+
+                    value = 'p99'
+                    for p99 in [i for i in range(6, 100, 2)] + [i for i in range(100, 200, 5)]:
+                        SLA = p99
+                        print_line()
+                    
+                    value = 'cpu'
+                    for cpu in [float(x) / FACTOR for x in range(4, 37*FACTOR)]:
+                        SLA = cpu
+                        print_line()
 
     else:
         winner = walk_latency(scheme, [])
@@ -233,7 +293,5 @@ if __name__ == '__main__':
             # not really doing any average, but we use this when
             # we want to compare walk results with an average.
             print(v, end="")
-        
-    import sys
+
     print("total benchmarks =", _benchmarks, file=sys.stderr)
-    

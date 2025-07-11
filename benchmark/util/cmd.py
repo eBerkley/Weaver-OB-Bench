@@ -19,13 +19,19 @@ class Mode(Enum):
     def __str__(self):
         return self.value
 
-def get_schemes() -> List[str]:
+def get_schemes(careful=None) -> List[str]:
     schemes: List[str] = []
-    for ss in stdin:
-        for s in ss.split(" "):
-            if s.strip() != "":
-                scm = shorten_scheme(s)
-                schemes.append(scm.strip())
+    if careful:
+        for ss in stdin:
+            for s in ss.split():
+                if s.strip() != "":
+                    schemes.append(s.strip())
+    else:
+        for ss in stdin:
+            for s in ss.split(" "):
+                if s.strip() != "":
+                    scm = shorten_scheme(s)
+                    schemes.append(scm.strip())
 
     return schemes
 

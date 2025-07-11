@@ -56,8 +56,13 @@ def shorten_scheme(s: str):
         return "_".join(gs[:i])
     return s
 
-def find_best_match(name: str, outdir: str) -> str:
-    
+def find_best_match(name: str, outdir: str, careful=None) -> str:
+    if careful:
+        tests = os.listdir(outdir)
+        for t in tests:
+            if name == t.split(".")[0]:
+                return os.path.join(outdir, t)
+                
     shortened=shorten_scheme(name)
     
     tests = os.listdir(outdir)

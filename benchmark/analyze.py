@@ -187,23 +187,39 @@ elif mode == util.Mode.COMPARE.value:
     exit(0)
 
 elif mode == util.Mode.GRAPH_MANY.value:
-    schemes = util.get_schemes()
+    schemes = util.get_schemes(True)
     if len(schemes) < 2:
         raise ValueError(f"Need to use schemes multiple times. schemes: {schemes}")
     
     micro: Optional[util.DataList] = None
     dls: List[util.DataList] = []
+    simple: List[util.DataList] = []
+    x4ch: List[util.DataList] = []
+
     for s in schemes:
-        res = util.find_best_match(s, resdir)
+        res = util.find_best_match(s, resdir, True)
         dl = util.DataList()
         dl.from_results(res)
-        if os.path.basename(res).split(".")[0] == "M_Ch_R_S_A_Cu_Ca_E_Pa_Cc_Pr":
+        cur_scheme=os.path.basename(res).split(".")[0]
+        # print(s, cur_scheme)
+        if cur_scheme == "M_Ch_R_S_A_Cu_Ca_E_Pa_Cc_Pr":
             micro = dl
+        elif cur_scheme.find("simple_checkout") > -1:
+            simple.append(dl)
+        elif cur_scheme.find("x4ch") > -1:
+            x4ch.append(dl)
         else:
             dls.append(dl)
+    
     dirname=os.path.join(THISDIR, "imgs", scheme)
     os.makedirs(dirname, exist_ok=True)
-    if micro != None:
+    if simple != []:
+        if micro:
+            dls.append(micro)
+        x4ch = [] # reset bc not supported atm...
+        util.plot_types(dls, simple, x4ch, scheme, dirname)
+
+    elif micro != None:
         util.plot_all(dls, micro, scheme, dirname)
     else:
         util.plot_data(dls, scheme, dirname)
