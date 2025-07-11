@@ -5,10 +5,12 @@ from typing import List, Callable, Optional
 import os
 import sys
 
-mode, scheme, alloc_ok, scheme2, user_count, value, _, _ = util.get_args()
+mode, scheme, alloc_ok, scheme2, user_count, value, _, _, graph_mode = util.get_args()
 
 THISDIR = os.path.dirname(__file__)
 resdir = os.path.normpath(os.path.join(THISDIR, "results"))
+
+
 
 if mode == util.Mode.AVG.value:
     schemes = util.get_schemes()
@@ -49,10 +51,9 @@ elif mode == util.Mode.RANK.value:
     if not any(len(dl) >= idx for dl in dls):
         raise ValueError(f"Can not find any idx that has user count = {user_count}")
 
-
     srted = [i for i in range(len(dls))]
 
-    srt: Callable[[util.DataList], float] = None
+    srt: Callable[[util.DataList], float]
     match value:
         case "p50":
             srt = lambda x: x[idx].p50
@@ -60,7 +61,7 @@ elif mode == util.Mode.RANK.value:
             srt = lambda x: x[idx].p99
         case "cpu":
             srt = lambda x: x[idx].cpu
-        
+    
     srted.sort(key=lambda i: srt(dls[i]))
 
     print(f"idx:\t{'name'.rjust(15)}, {value.rjust(7)}")
@@ -186,11 +187,19 @@ elif mode == util.Mode.COMPARE.value:
     print(dl1.compare(dl2))
     exit(0)
 
+
+
 elif mode == util.Mode.GRAPH_MANY.value:
-    schemes = util.get_schemes(True)
-    if len(schemes) < 2:
-        raise ValueError(f"Need to use schemes multiple times. schemes: {schemes}")
+    if graph_mode == util.GraphMode.INPUT.value:
+        schemes = util.get_schemes(True)
+        if len(schemes) < 2:
+            raise ValueError(f"Need to use schemes multiple times. schemes: {schemes}")
     
+    elif graph_mode == util.GraphMode.ARM.value:
+        util.graph_arm(scheme, resdir, THISDIR)
+        exit(0)
+
+    exit(0)
     micro: Optional[util.DataList] = None
     dls: List[util.DataList] = []
     simple: List[util.DataList] = []

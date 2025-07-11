@@ -19,6 +19,13 @@ class Mode(Enum):
     def __str__(self):
         return self.value
 
+class GraphMode(Enum):
+    ARM="arm"
+    BASE="base"
+    SIMPLE="simple"
+    X4CH="x4ch"
+    INPUT="input"
+
 def get_schemes(careful=None) -> List[str]:
     schemes: List[str] = []
     if careful:
@@ -35,8 +42,8 @@ def get_schemes(careful=None) -> List[str]:
 
     return schemes
 
-def get_args() -> Tuple[Mode, str, bool, str, int, str, int, bool]: 
-    "mode, scheme_name, allow_alloc|SLA mode, scheme2_name, user_count, value, breadth, prune"
+def get_args() -> Tuple[Mode, str, bool, str, int, str, int, bool, GraphMode]: 
+    "mode, scheme_name, allow_alloc|SLA mode, scheme2_name, user_count, value, breadth, prune, graph_mode"
     parser = argparse.ArgumentParser(
         description='analyze results')
 
@@ -47,10 +54,10 @@ def get_args() -> Tuple[Mode, str, bool, str, int, str, int, bool]:
     parser.add_argument("-n2", "--name2", default="", metavar="NAME2", type=str, help="Name of the second scheme. to be used with --mode=COMPARE")
     parser.add_argument("-u", "--users", metavar="USERS", type=int, help="For use with --mode=rank. specify the user count to rank at.")
     parser.add_argument("-v", "--value", choices=["p50", "p99", "cpu"], help="For use with --mode=rank.")
-    
+    parser.add_argument("-g", "--graph", choices=[GraphMode.ARM.value, GraphMode.BASE.value, GraphMode.INPUT.value, GraphMode.SIMPLE.value, GraphMode.X4CH.value], help="for use with mode=graph_many")
     parser.add_argument('-b', "--breadth", default=3, type=int, help="for use with walk.py")
     parser.add_argument('-p', '--prune', action='store_true')
 
     args = parser.parse_args()
 
-    return args.mode, args.name, args.alloc, args.name2, args.users, args.value, args.breadth, args.prune
+    return args.mode, args.name, args.alloc, args.name2, args.users, args.value, args.breadth, args.prune, args.graph

@@ -7,6 +7,7 @@ from matplotlib import pyplot as plt
 import os
 from statistics import median
 
+
 MAX_CORES=36
 
 class ResultsHead:

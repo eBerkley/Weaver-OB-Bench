@@ -14,14 +14,15 @@ fi
 
 # Once every n benchmarks, clear docker cache 
 # prevents running out of space.
-DOCKER_CACHE_CLEAR_FREQ=7
+DOCKER_CACHE_CLEAR_FREQ=3
 
 i=0
 
 maybe_clear_cache () {
   (( i++ ))
   if [ $(( i % $DOCKER_CACHE_CLEAR_FREQ )) -eq 0 ]; then
-    docker system prune -f
+    minikube delete
+    docker system prune -af
   fi
 }
 
