@@ -6,19 +6,22 @@ if [[ -z $TMUX ]]; then
 fi
 
 arm=0
-4ch=0
+x4ch=0
 simple=0
-
+static=0
 for i in "$@"; do
   case $i in
     arm)
       arm=1
       ;;
-    4xch)
-      4xch=1
+    x4ch)
+      x4ch=1
       ;;
     simple)
       simple=1
+      ;;
+    static)
+      static=1
       ;;
   esac
 done
@@ -39,55 +42,70 @@ else
   MAX_CORES=36
 fi
 
-sed -i -E "s/MAX_CORES=[0-9\-]+/MAX_CORES=$MAX_CORES" .env
+sed -i -E "s/MAX_CORES=[0-9\-]+/MAX_CORES=$MAX_CORES/" .env
 
 scheme_suffix=""
 
 if [[ $simple = 1 ]]; then
+  echo simple checkout enabled
   scheme_suffix+="-simple_checkout"
   sed -i -E 's/CHECKOUT_FUNCTIONALITY=[a-z\_]+/CHECKOUT_FUNCTIONALITY=simple_checkout/' .env
 else
   sed -i -E 's/CHECKOUT_FUNCTIONALITY=[a-z\_]+/CHECKOUT_FUNCTIONALITY=full_checkout/' .env
 fi
 
-if [[ $4xch = 1 ]]; then
-  scheme_suffix+="-4xch"
-  sed -i -E 's/LOCUST_CHECKOUT_MOD=[0-9]+/LOCUST_CHECKOUT_MOD=4/' .env
+if [[ $x4ch = 1 ]]; then
+  echo x4ch enabled
+  scheme_suffix+="-x4ch"
+  sed -i -E 's/LOCUST_CHECKOUT_MOD=[0-9]+/LOCUST_CHECKOUT_MOD=4/' locust.env
 else
-  sed -i -E 's/LOCUST_CHECKOUT_MOD=[0-9]+/LOCUST_CHECKOUT_MOD=1/' .env
+  sed -i -E 's/LOCUST_CHECKOUT_MOD=[0-9]+/LOCUST_CHECKOUT_MOD=1/' locust.env
 fi
 
 if [[ $arm = 1 ]]; then
+  echo ARM enabled
   scheme_suffix+="-arm"
-  sed -i -E 's/KUBE_CORES=[0-9\-]+/KUBE_CORES=0-4' .env
+  sed -i -E 's/KUBE_CORES=[0-9\-]+/KUBE_CORES=0-4/' .env
 else
-  sed -i -E 's/KUBE_CORES=[0-9\-]+/KUBE_CORES=0-2' .env
+  sed -i -E 's/KUBE_CORES=[0-9\-]+/KUBE_CORES=0-2/' .env
 fi
 
 
 for a in $(cat todo.txt); do
-  ./utils/make_template.sh $a
+  if [[ $static = 0 ]]; then
+    rm -f alloc/"$a""$scheme_suffix".cfg
+  fi
+
+  rm benchmark/results/"$a""$scheme_suffix".csv
   rm -rf release/base/colocation/"$a""$scheme_suffix"/ # Just in case.
-  cp -r release/base/colocation/$a/ release/base/colocation/"$a""$scheme_suffix"/
+  ./utils/make_template.sh $a
   
+  if [[ -n $scheme_suffix ]]; then
+    cp -r release/base/colocation/$a/ release/base/colocation/"$a""$scheme_suffix"/
+  fi
+
   if [[ $arm = 1 ]]; then
     sed -i 's/pr=1/pr=2/' release/base/colocation/"$a""$scheme_suffix"/groups_height.cfg
   fi
   ./utils/make_cfg.sh "$a""$scheme_suffix"
 done
 
+if [[ $static = 0 ]]; then
+  echo                                      >>DELETE.txt
+  echo "----------------------------------" >>DELETE.txt
+  echo "PREPARING TO RUN ALLOC BENCHMARKS" | tee -a DELETE.txt
+  echo "----------------------------------" >>DELETE.txt
+  echo                                      >>DELETE.txt
 
-echo                                      >>DELETE.txt
-echo "----------------------------------" >>DELETE.txt
-echo "PREPARING TO RUN ALLOC BENCHMARKS" | tee -a DELETE.txt
-echo "----------------------------------" >>DELETE.txt
-echo                                      >>DELETE.txt
+  sed -i -E 's/BENCH_TYPE=[A-Z]+/BENCH_TYPE=ALLOC/' .env
+  make bench_all &>DELETE.txt
 
-sed -i -E 's/BENCH_TYPE=[A-Z]+/BENCH_TYPE=ALLOC/' .env
-make bench_all &>DELETE.txt
+  echo alloc output:              >>DELETE.txt
+  ./scripts/export_allocations.sh >> DELETE.txt
 
-echo alloc output:              >>DELETE.txt
-./scripts/export_allocations.sh >> DELETE.txt
+else
+  echo skipping static benchmarks. | tee DELETE.txt
+fi
 
 echo                                      >>DELETE.txt
 echo "----------------------------------" >>DELETE.txt
@@ -101,7 +119,7 @@ make bench_all &>>DELETE.txt
 
 # Reset env vars.
 sed -i -E 's/CHECKOUT_FUNCTIONALITY=[a-z\_]+/CHECKOUT_FUNCTIONALITY=full_checkout/' .env
-sed -i -E 's/KUBE_CORES=[0-9\-]+/KUBE_CORES=0-2' .env
-sed -i -E 's/LOCUST_CHECKOUT_MOD=[0-9]+/LOCUST_CHECKOUT_MOD=1/' .env
+sed -i -E 's/KUBE_CORES=[0-9\-]+/KUBE_CORES=0-2/' .env
+sed -i -E 's/LOCUST_CHECKOUT_MOD=[0-9]+/LOCUST_CHECKOUT_MOD=1/' locust.env
 
 echo Done.

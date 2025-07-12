@@ -37,7 +37,7 @@ schemes=$group
 if [[ $group = "Ch" ]]; then
   schemes="M_Ch_R_S_A_Cu_Ca_E_Pa_Cc_Pr"
 else
-  res=$(basename $(ls benchmark/results | grep ^$group"_") .csv)
+  res=$(basename $(ls benchmark/results | grep -E ^$group"_"[a-zA-Z_]+.csv) .csv)
   if [[ $? != 0 ]] || [[ $res = ".csv" ]]; then
     schemes="" 
   else
