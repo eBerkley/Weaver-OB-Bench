@@ -30,8 +30,17 @@ _USERS = {
     37_000: 12, 38_000: 13, 39_000: 14, 
     40_000: 15, 41_000: 16, 42_000: 17, 
     43_000: 18, 44_000: 19, 45_000: 20, 
-    46_000: 21, 47_000: 21, 48_000: 23
+    46_000: 21, 47_000: 22, 48_000: 23
 }
+
+srt_t: TypeAlias = Callable[['DataList'], float]
+        
+def get_srts(idx: int) -> Tuple[srt_t, srt_t, srt_t]:
+    p50: srt_t = lambda x: x[idx].p50
+    p99: srt_t = lambda x: x[idx].p99
+    cpu: srt_t = lambda x: x[idx].cpu
+    return p50, p99, cpu
+
 def user_idx(users: int) -> int:
     return _USERS[users]
 
@@ -107,6 +116,17 @@ class DataList:
         for i in range(len(csv[ResultsHead.Users])):
             d = DataPoint(csv[ResultsHead.Users][i], [csv[ResultsHead.P50][i]]*10, [csv[ResultsHead.P99][i]]*10, [csv[ResultsHead.RPS][i]]*10, [csv[ResultsHead.CPU][i]]*10)
             self.ds.append(d)
+
+    def from_cmp(self, dl1: 'DataList', dl2: 'DataList'):
+        self.name = "cmp"
+        for i in range(min(len(dl1), len(dl2))):
+            srtp50, srtp99, srtcpu = get_srts(i)
+            p50 = srtp50(dl1) - srtp50(dl2)
+            p99 = srtp99(dl1) - srtp99(dl2)
+            cpu = srtcpu(dl1) - srtcpu(dl2)
+            d = DataPoint(idx_user(i), [p50], [p99], [idx_user(i)], [cpu])
+            self.ds.append(d)
+            
     
     # We say that our simulated "random scheme" 
     # saturates at this point. Then, when creating
@@ -118,14 +138,7 @@ class DataList:
     # schemes that are saturated at this count.
     def from_others(self, dls: List['DataList']):
         self.name = "average"
-        srt_t: TypeAlias = Callable[[DataList], float]
         
-        def get_srts(idx: int) -> Tuple[srt_t, srt_t, srt_t]:
-            p50: srt_t = lambda x: x[idx].p50
-            p99: srt_t = lambda x: x[idx].p99
-            cpu: srt_t = lambda x: x[idx].cpu
-            return p50, p99, cpu
-
         for usrs in list(_USERS.keys()):
             idx = user_idx(usrs)
             srtp50, srtp99, srtcpu = get_srts(idx)
@@ -152,14 +165,17 @@ class DataList:
         return s[:-1]
 
     def compare(self, other: 'DataList') -> str:
-        s = f'{"users".rjust(5)}: {"p50".rjust(6)}, {"p99".rjust(7)}, {"cpu".rjust(5)}; {"dp50".rjust(5)}, {"dp99".rjust(5)}, {"dcpu".rjust(5)}\n'
+        s = f'{"users".rjust(5)}: {"p50".rjust(6)}, {"p99".rjust(7)}, {"cpu".rjust(5)}; {"dp50".rjust(7)}, {"dp99".rjust(7)}, {"dcpu".rjust(7)}\n'
         for i in range(min(len(self.ds), len(other.ds))):
             usrs = self.ds[i].get_users()
             p50 = self.ds[i].get_p50() - other.ds[i].get_p50()
             p99 = self.ds[i].get_p99() - other.ds[i].get_p99()
             cpu = self.ds[i].get_cpu() - other.ds[i].get_cpu()
+            dp50 = 100 * (p50 / self.ds[i].get_p50())
+            dp99 = 100 * (p99 / self.ds[i].get_p99())
+            dcpu = 100 * (cpu / self.ds[i].get_cpu())
             
-            s += f"{usrs:5d}: {p50:+6.2f}, {p99:+7.2f}, {cpu:+5.2f} \n"
+            s += f"{usrs:5d}: {p50:+6.2f}, {p99:+7.2f}, {cpu:+5.2f}; {dp50:+6.2f}%, {dp99:+6.2f}%, {dcpu:+6.2f}%\n"
         return s
 
     def graph(self, name: str, dest: str):
@@ -183,8 +199,6 @@ def longest_idx(dls: List[DataList]) -> int:
         if len(dls[longest]) < len(dls[i]):
             longest = i
     return longest
-
-
 
 markers=["o",       "^",            "d",            "X",        "*"]
 colors=["tab:blue", "tab:orange",   "tab:green",    "tab:red",  "tab:purple", "tab:cyan"]
@@ -233,6 +247,19 @@ MCH_COLOR       = 2
 CH_COLOR        = 3
 
 def plot_all(fused: List[DataList], not_fused: DataList, name: str, outdir: str):
+    ALPHA=0.1
+    MAX_RPS=45_000
+    MAX_P99=150
+    MAX_P50=50
+    CH=True
+    if fused[0].name.endswith("-arm"):
+        MAX_CORES=80
+        ALPHA=0.3
+        MAX_RPS=15_000
+        MAX_P99=250
+        MAX_P50=100
+        CH=False
+
     datas: List[graphable] = [(
             [dl.ds[i].get_users() for i in range(len(dl))],
             [dl.ds[i].get_p50() for i in range(len(dl))],
@@ -252,6 +279,9 @@ def plot_all(fused: List[DataList], not_fused: DataList, name: str, outdir: str)
         for i in range(len(fused)):
             c_idx = 0
             if fused[i].name.startswith("M"):
+                # if "Cu" in fused[i].name.split("_")[0]:
+                #     c_idx = PURPLE
+
                 if fused[i].name.startswith("MCh"):
                     c_idx = MCH_COLOR
                 else:
@@ -260,22 +290,25 @@ def plot_all(fused: List[DataList], not_fused: DataList, name: str, outdir: str)
                 c_idx = CH_COLOR
 
             plt.plot(datas[i][0], datas[i][metric_i], 
-                linestyle='--', marker=None, color=colors[c_idx], alpha=0.1)
+                linestyle='--', marker=None, color=colors[c_idx], alpha=ALPHA)
 
         plt.plot(nf_data[0], nf_data[metric_i],
             label="microservices", linestyle='--', marker=None, color=colors[TRIVIAL_COLOR])
         
         plt.plot([], linestyle='--', marker=None, color=colors[M_COLOR], label='fusion-M')
         plt.plot([], linestyle='--', marker=None, color=colors[MCH_COLOR], label='fusion-MCh')
-        plt.plot([], linestyle='--', marker=None, color=colors[CH_COLOR], label='fusion-Ch')
+        if CH:
+            plt.plot([], linestyle='--', marker=None, color=colors[CH_COLOR], label='fusion-Ch')
+        # else:
+        #     plt.plot([], linestyle='--', marker=None, color=colors[CH_COLOR], label='fusion-MxCu')
         
         plt.legend(loc="upper left")
         plt.ylabel(units)
         plt.xlabel('Requests per Second')
         plt.title(f"{name} - {metric}")
-        plt.xlim(0, 45_000)
-        if   metric=="p50": plt.ylim(0, 50)
-        elif metric=="p99": plt.ylim(0, 150)
+        plt.xlim(0, MAX_RPS)
+        if   metric=="p50": plt.ylim(0, MAX_P50)
+        elif metric=="p99": plt.ylim(0, MAX_P99)
         else              : plt.ylim(0, MAX_CORES)
 
         plt.savefig(os.path.join(outdir, f"{name}-{metric}"))
@@ -295,6 +328,8 @@ def plot_types(base: List[DataList], simple: List[DataList], x4ch: List[DataList
     base_data = get_data(base)
     simple_data = get_data(simple)
     x4ch_data = get_data(x4ch)
+
+    GRAPH_MCH = False
     
     def plot_once(metric: str, metric_i: int, units: str):
         BASE_M_COLOR=0
@@ -311,6 +346,9 @@ def plot_types(base: List[DataList], simple: List[DataList], x4ch: List[DataList
         for i in range(len(base)):
             c_idx = BASE_M_COLOR
             if base[i].name.startswith("MCh"):
+                if not GRAPH_MCH:
+                    continue
+
                 c_idx = BASE_MCH_COLOR
             plt.plot(base_data[i][0], base_data[i][metric_i], 
                 linestyle='--', marker=None, color=colors[c_idx], alpha=ALPHA)
@@ -318,6 +356,8 @@ def plot_types(base: List[DataList], simple: List[DataList], x4ch: List[DataList
         for i in range(len(simple)):
             c_idx = SIMPLE_M_COLOR
             if simple[i].name.startswith("MCh"):
+                if not GRAPH_MCH:
+                    continue
                 c_idx = SIMPLE_MCH_COLOR
             plt.plot(simple_data[i][0], simple_data[i][metric_i], 
                 linestyle='--', marker=None, color=colors[c_idx], alpha=ALPHA)
@@ -325,15 +365,26 @@ def plot_types(base: List[DataList], simple: List[DataList], x4ch: List[DataList
         for i in range(len(x4ch)):
             c_idx = X4CH_M_COLOR
             if x4ch[i].name.startswith("MCh"):
+                if not GRAPH_MCH:
+                    continue
                 c_idx = X4CH_MCH_COLOR
             plt.plot(x4ch_data[i][0], x4ch_data[i][metric_i], 
                 linestyle='--', marker=None, color=colors[c_idx], alpha=ALPHA)
         
         plt.plot([], linestyle='--', marker=None, color=colors[BASE_M_COLOR], label='base-M')
-        plt.plot([], linestyle='--', marker=None, color=colors[BASE_MCH_COLOR], label='base-MCh')
-        plt.plot([], linestyle='--', marker=None, color=colors[SIMPLE_M_COLOR], label='simple-M')
-        plt.plot([], linestyle='--', marker=None, color=colors[SIMPLE_MCH_COLOR], label='simple-MCh')
+        if GRAPH_MCH:
+            plt.plot([], linestyle='--', marker=None, color=colors[BASE_MCH_COLOR], label='base-MCh')
         
+        if simple != []:
+            plt.plot([], linestyle='--', marker=None, color=colors[SIMPLE_M_COLOR], label='simple-M')
+            if GRAPH_MCH:
+                plt.plot([], linestyle='--', marker=None, color=colors[SIMPLE_MCH_COLOR], label='simple-MCh')
+        
+        if x4ch != []:
+            plt.plot([], linestyle='--', marker=None, color=colors[X4CH_M_COLOR], label='x4ch-M')
+            if GRAPH_MCH:
+                plt.plot([], linestyle='--', marker=None, color=colors[X4CH_MCH_COLOR], label='x4ch-MCh')
+
         plt.legend(loc="upper left")
         plt.ylabel(units)
         plt.xlabel('Requests per Second')

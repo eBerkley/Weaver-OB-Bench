@@ -4,6 +4,11 @@ from typing import NamedTuple, List, Tuple
 
 from statistics import mean
 
+import platform
+SAMPLE_WINDOW=10
+if platform.processor() == 'aarch64':
+    SAMPLE_WINDOW = 30
+
 class DataPoint(NamedTuple):
     # timestamp: int
     users: int
@@ -14,7 +19,7 @@ class DataPoint(NamedTuple):
 
     @staticmethod
     def get(d: List[float]):
-        return round(mean(d[len(d)-10:]), 2)
+        return round(mean(d[len(d)-SAMPLE_WINDOW:]), 2)
 
     def get_users(self): return self.users
     def get_p50(self): return self.get(self.p50)
@@ -39,7 +44,8 @@ def get_hold_idxs(data: List[int]) -> List[Tuple[int, int]]:
                 hold_i = i
         
         elif holding:
-            ret.append((hold_i, i))
+            if i > hold_i + 5:
+                ret.append((hold_i, i))
             hold_i = 0
             holding = False
             

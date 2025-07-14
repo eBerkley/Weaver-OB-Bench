@@ -1,6 +1,6 @@
 #!/bin/python3
 
-from .datalist import  DataList,  plot_data, plot_all
+from .datalist import  DataList,  plot_data, plot_all, plot_types
 from .env import find_best_match
 from .cmd import get_schemes
 
@@ -62,6 +62,49 @@ def graph_suffix(name: str, resdir: str, basedir: str, suffix: str):
 
 def graph_arm(name: str, resdir: str, basedir: str):
     graph_suffix(name, resdir, basedir, "arm")
+
+def graph_simple(name: str, resdir: str, basedir: str):
+
+    simples = get_suffix(resdir, "simple_checkout")
+    simpledls: List[DataList] = []
+    basedls: List[DataList] = []
+
+    for scheme in simples:
+        base = scheme.replace("-simple_checkout", "")
+        basedl = DataList()
+        simpledl = DataList()
+
+        basedl.from_results(base)
+        simpledl.from_results(scheme)
+
+        basedls.append(basedl)
+        simpledls.append(simpledl)
     
+    dirname = os.path.join(basedir, "imgs", name)
+    os.makedirs(dirname, exist_ok=True)
+    plot_types(basedls, simpledls, [], name, dirname)
+
+
+def graph_x4ch(name: str, resdir: str, basedir: str):
+    x4chs = get_suffix(resdir, "4xch")
+    x4chdls: List[DataList] = []
+    basedls: List[DataList] = []
+
+    for scheme in x4chs:
+
+        base = scheme.replace("-4xch", "")
+        basedl = DataList()
+        simpledl = DataList()
+
+        basedl.from_results(base)
+        simpledl.from_results(scheme)
+
+        basedls.append(basedl)
+        x4chdls.append(simpledl)
+    
+    dirname = os.path.join(basedir, "imgs", name)    
+    os.makedirs(dirname, exist_ok=True)
+
+    plot_types(basedls, [], x4chdls, name, dirname)
 
 
