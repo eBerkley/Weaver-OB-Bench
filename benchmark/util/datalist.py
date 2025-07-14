@@ -178,8 +178,6 @@ class DataList:
             s += f"{usrs:5d}: {p50:+6.2f}, {p99:+7.2f}, {cpu:+5.2f}; {dp50:+6.2f}%, {dp99:+6.2f}%, {dcpu:+6.2f}%\n"
         return s
 
-    
-
     def graph(self, name: str, dest: str):
         plt.cla()
         usrs = [self.ds[i].get_users() for i in range(len(self))]
@@ -201,8 +199,6 @@ def longest_idx(dls: List[DataList]) -> int:
         if len(dls[longest]) < len(dls[i]):
             longest = i
     return longest
-
-
 
 markers=["o",       "^",            "d",            "X",        "*"]
 colors=["tab:blue", "tab:orange",   "tab:green",    "tab:red",  "tab:purple", "tab:cyan"]
@@ -251,6 +247,19 @@ MCH_COLOR       = 2
 CH_COLOR        = 3
 
 def plot_all(fused: List[DataList], not_fused: DataList, name: str, outdir: str):
+    ALPHA=0.1
+    MAX_RPS=45_000
+    MAX_P99=150
+    MAX_P50=50
+    CH=True
+    if fused[0].name.endswith("-arm"):
+        MAX_CORES=80
+        ALPHA=0.3
+        MAX_RPS=15_000
+        MAX_P99=250
+        MAX_P50=100
+        CH=False
+
     datas: List[graphable] = [(
             [dl.ds[i].get_users() for i in range(len(dl))],
             [dl.ds[i].get_p50() for i in range(len(dl))],
@@ -270,6 +279,9 @@ def plot_all(fused: List[DataList], not_fused: DataList, name: str, outdir: str)
         for i in range(len(fused)):
             c_idx = 0
             if fused[i].name.startswith("M"):
+                # if "Cu" in fused[i].name.split("_")[0]:
+                #     c_idx = PURPLE
+
                 if fused[i].name.startswith("MCh"):
                     c_idx = MCH_COLOR
                 else:
@@ -278,22 +290,25 @@ def plot_all(fused: List[DataList], not_fused: DataList, name: str, outdir: str)
                 c_idx = CH_COLOR
 
             plt.plot(datas[i][0], datas[i][metric_i], 
-                linestyle='--', marker=None, color=colors[c_idx], alpha=0.1)
+                linestyle='--', marker=None, color=colors[c_idx], alpha=ALPHA)
 
         plt.plot(nf_data[0], nf_data[metric_i],
             label="microservices", linestyle='--', marker=None, color=colors[TRIVIAL_COLOR])
         
         plt.plot([], linestyle='--', marker=None, color=colors[M_COLOR], label='fusion-M')
         plt.plot([], linestyle='--', marker=None, color=colors[MCH_COLOR], label='fusion-MCh')
-        plt.plot([], linestyle='--', marker=None, color=colors[CH_COLOR], label='fusion-Ch')
+        if CH:
+            plt.plot([], linestyle='--', marker=None, color=colors[CH_COLOR], label='fusion-Ch')
+        # else:
+        #     plt.plot([], linestyle='--', marker=None, color=colors[CH_COLOR], label='fusion-MxCu')
         
         plt.legend(loc="upper left")
         plt.ylabel(units)
         plt.xlabel('Requests per Second')
         plt.title(f"{name} - {metric}")
-        plt.xlim(0, 45_000)
-        if   metric=="p50": plt.ylim(0, 50)
-        elif metric=="p99": plt.ylim(0, 150)
+        plt.xlim(0, MAX_RPS)
+        if   metric=="p50": plt.ylim(0, MAX_P50)
+        elif metric=="p99": plt.ylim(0, MAX_P99)
         else              : plt.ylim(0, MAX_CORES)
 
         plt.savefig(os.path.join(outdir, f"{name}-{metric}"))

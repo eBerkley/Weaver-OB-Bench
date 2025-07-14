@@ -150,6 +150,7 @@ results:
 results_all:
 	@for a in $(shell ls benchmark/out); do                                     \
 		if ! grep "BENCH_TYPE=ALLOC" benchmark/out/$$a/info.txt &>/dev/null; then \
+			echo $$a;                                                               \
 			make S=$$a results >/dev/null;                                          \
 		fi;                                                                       \
 	done
