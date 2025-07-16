@@ -12,7 +12,6 @@ include .env
 include locust.env
 include docker.env
 
-# sets LOADGEN_REPLICAS, OB_CORES, OB_REPLICAS, and optionally SCHEME.
 include $(CONFIG_FILE)
 
 ifeq ($(VERBOSE), 1)
@@ -106,6 +105,20 @@ else ifeq ($(BENCH_TYPE), ALLOC)
 	LOCUST_SLOWLOAD_RAMP := 5000
 	LOCUST_SLOWER_PAUSE  := 45
 	LOCUST_WAIT_TIME     := 300		
+
+else ifeq ($(BENCH_TYPE), PERF)
+	METRIC_ENABLE   := false
+	TRACE_ENABLE    := false
+	INSTFP_ENABLE   := false
+	CPU_UTIL_ENABLE := false
+	VERTICAL_PROF   := false
+	RUNTIME_METRIC_ENABLE := false
+
+	LOCUST_RESET_CONN := 0
+
+	LOCUST_SHAPE       := constload
+	LOCUST_CONST_USERS := 15000
+	VTUNE_DURATION     := 300
 else # ifeq ($(BENCH_TYPE), CUSTOM)
 # ...
 endif
@@ -255,6 +268,8 @@ bench: deploy
 
 	@if [[ $$RUNTIME_METRIC_ENABLE = "true" ]]; then \
 		taskset -c 5-25 ./scripts/runtime_metrics_stats.sh;        \
+	elif [[ $$BENCH_TYPE = "PERF" ]]; then      \
+		./scripts/perf_stats.sh;                  \
 	elif [[ $$TRACE_ENABLE = "true" ]]; then    \
 		./scripts/traces_stats.sh;                 \
 	elif [[ $$INSTFP_ENABLE = "true" ]]; then   \
@@ -270,7 +285,7 @@ bench: deploy
 	fi
 
 	@echo deleting deployment...
-	@-kubectl delete all --all >> $(DEBUG_OUTPUT) 2>&1
+	# @-kubectl delete all --all >> $(DEBUG_OUTPUT) 2>&1
 
 # Shouldn't be ran by user, used by bench_all.
 bench_once: deploy

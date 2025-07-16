@@ -23,6 +23,7 @@ C_SCHEME=groups_height
 LOADGEN_REPLICAS=$load_replicas
 OB_CORES=1
 OB_REPLICAS=100
+VTUNE_GROUP_NAME=$(./../utils/lower_grp.sh $name)
 FIXED=main
 FIXED_HEIGHT=2
 FIXED_WIDTH=1

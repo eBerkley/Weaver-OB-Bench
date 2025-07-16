@@ -19,6 +19,7 @@ const DELIMITER = "_"
 
 var spec = flag.String("scheme", "", "the name of the fusion scheme.")
 var from = flag.Bool("fromYaml", true, "true if we are going from yaml file to formatted string. false if vice versa.")
+var lower = flag.Bool("lowerSpec", false, "convert a scheme like MChRSCuCa to m-ch-r-s-cu-ca")
 
 type Group struct {
 	Name       string
@@ -107,6 +108,14 @@ func toYaml() {
 
 }
 
+func toLower() {
+	strs := strings.Split(*spec, DELIMITER)
+	str := strs[0]
+
+	g := makeGroup(str)
+	fmt.Println(g.Name)
+}
+
 func fromYaml() {
 	dir, err := os.Getwd()
 	if err != nil {
@@ -156,7 +165,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	if *from {
+	if *lower {
+		toLower()
+	} else if *from {
 		fromYaml()
 	} else {
 		toYaml()
