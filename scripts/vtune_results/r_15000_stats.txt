@@ -1,0 +1,37 @@
+# started on Wed Jul 16 20:21:33 2025
+
+
+ Performance counter stats for process id '2753021':
+
+   572,127,595,488      instructions                     #    1.64  insn per cycle            
+   349,383,287,087      cycles                                                                
+    28,581,555,425      L1-icache-load-misses                                                 
+     1,123,054,043      branch-misses                                                         
+   143,670,522,325      dTLB-loads                                                            
+
+     299.975263758 seconds time elapsed
+
+# started on Wed Jul 16 20:26:33 2025
+
+
+ Performance counter stats for process id '2753021':
+
+   143,953,000,272      L1-dcache-loads                                                       
+     7,731,385,854      L1-dcache-load-misses            #    5.37% of all L1-dcache accesses 
+     1,137,286,611      LLC-loads                                                             
+       423,734,571      LLC-load-misses                  #   37.26% of all LL-cache accesses  
+
+     299.979355952 seconds time elapsed
+
+# started on Wed Jul 16 20:31:33 2025
+
+
+ Performance counter stats for process id '2753021':
+
+        38,899,523      dTLB-load-misses                                                      
+        16,422,782      iTLB-load-misses                                                      
+   108,604,768,774      branch-instructions                                                   
+         4,434,616      context-switches                                                      
+
+     299.976490963 seconds time elapsed
+

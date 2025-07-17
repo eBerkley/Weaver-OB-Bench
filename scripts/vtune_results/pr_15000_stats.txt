@@ -1,0 +1,37 @@
+# started on Thu Jul 17 04:21:46 2025
+
+
+ Performance counter stats for process id '2753436':
+
+   867,745,675,692      instructions                     #    1.80  insn per cycle            
+   482,966,876,542      cycles                                                                
+    38,134,522,505      L1-icache-load-misses                                                 
+     1,742,254,943      branch-misses                                                         
+   211,482,740,369      dTLB-loads                                                            
+
+     299.975604410 seconds time elapsed
+
+# started on Thu Jul 17 04:26:46 2025
+
+
+ Performance counter stats for process id '2753436':
+
+   211,990,695,713      L1-dcache-loads                                                       
+    10,348,339,084      L1-dcache-load-misses            #    4.88% of all L1-dcache accesses 
+     1,419,461,277      LLC-loads                                                             
+       519,245,498      LLC-load-misses                  #   36.58% of all LL-cache accesses  
+
+     299.979699618 seconds time elapsed
+
+# started on Thu Jul 17 04:31:46 2025
+
+
+ Performance counter stats for process id '2753436':
+
+        54,187,092      dTLB-load-misses                                                      
+        14,567,332      iTLB-load-misses                                                      
+   172,551,497,996      branch-instructions                                                   
+         5,053,283      context-switches                                                      
+
+     299.975998159 seconds time elapsed
+
