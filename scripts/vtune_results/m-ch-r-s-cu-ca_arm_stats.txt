@@ -1,0 +1,37 @@
+# started on Fri Jul 18 12:40:30 2025
+
+
+ Performance counter stats for process id '966041':
+
+   156,131,580,097      instructions                     #    0.28  insn per cycle            
+   548,053,780,847      cycles                                                                
+     6,707,153,515      L1-icache-load-misses                                                 
+     1,614,613,200      branch-misses                                                         
+    79,568,324,282      dTLB-loads                                                            
+
+     299.960919460 seconds time elapsed
+
+# started on Fri Jul 18 12:45:30 2025
+
+
+ Performance counter stats for process id '966041':
+
+    62,051,960,152      L1-dcache-loads                                                       
+     1,700,421,462      L1-dcache-load-misses            #    2.74% of all L1-dcache accesses 
+    11,014,238,802      l2d_cache                                                             
+     2,264,191,543      l2d_cache_refill                                                      
+
+     299.970622410 seconds time elapsed
+
+# started on Fri Jul 18 12:50:30 2025
+
+
+ Performance counter stats for process id '966041':
+
+     1,277,715,482      dTLB-load-misses                                                      
+       504,274,308      iTLB-load-misses                                                      
+    30,432,841,804      branch-instructions                                                   
+         2,397,537      context-switches                                                      
+
+     299.974281230 seconds time elapsed
+
