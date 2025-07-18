@@ -1,0 +1,37 @@
+# started on Thu Jul 17 19:54:43 2025
+
+
+ Performance counter stats for process id '3980624':
+
+    41,087,417,218      instructions                     #    0.31  insn per cycle            
+   131,638,259,252      cycles                                                                
+     2,487,792,009      L1-icache-load-misses                                                 
+       632,573,607      branch-misses                                                         
+    20,081,922,621      dTLB-loads                                                            
+
+     299.977206764 seconds time elapsed
+
+# started on Thu Jul 17 19:59:43 2025
+
+
+ Performance counter stats for process id '3980624':
+
+    15,731,738,230      L1-dcache-loads                                                       
+       516,719,555      L1-dcache-load-misses            #    3.28% of all L1-dcache accesses 
+     3,890,590,435      l2d_cache                                                             
+       966,478,755      l2d_cache_refill                                                      
+
+     299.972768531 seconds time elapsed
+
+# started on Thu Jul 17 20:04:43 2025
+
+
+ Performance counter stats for process id '3980624':
+
+       341,537,743      dTLB-load-misses                                                      
+       135,855,719      iTLB-load-misses                                                      
+     7,687,066,814      branch-instructions                                                   
+         1,268,829      context-switches                                                      
+
+     299.976499479 seconds time elapsed
+
