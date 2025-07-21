@@ -247,6 +247,7 @@ MCH_COLOR       = 2
 CH_COLOR        = 3
 
 def plot_all(fused: List[DataList], not_fused: DataList, name: str, outdir: str):
+    global MAX_CORES
     ALPHA=0.1
     MAX_RPS=45_000
     MAX_P99=150

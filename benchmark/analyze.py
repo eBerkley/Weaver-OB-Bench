@@ -70,8 +70,6 @@ elif mode == util.Mode.RANK.value:
         i = srted[rank]
         print(f"{rank:3d}:\t{schemes[i].rjust(15)}, {srt(dls[i]):7.2f}")
 
-
-
 elif mode == util.Mode.COMPARE_MANY.value:
     def cmp_mode(suffix: str):
         simples = util.get_suffix(resdir, suffix)
@@ -236,13 +234,12 @@ elif mode == util.Mode.COMPARE.value:
     print(dl1.compare(dl2))
     exit(0)
 
-
-
 elif mode == util.Mode.GRAPH_MANY.value:
     if group_mode == util.GroupMode.INPUT.value:
-        schemes = util.get_schemes(True)
-        if len(schemes) < 2:
-            raise ValueError(f"Need to use schemes multiple times. schemes: {schemes}")
+        util.graph_input(scheme, resdir, THISDIR)
+        # schemes = util.get_schemes(True)
+        # if len(schemes) < 2:
+        #     raise ValueError(f"Need to use schemes multiple times. schemes: {schemes}")
     
     elif group_mode == util.GroupMode.ARM.value:
         util.graph_arm(scheme, resdir, THISDIR)

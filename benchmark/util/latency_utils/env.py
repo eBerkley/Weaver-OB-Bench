@@ -81,7 +81,7 @@ def init_env(testname: str, alloc_ok: bool) -> Env:
     # ==================================
     THISDIR = os.path.dirname(__file__)
     outdir = os.path.normpath(
-        os.path.join(THISDIR, "..", "out"))
+        os.path.join(THISDIR, "..", "..", "out"))
     
     dirname = os.path.join(outdir, testname)
     if not os.path.exists(dirname):
@@ -106,12 +106,14 @@ def init_env(testname: str, alloc_ok: bool) -> Env:
     # ==========================
     # Get all data from the CSVs
     # ==========================
-    lat = pd.read_csv(lat_csv).dropna(subset='50%')
+    lat = pd.read_csv(lat_csv) # .dropna(subset='50%')
+    init_time = lat[StatsHead.Timestamp].astype(int).values[0]
+    lat = lat.dropna(subset="50%")
+
     cpu = pd.read_csv(cpu_csv)
 
     # Time, as reported in aggregated.csv
     time_arr = lat[StatsHead.Timestamp].astype(int).values
-    init_time = time_arr[0]
     # Normalized, t_0 = 0s
     time_arr = [t - init_time for t in time_arr]
 
@@ -133,8 +135,8 @@ def init_env(testname: str, alloc_ok: bool) -> Env:
 
         if t_cpu <= t_stats and i_cpu < len(_cpu_arr) - 1:
             i_cpu += 1
-
-    
+    # for i in range(len(cpu_arr)):
+    #     print(f"{i}: {cpu_arr[i]}")
     env = Env(testname)
     env.times = time_arr
     env.users = lat[StatsHead.Users].astype(int).to_list()

@@ -15,17 +15,24 @@ def graph_input(name: str, resdir: str, basedir: str):
         raise ValueError(f"Need to use schemes multiple times. schemes: {schemes}")
     
     dls: List[DataList] = []
+    baseline: Optional[DataList] = None
     for s in schemes:
         res = find_best_match(s, resdir, True)
         dl = DataList()
         dl.from_results(res)
+        if dl.name == BASELINE:
+            baseline = dl
+        else:
         # print(s, cur_scheme)
-        dls.append(dl)
+            dls.append(dl)
     
     dirname=os.path.join(basedir, "imgs", name)
     os.makedirs(dirname, exist_ok=True)
 
-    plot_data(dls, name, dirname)
+    if baseline != None:
+        plot_all(dls, baseline, name, dirname)
+    else:
+        plot_data(dls, name, dirname)
 
 # Returns actual paths
 def get_suffix(resdir: str, suffix: str):
