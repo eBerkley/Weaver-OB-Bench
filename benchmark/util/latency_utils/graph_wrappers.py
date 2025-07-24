@@ -41,7 +41,7 @@ def get_suffix(resdir: str, suffix: str):
     schemes = os.listdir(resdir)
     for scheme in schemes:
         # s = scheme.split(".")[0]
-        if suffix_str in scheme:
+        if suffix_str in scheme and suffix_str.count("-") == scheme.count("-"):
             arms.append(os.path.join(resdir, scheme))
     return arms
 
@@ -49,12 +49,13 @@ def get_suffix(resdir: str, suffix: str):
 def graph_suffix(name: str, resdir: str, basedir: str, suffix: str):
     suffix_str = f"-{suffix}"
     schemes = get_suffix(resdir, suffix)
+    
     micro: Optional[DataList] = None
     dls: List[DataList] = []
     for s in schemes:
         dl = DataList()
         dl.from_results(s)
-        cur_scheme = os.path.basename(s).split(".")
+        cur_scheme = os.path.basename(s).split(".")[0]
         if cur_scheme == BASELINE + suffix_str:
             micro = dl
         else:

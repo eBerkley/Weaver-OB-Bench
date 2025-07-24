@@ -250,7 +250,8 @@ elif mode == util.Mode.GRAPH_MANY.value:
 
     elif group_mode == util.GroupMode.X4CH.value:
         util.graph_x4ch(scheme, resdir, THISDIR)
-
+    else:
+        util.graph_suffix(scheme, resdir, THISDIR, scheme)
     exit(0)
 
 elif mode == util.Mode.GRAPH.value:
