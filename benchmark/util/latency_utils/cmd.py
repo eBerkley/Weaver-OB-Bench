@@ -25,6 +25,7 @@ class GroupMode(Enum):
     SIMPLE="simple"
     X4CH="x4ch"
     INPUT="input"
+    NONE=''
 
 def get_schemes(careful=None) -> List[str]:
     schemes: List[str] = []
@@ -54,7 +55,7 @@ def get_args() -> Tuple[Mode, str, bool, str, int, str, int, bool, GroupMode]:
     parser.add_argument("-n2", "--name2", default="", metavar="NAME2", type=str, help="Name of the second scheme. to be used with --mode=COMPARE")
     parser.add_argument("-u", "--users", metavar="USERS", type=int, help="For use with --mode=rank. specify the user count to rank at.")
     parser.add_argument("-v", "--value", choices=["p50", "p99", "cpu"], help="For use with --mode=rank.")
-    parser.add_argument("-g", "--graph", choices=[GroupMode.ARM.value, GroupMode.BASE.value, GroupMode.INPUT.value, GroupMode.SIMPLE.value, GroupMode.X4CH.value], help="for use with mode=graph_many")
+    parser.add_argument("-g", "--graph", choices=[GroupMode.ARM.value, GroupMode.BASE.value, GroupMode.INPUT.value, GroupMode.SIMPLE.value, GroupMode.X4CH.value, GroupMode.NONE.value], help="for use with mode=graph_many")
     parser.add_argument('-b', "--breadth", default=3, type=int, help="for use with walk.py")
     parser.add_argument('-p', '--prune', action='store_true')
 

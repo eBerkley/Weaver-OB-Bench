@@ -250,6 +250,8 @@ elif mode == util.Mode.GRAPH_MANY.value:
 
     elif group_mode == util.GroupMode.X4CH.value:
         util.graph_x4ch(scheme, resdir, THISDIR)
+    elif scheme == "":
+        util.graph_suffix("Aggregate", resdir, THISDIR, "")
     else:
         util.graph_suffix(scheme, resdir, THISDIR, scheme)
     exit(0)

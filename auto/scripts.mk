@@ -21,6 +21,9 @@ minikube_start:
 		echo Minikube already running. ;\
 	fi 
 
+graph:
+	python3 benchmark/analyze.py -m graph_many -n "$$NAME" -g "$$TYPE"
+
 # Will try to ignore errors i.e. if minikube wasn't running
 minikube_restart:
 	- minikube delete

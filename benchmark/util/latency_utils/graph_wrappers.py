@@ -34,21 +34,30 @@ def graph_input(name: str, resdir: str, basedir: str):
     else:
         plot_data(dls, name, dirname)
 
-# Returns actual paths
-def get_suffix(resdir: str, suffix: str):
+
+def get_suffix(resdir: str, suffix: str, verbose: bool):
+    '''Returns actual paths. 
+    `suffix` should have the hyphen in it already, if applicable.'''
     arms: List[str] = []
-    suffix_str=f"-{suffix}"
     schemes = os.listdir(resdir)
     for scheme in schemes:
         # s = scheme.split(".")[0]
-        if suffix_str in scheme and suffix_str.count("-") == scheme.count("-"):
+        if scheme[0] not in "MC":
+            continue
+        if suffix in scheme and suffix.count("-") == scheme.count("-"):
+            if verbose:
+                print(scheme)
             arms.append(os.path.join(resdir, scheme))
     return arms
 
 
-def graph_suffix(name: str, resdir: str, basedir: str, suffix: str):
+def graph_suffix(name: str, resdir: str, basedir: str, suffix: str, verbose=False):
     suffix_str = f"-{suffix}"
-    schemes = get_suffix(resdir, suffix)
+    if suffix == "":
+        suffix_str = ""
+    
+    print(verbose) 
+    schemes = get_suffix(resdir, suffix_str, verbose)
     
     micro: Optional[DataList] = None
     dls: List[DataList] = []

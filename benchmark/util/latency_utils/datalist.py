@@ -1,11 +1,12 @@
 #!/bin/python3
 
-from typing import List, Final, TypeAlias, Tuple, Callable
+from typing import List, Final, TypeAlias, Tuple, Callable, NamedTuple, Dict
 from . import DataPoint, Env, get_hold_idxs
 import pandas as pd
 from matplotlib import pyplot as plt
 import os
 from statistics import median
+
 
 
 MAX_CORES=36
@@ -241,6 +242,133 @@ def plot_data(dls: List[DataList], name: str, outdir: str):
     plot_once('p99', 2, 'Latency (ms)')
     plot_once('cpu', 3, 'Total Utilization (cores)')
 
+class Point(NamedTuple):
+    x: float
+    y: float
+
+from math import sqrt
+def DISTANCE(v: Point, p1: Point, p2: Point):
+    arg1 = (p2.y - p1.y) * v.x
+    arg2 = (p2.x - p1.x) * v.y
+    arg3 = p2.x * p1.y
+    arg4 = p2.y - p1.x
+    num = abs(arg1 - arg2 + arg3 - arg4)
+    
+    den = sqrt((p2.y - p1.y)**2 + (p2.x - p1.x)**2)
+    return num / den
+
+def get_slo(xs: List[int], ys:List[float]):
+    MAX_P99 = 100
+    idx = 0
+    while len(ys) > idx and ys[idx] < MAX_P99:
+        idx+=1
+
+    idx -= 1
+
+    cur_p = Point(xs[idx], ys[idx])
+    return cur_p
+    if len(ys) - 1 == idx:
+        return cur_p
+
+    next_i = idx+1
+
+
+    next_p = Point(float(xs[next_i]), ys[next_i])
+    
+    
+    next_xdist = next_p.x - cur_p.x
+    next_ydist = next_p.y - cur_p.y
+    
+    xfactor = next_xdist / 50
+    yfactor = next_ydist / 50
+
+    cur_x = cur_p.x
+    cur_y = cur_p.y
+
+    for i in range(50):
+        cur_x += xfactor
+        cur_y += yfactor
+        if cur_y >= MAX_P99:
+            return Point(cur_x - xfactor, cur_y - yfactor)
+    return Point(cur_x, cur_y)
+
+    
+def get_knee(xs: List[int], ys: List[float]):
+    return get_slo(xs, ys)
+    MAX_P99 = 100
+    idx = 0
+    while len(ys) > idx and ys[idx] < MAX_P99:
+        idx+=1
+    
+    idx -= 1
+
+    p1 = Point(xs[0], ys[0])
+    p2 = Point(xs[idx], ys[idx])
+    # return p2
+    
+    # dists: Dict[Point, float] = {}
+    best_dist = 0.0
+    best_i = 0
+    # best_p = Point(0, 0)
+
+    for i in range(idx): # in zip(xs[:idx], ys[:idx]):
+
+        p = Point(float(xs[i]), ys[i])
+        # dists[v_p] = DISTANCE(v_p, p1, p2)
+
+        d = DISTANCE(p, p1, p2)
+        if d > best_dist:
+            best_dist = d
+            best_i = i
+
+            # best_p = v_p
+    # assert best_p != Point(0, 0)    
+
+    prev_i = best_i - 1
+    next_i = best_i + 1
+    best_p = Point(float(xs[best_i]), ys[best_i])
+    return best_p
+
+    prev_p = Point(float(xs[prev_i]), ys[prev_i])
+    next_p = Point(float(xs[next_i]), ys[next_i])
+    
+    prev_xdist = best_p.x - prev_p.x
+    next_xdist = next_p.x - best_p.x
+
+    prev_ydist = best_p.y - prev_p.y
+    next_ydist = next_p.y - best_p.y
+
+    # print(f"Best point: ({best_p.x}, {best_p.y}), dist = {best_dist}")
+    cur_x = prev_p.x
+    cur_y = prev_p.y
+
+    real_best_p = best_p
+
+
+    for i in range(50):
+        cur_x += prev_xdist / 50 # 
+        cur_y += prev_ydist / 50
+        cur_point = Point(cur_x, cur_y)
+        cur_d = DISTANCE(cur_point, p1, p2)
+        # print(f"Cur point: ({cur_point.x}, {cur_point.y}), dist = {cur_d}")
+        if cur_d > best_dist:
+            best_dist = cur_d
+            real_best_p = cur_point
+
+    for i in range(50):
+        cur_x += next_xdist / 50 # 
+        cur_y += next_ydist / 50
+        cur_point = Point(cur_x, cur_y)
+        cur_d = DISTANCE(cur_point, p1, p2)
+        
+        if cur_d > best_dist:
+            best_dist = cur_d
+            real_best_p = cur_point
+    
+    return real_best_p
+
+
+
 TRIVIAL_COLOR   = 0
 M_COLOR         = 1
 MCH_COLOR       = 2
@@ -253,9 +381,11 @@ def plot_all(fused: List[DataList], not_fused: DataList, name: str, outdir: str)
     MAX_P99=150
     MAX_P50=50
     CH=True
+    if len(fused) < 50:
+        ALPHA=0.3
+    PLOT_KNEES = False
     if fused[0].name.endswith("-arm"):
         MAX_CORES=80
-        ALPHA=0.3
         MAX_RPS=15_000
         MAX_P99=250
         MAX_P50=100
@@ -276,7 +406,13 @@ def plot_all(fused: List[DataList], not_fused: DataList, name: str, outdir: str)
     )
     
     def plot_once(metric: str, metric_i: int, units: str):
+        
         plt.cla()
+        ch = False
+
+        # [(Point, color)]
+        points: Dict[int, List[Point]] = {M_COLOR: [], MCH_COLOR: [], CH_COLOR: []}
+
         for i in range(len(fused)):
             c_idx = 0
             if fused[i].name.startswith("M"):
@@ -288,18 +424,35 @@ def plot_all(fused: List[DataList], not_fused: DataList, name: str, outdir: str)
                 else:
                     c_idx = M_COLOR
             else:
+                ch = True
                 c_idx = CH_COLOR
+            
+            if metric == "p99" and PLOT_KNEES:
+                points[c_idx].append(get_knee(datas[i][0], datas[i][metric_i] ))
+                
 
             plt.plot(datas[i][0], datas[i][metric_i], 
                 linestyle='--', marker=None, color=colors[c_idx], alpha=ALPHA)
 
+            if not PLOT_KNEES:
+                continue
+            for COLOR in [M_COLOR, MCH_COLOR, CH_COLOR]:
+                plt.scatter([p.x for p in points[COLOR]], [p.y for p in points[COLOR]],
+                    marker=markers[COLOR], color=colors[COLOR], s=1, alpha=ALPHA/2)
+            
+
+
         plt.plot(nf_data[0], nf_data[metric_i],
-            label="microservices", linestyle='--', marker=None, color=colors[TRIVIAL_COLOR])
+            label="baseline", linestyle='--', marker=None, color=colors[TRIVIAL_COLOR])
         
-        plt.plot([], linestyle='--', marker=None, color=colors[M_COLOR], label='fusion-M')
-        plt.plot([], linestyle='--', marker=None, color=colors[MCH_COLOR], label='fusion-MCh')
-        if CH:
-            plt.plot([], linestyle='--', marker=None, color=colors[CH_COLOR], label='fusion-Ch')
+        if PLOT_KNEES:
+            b_pt = get_knee(nf_data[0], nf_data[metric_i])
+            plt.scatter(b_pt.x, b_pt.y, marker=markers[TRIVIAL_COLOR], color=colors[TRIVIAL_COLOR])
+
+        plt.plot([], linestyle='--', marker=None, color=colors[M_COLOR], label='fusion-M', alpha=ALPHA)
+        plt.plot([], linestyle='--', marker=None, color=colors[MCH_COLOR], label='fusion-MCh', alpha=ALPHA)
+        if CH and ch: # If we are plotting Ch lines and Ch lines exist
+            plt.plot([], linestyle='--', marker=None, color=colors[CH_COLOR], label='fusion-Ch', alpha=ALPHA)
         # else:
         #     plt.plot([], linestyle='--', marker=None, color=colors[CH_COLOR], label='fusion-MxCu')
         
