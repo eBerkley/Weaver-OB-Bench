@@ -56,7 +56,6 @@ def graph_suffix(name: str, resdir: str, basedir: str, suffix: str, verbose=Fals
     if suffix == "":
         suffix_str = ""
     
-    print(verbose) 
     schemes = get_suffix(resdir, suffix_str, verbose)
     
     micro: Optional[DataList] = None
@@ -67,8 +66,15 @@ def graph_suffix(name: str, resdir: str, basedir: str, suffix: str, verbose=Fals
         cur_scheme = os.path.basename(s).split(".")[0]
         if cur_scheme == BASELINE + suffix_str:
             micro = dl
+        # elif cur_scheme.startswith("MCh"):
+            # dls.append(dl)
+            # continue
+        # elif cur_scheme.startswith("Ch"):
+            # dls.append(dl)
+            # continue
         else:
             dls.append(dl)
+            continue
     
     dirname = os.path.join(basedir, "imgs", name)
     os.makedirs(dirname, exist_ok=True)
@@ -82,7 +88,7 @@ def graph_arm(name: str, resdir: str, basedir: str):
 
 def graph_simple(name: str, resdir: str, basedir: str):
 
-    simples = get_suffix(resdir, "simple_checkout")
+    simples = get_suffix(resdir, "simple_checkout", False)
     simpledls: List[DataList] = []
     basedls: List[DataList] = []
 
@@ -103,7 +109,7 @@ def graph_simple(name: str, resdir: str, basedir: str):
 
 
 def graph_x4ch(name: str, resdir: str, basedir: str):
-    x4chs = get_suffix(resdir, "4xch")
+    x4chs = get_suffix(resdir, "4xch", False)
     x4chdls: List[DataList] = []
     basedls: List[DataList] = []
 

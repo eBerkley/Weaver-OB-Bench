@@ -294,8 +294,8 @@ def get_slo(xs: List[int], ys:List[float]):
 
     
 def get_knee(xs: List[int], ys: List[float]):
-    return get_slo(xs, ys)
-    MAX_P99 = 100
+    # return get_slo(xs, ys)
+    MAX_P99 = 200
     idx = 0
     while len(ys) > idx and ys[idx] < MAX_P99:
         idx+=1
@@ -369,20 +369,30 @@ def get_knee(xs: List[int], ys: List[float]):
 
 
 
-TRIVIAL_COLOR   = 0
-M_COLOR         = 1
-MCH_COLOR       = 2
-CH_COLOR        = 3
+TRIVIAL_COLOR   = BLUE
+M_COLOR         = ORANGE
+MCH_COLOR       = GREEN
+CH_COLOR        = RED
 
 def plot_all(fused: List[DataList], not_fused: DataList, name: str, outdir: str):
     global MAX_CORES
-    ALPHA=0.1
     MAX_RPS=45_000
     MAX_P99=150
     MAX_P50=50
     CH=True
+    ALPHA=0.1
+    LINESTYLE="--"
+    LINEWIDTH=2 # Doesn't get used atm
+    
+    # Was experimenting with different ways to show the graphs
+    SOLID_MODE=False
+    if SOLID_MODE:
+        LINESTYLE="-"
+        LINEWIDTH=0.25
+        ALPHA=0.5
     if len(fused) < 50:
         ALPHA=0.3
+    
     PLOT_KNEES = False
     if fused[0].name.endswith("-arm"):
         MAX_CORES=80
@@ -409,6 +419,8 @@ def plot_all(fused: List[DataList], not_fused: DataList, name: str, outdir: str)
         
         plt.cla()
         ch = False
+        m = False
+        mch = False
 
         # [(Point, color)]
         points: Dict[int, List[Point]] = {M_COLOR: [], MCH_COLOR: [], CH_COLOR: []}
@@ -420,8 +432,10 @@ def plot_all(fused: List[DataList], not_fused: DataList, name: str, outdir: str)
                 #     c_idx = PURPLE
 
                 if fused[i].name.startswith("MCh"):
+                    mch = True
                     c_idx = MCH_COLOR
                 else:
+                    m = True
                     c_idx = M_COLOR
             else:
                 ch = True
@@ -431,8 +445,8 @@ def plot_all(fused: List[DataList], not_fused: DataList, name: str, outdir: str)
                 points[c_idx].append(get_knee(datas[i][0], datas[i][metric_i] ))
                 
 
-            plt.plot(datas[i][0], datas[i][metric_i], 
-                linestyle='--', marker=None, color=colors[c_idx], alpha=ALPHA)
+            plt.plot(datas[i][0], datas[i][metric_i], # linewidth=LINEWIDTH,
+                linestyle=LINESTYLE, marker=None, color=colors[c_idx], alpha=ALPHA)
 
             if not PLOT_KNEES:
                 continue
@@ -448,11 +462,18 @@ def plot_all(fused: List[DataList], not_fused: DataList, name: str, outdir: str)
         if PLOT_KNEES:
             b_pt = get_knee(nf_data[0], nf_data[metric_i])
             plt.scatter(b_pt.x, b_pt.y, marker=markers[TRIVIAL_COLOR], color=colors[TRIVIAL_COLOR])
+        
+        if m:
+            plt.plot([], linestyle=LINESTYLE, # linewidth=LINEWIDTH,
+                marker=None, color=colors[M_COLOR], label='fusion-M', alpha=0.3)
 
-        plt.plot([], linestyle='--', marker=None, color=colors[M_COLOR], label='fusion-M', alpha=ALPHA)
-        plt.plot([], linestyle='--', marker=None, color=colors[MCH_COLOR], label='fusion-MCh', alpha=ALPHA)
+        if mch:
+            plt.plot([], linestyle=LINESTYLE, # linewidth=LINEWIDTH,
+                marker=None, color=colors[MCH_COLOR], label='fusion-MCh', alpha=0.3)
+
         if CH and ch: # If we are plotting Ch lines and Ch lines exist
-            plt.plot([], linestyle='--', marker=None, color=colors[CH_COLOR], label='fusion-Ch', alpha=ALPHA)
+            plt.plot([], linestyle=LINESTYLE, # linewidth=LINEWIDTH,
+                marker=None, color=colors[CH_COLOR], label='fusion-Ch', alpha=0.3)
         # else:
         #     plt.plot([], linestyle='--', marker=None, color=colors[CH_COLOR], label='fusion-MxCu')
         
@@ -465,7 +486,17 @@ def plot_all(fused: List[DataList], not_fused: DataList, name: str, outdir: str)
         elif metric=="p99": plt.ylim(0, MAX_P99)
         else              : plt.ylim(0, MAX_CORES)
 
-        plt.savefig(os.path.join(outdir, f"{name}-{metric}"))
+        _outdir = outdir
+        if not (m and mch):
+            if m:
+                _outdir+="-M"
+            elif mch:
+                _outdir+="-MCh"
+            elif ch:
+                _outdir+="-Ch"
+
+        os.makedirs(_outdir, exist_ok=True)
+        plt.savefig(os.path.join(_outdir, f"{name}-{metric}"))
 
     plot_once('p50', 1, 'Latency (ms)')
     plot_once('p99', 2, 'Latency (ms)')
