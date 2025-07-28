@@ -1,0 +1,49 @@
+# load-lvl=33600
+# started on Wed Jul 16 20:58:22 2025
+
+
+ Performance counter stats for process id '1289808':
+
+   912,713,627,715      instructions                     #    1.50  insn per cycle            
+   606,526,127,827      cycles                                                                
+    39,735,054,993      L1-icache-load-misses                                                 
+     2,030,294,856      branch-misses                                                         
+   227,766,781,876      dTLB-loads                                                            
+
+     299.976660138 seconds time elapsed
+
+# started on Wed Jul 16 21:03:22 2025
+
+
+ Performance counter stats for process id '1289808':
+
+   227,602,771,497      L1-dcache-loads                                                       
+     8,279,167,589      L1-dcache-load-misses            #    3.64% of all L1-dcache accesses 
+     1,445,983,588      LLC-loads                                                             
+       350,052,320      LLC-load-misses                  #   24.21% of all LL-cache accesses  
+
+     299.978785830 seconds time elapsed
+
+# started on Wed Jul 16 21:08:22 2025
+
+
+ Performance counter stats for process id '1289808':
+
+       313,700,960      dTLB-load-misses                                                      
+        55,126,346      iTLB-load-misses                                                      
+   178,688,015,906      branch-instructions                                                   
+         3,091,746      context-switches                                                      
+
+     299.977050177 seconds time elapsed
+
+# started on Fri Jul 18 18:56:57 2025
+
+
+ Performance counter stats for process id '2135136':
+
+    47,744,612,293      l2_request.all                                                        
+     3,850,924,657      l2_request.miss                                                       
+    37,084,036,157      l2_rqsts.all_code_rd                                                  
+
+     299.965734553 seconds time elapsed
+

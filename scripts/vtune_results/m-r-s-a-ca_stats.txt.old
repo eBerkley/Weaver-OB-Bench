@@ -1,0 +1,48 @@
+# started on Sat Jul 19 16:38:37 2025
+
+
+ Performance counter stats for process id '2643687':
+
+   842,298,503,097      instructions                     #    1.47  insn per cycle            
+   571,257,339,977      cycles                                                                
+    39,244,631,605      L1-icache-load-misses                                                 
+     2,067,478,962      branch-misses                                                         
+   210,487,696,909      dTLB-loads                                                            
+
+     299.964386264 seconds time elapsed
+
+# started on Sat Jul 19 16:43:37 2025
+
+
+ Performance counter stats for process id '2643687':
+
+   210,283,683,774      L1-dcache-loads                                                       
+     8,329,384,078      L1-dcache-load-misses            #    3.96% of all L1-dcache accesses 
+     1,339,685,458      LLC-loads                                                             
+       291,825,986      LLC-load-misses                  #   21.78% of all LL-cache accesses  
+
+     299.979346857 seconds time elapsed
+
+# started on Sat Jul 19 16:48:37 2025
+
+
+ Performance counter stats for process id '2643687':
+
+       283,283,627      dTLB-load-misses                                                      
+        63,170,740      iTLB-load-misses                                                      
+   164,930,554,912      branch-instructions                                                   
+         5,222,179      context-switches                                                      
+
+     299.976160294 seconds time elapsed
+
+# started on Sat Jul 19 16:53:37 2025
+
+
+ Performance counter stats for process id '2643687':
+
+    50,679,374,859      l2_request.all                                                        
+     4,024,812,012      l2_request.miss                                                       
+    39,323,002,170      l2_rqsts.all_code_rd                                                  
+
+     299.972967236 seconds time elapsed
+

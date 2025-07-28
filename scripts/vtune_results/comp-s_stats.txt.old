@@ -35,3 +35,14 @@
 
      299.975884209 seconds time elapsed
 
+# started on Fri Jul 18 12:37:39 2025
+
+
+ Performance counter stats for process id '1929259':
+
+    22,483,433,600      l2_request.all                                                        
+     1,332,386,534      l2_request.miss                                                       
+    16,855,897,375      l2_rqsts.all_code_rd                                                  
+
+     299.985230914 seconds time elapsed
+

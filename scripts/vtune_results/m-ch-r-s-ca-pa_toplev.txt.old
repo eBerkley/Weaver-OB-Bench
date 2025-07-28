@@ -1,0 +1,43 @@
+# 5.01-full-perf on INTEL(R) XEON(R) GOLD 6554S [spr/sapphire_rapids]
+FE               Frontend_Bound                                        % Slots                       31.7   
+BAD              Bad_Speculation.Branch_Mispredicts.Other_Mispredicts  % Slots                        1.1  <
+BAD              Bad_Speculation.Machine_Clears.Other_Nukes            % Slots                        0.0  <
+BE/Core          Backend_Bound.Core_Bound.Serializing_Operation        % Clocks                      10.4   
+BAD              Bad_Speculation                                       % Slots                        7.9  <
+BE               Backend_Bound                                         % Slots                       34.8   
+RET              Retiring                                              % Slots                       25.5  <
+FE               Frontend_Bound.Fetch_Latency                          % Slots                       18.6   
+FE               Frontend_Bound.Fetch_Bandwidth                        % Slots                       13.1  <
+BAD              Bad_Speculation.Branch_Mispredicts                    % Slots                        7.4  <
+BAD              Bad_Speculation.Machine_Clears                        % Slots                        0.5   
+BE/Mem           Backend_Bound.Memory_Bound                            % Slots                       29.0   <==
+BE/Core          Backend_Bound.Core_Bound                              % Slots                        5.8  <
+RET              Retiring.Light_Operations                             % Slots                       23.2  <
+RET              Retiring.Heavy_Operations                             % Slots                        2.3  <
+FE               Frontend_Bound.Fetch_Latency.ICache_Misses            % Clocks                       7.5   
+FE               Frontend_Bound.Fetch_Latency.ITLB_Misses              % Clocks                       1.8  <
+FE               Frontend_Bound.Fetch_Latency.Branch_Resteers          % Clocks                       9.5   
+FE               Frontend_Bound.Fetch_Latency.MS_Switches              % Clocks_est                   5.3   
+FE               Frontend_Bound.Fetch_Latency.LCP                      % Clocks                       0.7  <
+FE               Frontend_Bound.Fetch_Latency.DSB_Switches             % Clocks                       3.9  <
+FE               Frontend_Bound.Fetch_Bandwidth.MITE                   % Slots_est                   11.8  <
+FE               Frontend_Bound.Fetch_Bandwidth.DSB                    % Slots_est                    3.1  <
+FE               Frontend_Bound.Fetch_Bandwidth.MS                     % Slots_est                    1.8  <
+RET              Retiring.Heavy_Operations.Microcode_Sequencer         % Slots                        1.2   
+BE/Mem           Backend_Bound.Memory_Bound.L1_Bound                   % Stalls                      14.0   
+BE/Mem           Backend_Bound.Memory_Bound.L2_Bound                   % Stalls                       1.9  <
+BE/Mem           Backend_Bound.Memory_Bound.L3_Bound                   % Stalls                      11.9   
+BE/Mem           Backend_Bound.Memory_Bound.DRAM_Bound                 % Stalls                       6.5  <
+BE/Mem           Backend_Bound.Memory_Bound.Store_Bound                % Stalls                       5.0  <
+BE/Core          Backend_Bound.Core_Bound.Divider                      % Clocks                       0.2  <
+BE/Core          Backend_Bound.Core_Bound.AMX_Busy                     % Core_Clocks                  0.0  <
+BE/Core          Backend_Bound.Core_Bound.Ports_Utilization            % Clocks                      15.9  <
+RET              Retiring.Light_Operations.FP_Arith                    % Uops                         0.0  <
+RET              Retiring.Light_Operations.Int_Operations              % Uops                         0.0  <
+RET              Retiring.Light_Operations.Memory_Operations           % Slots                        9.3  <
+RET              Retiring.Light_Operations.Fused_Instructions          % Slots                        2.4  <
+RET              Retiring.Light_Operations.Non_Fused_Branches          % Slots                        2.0  <
+RET              Retiring.Light_Operations.Other_Light_Ops             % Slots                        9.5  <
+RET              Retiring.Heavy_Operations.Few_Uops_Instructions       % Slots                        1.0  <
+MUX                                                                    %                            100.00  
+Run toplev --describe Memory_Bound^ to get more information on bottleneck
