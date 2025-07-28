@@ -23,3 +23,27 @@
 
      299.978051781 seconds time elapsed
 
+# started on Mon Jul 28 16:42:50 2025
+
+
+ Performance counter stats for process id '1032188':
+
+         7,936,279      dTLB-load-misses                                                      
+         6,557,875      iTLB-load-misses                                                      
+    10,183,974,660      branch-instructions                                                   
+         1,213,519      context-switches                                                      
+
+     299.971223934 seconds time elapsed
+
+# started on Mon Jul 28 16:47:50 2025
+
+
+ Performance counter stats for process id '1032188':
+
+     3,793,425,512      l2_request.all                                                        
+       220,191,473      l2_request.miss                                                       
+     2,846,762,480      l2_rqsts.all_code_rd                                                  
+               792      faults                                                                
+
+     299.967746000 seconds time elapsed
+

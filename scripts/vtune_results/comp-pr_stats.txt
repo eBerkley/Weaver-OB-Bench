@@ -1,48 +1,49 @@
-# started on Thu Jul 17 04:21:46 2025
+# started on Mon Jul 28 18:42:54 2025
 
 
- Performance counter stats for process id '2753436':
+ Performance counter stats for process id '1032116':
 
-   867,745,675,692      instructions                     #    1.80  insn per cycle            
-   482,966,876,542      cycles                                                                
-    38,134,522,505      L1-icache-load-misses                                                 
-     1,742,254,943      branch-misses                                                         
-   211,482,740,369      dTLB-loads                                                            
+   914,247,955,308      instructions                     #    2.01  insn per cycle            
+   455,246,067,129      cycles                                                                
+    35,860,047,502      L1-icache-load-misses                                                 
+     1,717,173,251      branch-misses                                                         
+   227,438,753,003      dTLB-loads                                                            
 
-     299.975604410 seconds time elapsed
+     299.971398395 seconds time elapsed
 
-# started on Thu Jul 17 04:26:46 2025
-
-
- Performance counter stats for process id '2753436':
-
-   211,990,695,713      L1-dcache-loads                                                       
-    10,348,339,084      L1-dcache-load-misses            #    4.88% of all L1-dcache accesses 
-     1,419,461,277      LLC-loads                                                             
-       519,245,498      LLC-load-misses                  #   36.58% of all LL-cache accesses  
-
-     299.979699618 seconds time elapsed
-
-# started on Thu Jul 17 04:31:46 2025
+# started on Mon Jul 28 18:47:54 2025
 
 
- Performance counter stats for process id '2753436':
+ Performance counter stats for process id '1032116':
 
-        54,187,092      dTLB-load-misses                                                      
-        14,567,332      iTLB-load-misses                                                      
-   172,551,497,996      branch-instructions                                                   
-         5,053,283      context-switches                                                      
+   227,745,466,895      L1-dcache-loads                                                       
+    11,263,573,704      L1-dcache-load-misses            #    4.95% of all L1-dcache accesses 
+     1,148,932,970      LLC-loads                                                             
+        26,314,371      LLC-load-misses                  #    2.29% of all LL-cache accesses  
 
-     299.975998159 seconds time elapsed
+     299.977331330 seconds time elapsed
 
-# started on Fri Jul 18 12:37:40 2025
+# started on Mon Jul 28 18:52:54 2025
 
 
- Performance counter stats for process id '1929616':
+ Performance counter stats for process id '1032116':
 
-    53,150,505,321      l2_request.all                                                        
-     3,417,917,918      l2_request.miss                                                       
-    38,492,834,031      l2_rqsts.all_code_rd                                                  
+        56,888,681      dTLB-load-misses                                                      
+        19,670,519      iTLB-load-misses                                                      
+   186,606,133,151      branch-instructions                                                   
+         2,161,864      context-switches                                                      
 
-     299.985613859 seconds time elapsed
+     299.967140796 seconds time elapsed
+
+# started on Mon Jul 28 18:57:54 2025
+
+
+ Performance counter stats for process id '1032116':
+
+    51,954,169,452      l2_request.all                                                        
+     3,366,230,212      l2_request.miss                                                       
+    35,952,768,878      l2_rqsts.all_code_rd                                                  
+           387,916      faults                                                                
+
+     299.969347799 seconds time elapsed
 
