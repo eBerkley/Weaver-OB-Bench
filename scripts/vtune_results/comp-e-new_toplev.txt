@@ -1,0 +1,15 @@
+# 5.01-full-perf on INTEL(R) XEON(R) GOLD 6554S [spr/sapphire_rapids]
+FE               Frontend_Bound                      % Slots                       27.4   
+BAD              Bad_Speculation                     % Slots                        7.2  <
+BE               Backend_Bound                       % Slots                       43.5   
+RET              Retiring                            % Slots                       22.0  <
+FE               Frontend_Bound.Fetch_Latency        % Slots                       16.0   
+FE               Frontend_Bound.Fetch_Bandwidth      % Slots                       11.4  <
+BAD              Bad_Speculation.Branch_Mispredicts  % Slots                        6.7  <
+BAD              Bad_Speculation.Machine_Clears      % Slots                        0.5  <
+BE/Mem           Backend_Bound.Memory_Bound          % Slots                       29.0   <==
+BE/Core          Backend_Bound.Core_Bound            % Slots                       14.5   
+RET              Retiring.Light_Operations           % Slots                       19.2  <
+RET              Retiring.Heavy_Operations           % Slots                        2.7  <
+MUX                                                  %                            100.00  
+Run toplev --describe Memory_Bound^ to get more information on bottleneck
