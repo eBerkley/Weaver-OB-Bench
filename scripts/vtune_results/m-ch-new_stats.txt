@@ -1,0 +1,49 @@
+# started on Tue Jul 29 14:37:53 2025
+
+
+ Performance counter stats for 'CPU(s) 41':
+
+   756,624,873,560      instructions                     #    1.62  insn per cycle            
+   466,669,134,693      cycles                                                                
+    31,334,232,514      L1-icache-load-misses                                                 
+     1,785,457,131      branch-misses                                                         
+   188,160,350,186      dTLB-loads                                                            
+
+     299.955772737 seconds time elapsed
+
+# started on Tue Jul 29 14:42:53 2025
+
+
+ Performance counter stats for 'CPU(s) 41':
+
+   188,296,238,554      L1-dcache-loads                                                       
+     7,318,125,949      L1-dcache-load-misses            #    3.89% of all L1-dcache accesses 
+     1,207,262,460      LLC-loads                                                             
+       220,265,359      LLC-load-misses                  #   18.25% of all LL-cache accesses  
+
+     299.973071852 seconds time elapsed
+
+# started on Tue Jul 29 14:47:53 2025
+
+
+ Performance counter stats for 'CPU(s) 41':
+
+       227,766,926      dTLB-load-misses                                                      
+        66,942,293      iTLB-load-misses                                                      
+   152,057,968,644      branch-instructions                                                   
+        10,019,851      context-switches                                                      
+
+     299.957692156 seconds time elapsed
+
+# started on Tue Jul 29 14:52:53 2025
+
+
+ Performance counter stats for 'CPU(s) 41':
+
+    41,190,916,209      l2_request.all                                                        
+     3,382,681,369      l2_request.miss                                                       
+    31,339,892,538      l2_rqsts.all_code_rd                                                  
+            49,732      faults                                                                
+
+     299.946585080 seconds time elapsed
+
