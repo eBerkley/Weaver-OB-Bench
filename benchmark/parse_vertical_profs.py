@@ -62,9 +62,13 @@ def get_msg_freq(fname: str):
 
 BASE_P50, MAIN_P50=get_base_p50s(SVC_LATENCY_FILE)
 BASE_SLO_RATIO=25.0
-SLO_RATIO=BASE_SLO_RATIO*max(get_msg_freq(MSG_COUNTS_FILE), 1.0)
+# SLO_RATIO=BASE_SLO_RATIO * max(get_msg_freq(MSG_COUNTS_FILE), 1.0)
+SLO_RATIO = BASE_SLO_RATIO * BASE_P50 * max(get_msg_freq(MSG_COUNTS_FILE)**2, 1) / MAIN_P50
+
+# print("SLO: ", SLO_RATIO * BASE_P50 * MAIN_P50)
 print("SLO: ", SLO_RATIO * BASE_P50)
-# SLO_RATIO = BASE_SLO_RATIO * BASE_P50 * get_msg_freq(MSG_COUNTS_FILE) / MAIN_P50
+print('freq: ', get_msg_freq(MSG_COUNTS_FILE))
+print("ratio: ", get_msg_freq(MSG_COUNTS_FILE) * BASE_P50 / MAIN_P50)
 
 def is_violating(p99: float) -> bool:
     return p99 / BASE_P50 >= SLO_RATIO
@@ -111,9 +115,12 @@ vprof_ls_ls: list[VProfDataList] = []
 for fname in os.listdir(profdir):
     width=int(fname.split("_")[-2])
     height=int(fname.split("_")[-1].split(".")[0])
-    
-    if height != int(sys.argv[2]) and width != int(sys.argv[2]):
+    if sys.argv[2] == '1':
+        if height != 1 or width != 1:
+            continue
+    elif height != int(sys.argv[2]) and width != int(sys.argv[2]):
         continue
+
     print(width, height)
 
     vprof_ls = VProfDataList(width, height)

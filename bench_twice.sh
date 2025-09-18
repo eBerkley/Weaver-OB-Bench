@@ -9,6 +9,7 @@ arm=0
 x4ch=0
 simple=0
 static=0
+freq=4
 for i in "$@"; do
   case $i in
     arm)
@@ -22,6 +23,15 @@ for i in "$@"; do
       ;;
     static)
       static=1
+      ;;
+    freq3)
+      freq=3
+      ;;
+    freq2)
+      freq=2
+      ;;
+    freq4)
+      freq=4
       ;;
   esac
 done
@@ -44,7 +54,8 @@ fi
 
 sed -i -E "s/MAX_CORES=[0-9\-]+/MAX_CORES=$MAX_CORES/" .env
 
-scheme_suffix=""
+scheme_suffix="-no_turbo"
+# scheme_suffix=""
 
 if [[ $simple = 1 ]]; then
   echo simple checkout enabled
@@ -53,6 +64,18 @@ if [[ $simple = 1 ]]; then
 else
   sed -i -E 's/CHECKOUT_FUNCTIONALITY=[a-z\_]+/CHECKOUT_FUNCTIONALITY=full_checkout/' .env
 fi
+
+if [[ $freq = 3 ]]; then
+  echo Warning: Setting cpu frequency to 3GHz!
+  scheme_suffix+="-freq3"
+  sudo cpupower frequency-set -f 3GHz
+
+elif [[ $freq = 2 ]]; then
+  echo Warning: Setting cpu frequency to **2**GHz!
+  scheme_suffix+="-freq2"
+  sudo cpupower frequency-set -f 2GHz
+fi
+
 
 if [[ $x4ch = 1 ]]; then
   echo x4ch enabled
@@ -71,7 +94,7 @@ else
 fi
 
 
-for a in $(cat todo.txt); do
+for a in $(cat new.txt); do
   if [[ $static = 0 ]]; then
     rm -f alloc/"$a""$scheme_suffix".cfg
   fi
@@ -121,5 +144,10 @@ make bench_all &>>DELETE.txt
 sed -i -E 's/CHECKOUT_FUNCTIONALITY=[a-z\_]+/CHECKOUT_FUNCTIONALITY=full_checkout/' .env
 sed -i -E 's/KUBE_CORES=[0-9\-]+/KUBE_CORES=0-2/' .env
 sed -i -E 's/LOCUST_CHECKOUT_MOD=[0-9]+/LOCUST_CHECKOUT_MOD=1/' locust.env
+
+if [[ $freq != 4 ]]; then
+  echo Returning cpu frequency to 4GHz.
+  sudo cpupower frequency-set -f 4GHz  
+fi
 
 echo Done.

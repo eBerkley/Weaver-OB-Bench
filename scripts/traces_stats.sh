@@ -2,9 +2,13 @@
 cd $(dirname "$0") || exit
 sleep 15
 
-logfile="../logs.txt"
+echo traces_stats.sh
+
 STATS_DIR="../benchmark/stats"
 mkdir -p "$STATS_DIR"
+
+# Get vars / fns for all stat collecters
+source stats_utils/all_stats.sh
 
 # Detect the load generator pod name
 full_podname=$(kubectl get pod -o name --selector app=loadgenerator)
@@ -20,23 +24,10 @@ finish () {
 
 trap finish EXIT
 
-mainpod=$(kubectl get deploy | grep '[mM]ain' | head -1 | awk '{print $1}')
-if [[ -z "$mainpod" ]]; then
-  mainpod=$(kubectl get deploy | grep 'all' | head -1 | awk '{print $1}')
-  if [[ -z "$mainpod" ]]; then
-    mainpod=$(kubectl get deploy | grep 'front' | head -1 | awk '{print $1}')
-  fi
-fi
-
 SECONDS=0
 debug_frequency=4 # 25% of time
 
-echo "Waiting for loadgenerator to be ready..." | tee -a $logfile
-kubectl wait --timeout=1h --for=condition=Ready pod/$podname
-sleep 1
-echo "Loadgenerator ready. Time elapsed = $SECONDS seconds." | tee -a $logfile
-echo | tee -a $logfile
-
+loadgen_wait
 
 
 if [ -d "../jaeger_traces" ]; then
@@ -67,28 +58,27 @@ LAST_FETCH_TIME=$(($(date +%s%N)/1000))  # Current time in microseconds
 
 SECONDS=0
 
-# Helper functions
-get_lines() {
-  kubectl logs --tail "${1:-1}" "$podname"
-}
-
-write_cpu_util() {
-  cores=$(./get_cores.sh)
-  echo "$SECONDS,$cores" >> "$STATS_DIR/cpu.csv"
-}
-
 log_debug_info() {
   local val=$1
   if [ $(( val % $debug_frequency )) -eq 0 ]; then
     date -d@$SECONDS -u +%H:%M:%S
-    kubectl top pod
+    kubectl top po 2>/dev/null | awk 'NR==1 || $1 !~ /^loadgenerator/'
+    echo
+    ./get_replicas.sh
+    code=$?
+    if [[ $code = 0 ]]; then
+      ./get_replicas.sh 1 >pod_stats.csv
+      echo
+    else
+      rm -f pod_stats.csv
+    fi
   fi
 }
 
 fetch_jaeger_traces () {
   CURRENT_TIME=$(($(date +%s%N)/1000))  # Current time in microseconds
   JAEGER_API_URL="http://localhost:${LOCAL_PORT}/api/traces?service=${SERVICE_NAME}"
-  TIMESTAMP=$(date +'%Y%m%d_%H%M%S')  # Unique timestamp for the file name
+  TIMESTAMP=$(date --iso-8601=seconds)  # Unique timestamp for the file name
   FETCH_FILE="${OUTPUT_DIR}/traces_${TIMESTAMP}.json"  # File name based on the timestamp
 
   # Fetch the data
@@ -114,39 +104,20 @@ fetch_jaeger_traces () {
 # Main loop
 echo Seconds,CPU Cores > ../benchmark/stats/cpu.csv
 
-timestamp="[$(date +'%a %h %d %T %Y')] "
-reprint="\e[1A\e[K"
-
-iterations=0
-str=$(get_lines)
+strs=$(get_lines $timestamp_file 30)
+str=$(echo "$strs" | tail -1)
 size=${#str}
-last_str=""
+echo "$strs" | tee -a $logfile
+
 while [ $size -le 5 ] || [ $size -ge 20 ]; do
   write_cpu_util
   fetch_jaeger_traces
   sleep 10
-
-  strs=$(get_lines 2)
+  strs=$(get_lines $timestamp_file 8)
   str=$(echo "$strs" | tail -1)
-  strPrev=$(echo "$strs" | head -1)
   size=${#str}
+  if [[ $size != 0 ]]; then echo "$strs" | tee -a $logfile; fi
 
-  if [[ $strPrev != $last_str ]]; then
-    echo -e $timestamp$strPrev
-    echo $strPrev >> $logfile   
-
-    if [[ $str != $last_str ]]; then
-      echo $str
-      echo $str >> $logfile
-    fi
-
-  elif [[ $str != $last_str ]]; then
-    echo -e  $timestamp$str
-    echo $str >> $logfile
-  fi
-
-  last_str=$str
-  
   (( iterations+=1 ))
   log_debug_info $iterations >> $logfile
 
@@ -165,7 +136,7 @@ fi
 Echo "Post-processing jaeger traces..."
 python3 ../benchmark/jaeger_trace.py "${OUTPUT_DIR}"
 
-rm -rf "${OUTPUT_DIR}"/*.json
+# rm -rf "${OUTPUT_DIR}"/*.json
 
 echo "Done."
 

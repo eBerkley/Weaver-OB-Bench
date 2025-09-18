@@ -12,7 +12,7 @@ VARIANCE_WINDOW = int(getenv("LOCUST_VARIANCE_WINDOW", "30"))
 MAX_VARIANCE = float(getenv("LOCUST_MAX_VARIANCE", "0.3"))
 
 class ScaleLoad(LoadTestShape):
-    init_users: Final = 1000 # users
+    init_users: Final = 7500 # users
     """What is the first target to hit?"""
 
     init_time: Final = 30 # seconds

@@ -24,6 +24,50 @@ minikube_start:
 graph:
 	python3 benchmark/analyze.py -m graph_many -n "$$NAME" -g "$$TYPE"
 
+analyze:
+	@if [ -z "$(S)" ]; then                                                    \
+		echo "Error: Need to define scheme name. ex: 'make S=MCu analyze'" >&2 ; \
+		exit 1;                                                                  \
+	else                                                                       \
+		python3 ./benchmark/analyze.py -m term -n $(S);                          \
+	fi
+
+results:
+	@if [ -z "$(S)" ]; then                                                      \
+		echo "Error: Need to define scheme name. ex: 'make S=MCu results'" >&2 ;   \
+		exit 1;                                                                    \
+	else                                                                         \
+		python3 ./benchmark/analyze.py -m csv -n $(S) >benchmark/results/$(S).csv; \
+	fi
+
+results_all:
+	@for a in $(shell ls benchmark/out); do                                     \
+		if ! grep "BENCH_TYPE=ALLOC" benchmark/out/$$a/info.txt &>/dev/null; then \
+			echo $$a;                                                               \
+			make S=$$a results >/dev/null;                                          \
+		fi;                                                                       \
+	done
+
+results_new:
+	@for a in $(shell ls benchmark/out); do                                     \
+		if ! grep "BENCH_TYPE=ALLOC" benchmark/out/$$a/info.txt &>/dev/null; then \
+	 		if [[ ! -e benchmark/results/$$a.csv ]]; then                           \
+	 	  	echo $$a;                                                             \
+	 			make S=$$a results >/dev/null;                                        \
+	 		fi;                                                                     \
+	 	fi;                                                                       \
+	 done
+
+results_new_dry:
+	@for a in $(shell ls benchmark/out); do                                     \
+		if ! grep "BENCH_TYPE=ALLOC" benchmark/out/$$a/info.txt &>/dev/null; then \
+	 		if [[ ! -e benchmark/results/$$a.csv ]]; then                           \
+	 	  	echo $$a;                                                             \
+	 		fi;                                                                     \
+	 	fi;                                                                       \
+	 done
+
+
 # Will try to ignore errors i.e. if minikube wasn't running
 minikube_restart:
 	- minikube delete

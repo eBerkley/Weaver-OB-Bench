@@ -1,0 +1,37 @@
+# started on Fri Jul 18 10:38:08 2025
+
+
+ Performance counter stats for process id '700642':
+
+   169,055,528,166      instructions                     #    0.35  insn per cycle            
+   485,754,501,087      cycles                                                                
+     7,744,548,406      L1-icache-load-misses                                                 
+     1,790,232,003      branch-misses                                                         
+    86,721,335,724      dTLB-loads                                                            
+
+     299.954097164 seconds time elapsed
+
+# started on Fri Jul 18 10:43:08 2025
+
+
+ Performance counter stats for process id '700642':
+
+    68,148,491,551      L1-dcache-loads                                                       
+     2,002,378,686      L1-dcache-load-misses            #    2.94% of all L1-dcache accesses 
+    12,740,455,580      l2d_cache                                                             
+     2,693,752,687      l2d_cache_refill                                                      
+
+     299.970136780 seconds time elapsed
+
+# started on Fri Jul 18 10:48:08 2025
+
+
+ Performance counter stats for process id '700642':
+
+     1,465,054,781      dTLB-load-misses                                                      
+       589,747,155      iTLB-load-misses                                                      
+    33,057,928,682      branch-instructions                                                   
+         2,242,112      context-switches                                                      
+
+     299.972381883 seconds time elapsed
+

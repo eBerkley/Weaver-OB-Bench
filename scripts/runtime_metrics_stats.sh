@@ -80,6 +80,7 @@ else # RUNTIME_METRIC_HIGH_GRANULARITY = 0
   
     echo "timestamp,p50_us,p99_us,MPS,Replicas,Util,Remote External Concurrence,Local External Concurrence,Internal Concurrence,Goroutines,Errors Per Sec" > "$METRICS_DIR/$c.csv"
 
+    echo "timestamp,5,10,15,20,25,30,35,40,45,50,55,60,65,70,75,80,85,90,95,99" > $METRICS_DIR/"$c"_hist.csv
   done
 
 fi
@@ -184,6 +185,21 @@ fetch_util() {
     echo "NaN"
     echo "NaN"
   fi
+}
+
+fetch_px() {
+  local comp_name=$1
+  local percentile=$2
+  local component_path="${COMPONENT_MAP[$comp_name]}"
+  local query_base
+  if [[ "$comp_name" == "main" ]]; then
+    query_base="serviceweaver_http_request_latency_micros_bucket"
+  else
+    query_base="serviceweaver_method_latency_micros_bucket{component=\"${component_path}\"}"
+  fi
+  local query="histogram_quantile($percentile, sum by (le) (rate(${query_base}[30s])))"
+  local encoded=$(jq -rn --arg q "$query" '$q|@uri')
+  fetch_value "$METRIC_URL/api/v1/query?query=$encoded"
 }
 
 fetch_p99() {
@@ -511,6 +527,13 @@ else # Low granularity
         EPS=$(awk "BEGIN {printf \"%.3f\", $eps}")
         echo "$realtime,$P50,$P99,$MPS,$repls,$util,$remote_ext,$local_ext,$int,$gort,$EPS" >> "$METRICS_DIR/$c.csv"
 
+        s="$realtime"
+        for x in 0.05 0.10 0.15 0.20 0.25 0.30 0.35 0.40 0.45 0.50 0.55 0.60 0.65 0.70 0.75 0.80 0.85 0.90 0.95 0.99; do
+          local v=$(fetch_px $c $x)
+          s+=,$(awk "BEGIN {printf \"%.3f\", $v}")
+
+        done
+        echo $s >> $METRICS_DIR/"$c"_hist.csv
       done
       
 

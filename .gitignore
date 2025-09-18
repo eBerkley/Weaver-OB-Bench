@@ -29,3 +29,25 @@ inst_fp_collection
 latency_parsing_test
 vertical_profs
 colocation_old
+
+alloc/*-perf*
+alloc/*-freq3*
+alloc/*-x4ch*
+alloc/*-simple*
+
+scripts/vtune_results/*.old
+scripts/vtune_results_backup
+
+# At this point, we just want to generate these files when needed.
+# There are so many.
+release/base/colocation
+
+benchmark/results/*-old.csv
+benchmark/results/*-perf*
+benchmark/results/*-freq3*
+benchmark/results/*-x4ch*
+benchmark/results/*-simple*
+
+benchmark/instfp_stats
+
+alloc/*-freq3

@@ -61,6 +61,7 @@ def graph_suffix(name: str, resdir: str, basedir: str, suffix: str, verbose=Fals
     micro: Optional[DataList] = None
     dls: List[DataList] = []
     for s in schemes:
+        print(s)
         dl = DataList()
         dl.from_results(s)
         cur_scheme = os.path.basename(s).split(".")[0]

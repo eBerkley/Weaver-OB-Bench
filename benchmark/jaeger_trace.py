@@ -1,3 +1,4 @@
+#!/bin/python3
 import os
 import json
 import csv
@@ -57,7 +58,7 @@ def aggregate_json_files_to_csv(input_dir):
                 try:
                     data = json.load(file)
                     invalid_spans, total_spans, valid_traces = count_invalid_parent_spans(data)
-                    
+                    print(f"trace {filename}: total spans = {total_spans}, invalid spans = {invalid_spans}, valid traces = {len(valid_traces)}.")
                     # Check filtering conditions
                     if invalid_spans > 300 or (total_spans > 0 and invalid_spans / total_spans > 0.3):
                         print(f"Skipping {filename} due to excessive invalid parent spans.")

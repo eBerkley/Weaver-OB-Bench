@@ -34,27 +34,43 @@ if mode == util.Mode.AVG.value:
     exit(0)
 
 elif mode == util.Mode.RANK.value:
-    schemes = util.get_schemes()
-    print("groups: " + " ".join(schemes))
+    schemes = util.get_schemes(True)
+    print("groups: " + " ".join(schemes), file=sys.stderr)
 
     if len(schemes) < 2:
         raise ValueError(f"Error: not enough input schemes: {schemes}")
-
+    
+    base: Optional[util.DataList] = None
     dls: List[util.DataList] = []
     for s in schemes:
-        res = util.find_best_match(s, resdir)
+        res = util.find_best_match(s, resdir, True)
         dl = util.DataList()
         dl.from_results(res)
-        dls.append(dl)
+        if dl.name.startswith("M_Ch_"):
+            base = dl
+        else:
+            dls.append(dl)
+    
+    if base:
+        dls.append(base)
 
-    idx = util.user_idx(user_count)
+    
 
-    if not any(len(dl) >= idx for dl in dls):
-        raise ValueError(f"Can not find any idx that has user count = {user_count}")
+    if not alloc_ok:
+        idx = util.user_idx(user_count)
+
+        if not any(len(dl) >= idx for dl in dls):
+            raise ValueError(f"Can not find any idx that has user count = {user_count}")
 
     srted = [i for i in range(len(dls))]
 
+    
     srt: Callable[[util.DataList], float]
+
+    # alloc_ok == True: SLA MODE
+
+
+
     match value:
         case "p50":
             srt = lambda x: x[idx].p50
@@ -62,17 +78,47 @@ elif mode == util.Mode.RANK.value:
             srt = lambda x: x[idx].p99
         case "cpu":
             srt = lambda x: x[idx].cpu
+        case _:
+            value = "p99"
+            srt = lambda x: x[idx].p99
+
     
-    srted.sort(key=lambda i: srt(dls[i]))
+    def find_max_throughput(dl: util.DataList):
+        val = -1
+        prev_val = -1
+        for i in range(len(dl)):
+            prev_val = val
+            
+            match value:
+                case "p50":
+                    val = dl[i].p50
+                case "p99":
+                    val = dl[i].p99
+                case "cpu":
+                    val = dl[i].cpu    
+            
+            if val >= user_count: # if val >= SLA
+                if prev_val == -1:
+                    return val
+                return util.idx_user(i - 1) + (200 - prev_val) / 200
+        
+        return util.idx_user(len(dl) - 1) + (200 - val) / 200
+    
+                
+    if alloc_ok:
+        srt = find_max_throughput
+    
+    
+    srted.sort(key=lambda i: srt(dls[i]), reverse=alloc_ok)
 
     print(f"idx:\t{'name'.rjust(15)}, {value.rjust(7)}")
     for rank in range(len(srted)):
         i = srted[rank]
-        print(f"{rank:3d}:\t{schemes[i].rjust(15)}, {srt(dls[i]):7.2f}")
+        print(f"{rank:3d}:\t{dls[i].name.rjust(15)}, {srt(dls[i]):7.2f}")
 
 elif mode == util.Mode.COMPARE_MANY.value:
     def cmp_mode(suffix: str):
-        simples = util.get_suffix(resdir, suffix)
+        simples = util.get_suffix(resdir, suffix, True)
 
         p50 = [0.0 for _ in range(24)]
         p99 = [0.0 for _ in range(24)]

@@ -22,9 +22,10 @@ uset() {
   sudo -u $username PATH="$PATH:/home/$username/go/bin" $*
 }
 
-PROFILE_TIME=60
+PROFILE_TIME=160
 # mode=hotspots
 
+PROFILE_PARENT=1
 
 # if [[ ! -e "/opt/intel/oneapi/vtune/latest/vtune-vars.sh" ]]; then
 #   echo "VTune is not installed. Please install VTune to use this script."
@@ -74,17 +75,21 @@ for p in $(pgrep -f "/weaver/ob" | xargs --no-run-if-empty ps | awk '{print $1}'
     continue
   fi
 
+  if [[ $PROFILE_PARENT = 1 ]]; then
+    # Get the parent PID of the process
+    p=$(ps -o ppid= -p "$p")
+    echo "Profiling babysitter of pod: $hostname"
+  fi
+
   echo "Profiling pod: $hostname"
   stat_output_file="$OUTPUT_DIR/${hostname}_stats.txt"
   record_output_file="$OUTPUT_DIR/${hostname}_record.data"
-  
-  # perf stat -o "$stat_output_file" \
-        # -e instructions,cycles,L1-icache-load-misses \
-        # -p "$p" 
+
+
 
   echo "Starting perf record for PID $p (Pod: $pod_name). Output: $record_output_file"
-  perf record -o "$record_output_file" \
-        -e instructions \
+  perf record -c 10000 -o "$record_output_file" \
+        -e instructions,cycles \
         -p "$p" &
   perf_pid=$!
 
@@ -95,18 +100,25 @@ for p in $(pgrep -f "/weaver/ob" | xargs --no-run-if-empty ps | awk '{print $1}'
   
   echo "Perf record completed for PID $p (Pod: $pod_name). Output: $record_output_file"
 
-  echo "Starting perf stat for PID $p (Pod: $pod_name). Output: $stat_output_file"
-  perf stat -o "$stat_output_file" \
-        -e instructions,cycles,L1-icache-load-misses \
-        -p "$p" &
+  # echo "Starting perf stat for PID $p (Pod: $pod_name). Output: $stat_output_file"
+  # perf stat -o "$stat_output_file" \
+        # -e instructions,cycles,L1-icache-load-misses \
+        # -p "$p" &
 
-  perf_pid=$!
+  # perf_pid=$!
   
-  sleep $PROFILE_TIME
-  kill -SIGINT "$perf_pid" 2>/dev/null
-  wait "$perf_pid" 2>/dev/null
+  # sleep $PROFILE_TIME
+  # kill -SIGINT "$perf_pid" 2>/dev/null
+  # wait "$perf_pid" 2>/dev/null
 
-  echo "Perf stat completed for PID $p (Pod: $pod_name). Output: $stat_output_file"
+  # echo "Perf stat completed for PID $p (Pod: $pod_name). Output: $stat_output_file"
+
+  if [[ $PROFILE_PARENT = 1 ]]; then
+  perf report --stdio --sort=symbol -i "$record_output_file" >"$OUTPUT_DIR/${hostname}-babysitter-report.txt" 
+  else
+    perf report --stdio --sort=symbol -i "$record_output_file" >"$OUTPUT_DIR/${hostname}_report.txt"
+  fi    
+  rm "$record_output_file"
 
   chown -R $username "$OUTPUT_DIR"
   break

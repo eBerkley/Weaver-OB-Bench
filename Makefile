@@ -116,7 +116,10 @@ else ifeq ($(BENCH_TYPE), PERF)
 
 	LOCUST_RESET_CONN := 0
 	LOCUST_SHAPE       := constload
-	LOCUST_CONST_USERS := 15000
+# LOCUST_CONST_USERS = MAKE_USER_SCALE * M-replicas in SCHEME
+# MAKE_USER_SCALE    := 1300
+#	LOCUST_CONST_USERS := $(shell ./make_scripts/adjust_load.sh $(SCHEME) $(MAKE_USER_SCALE))
+   	LOCUST_CONST_USERS := 15000
 	VTUNE_DURATION     := 300
 else # ifeq ($(BENCH_TYPE), CUSTOM)
 # ...
