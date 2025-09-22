@@ -16,7 +16,7 @@ class ConstLoad(LoadTestShape):
     
     """
     max_users = CONST_USERS # users
-
+    init_users = min(max_users / 2, 3000)
     ramp_speed = 100 # users per second
 
     def __init__(self, *args, **kwargs):
@@ -24,8 +24,11 @@ class ConstLoad(LoadTestShape):
     
     def tick(self):
         cur_users = self.get_current_user_count()
-        if cur_users < 3000:
-            return 3000, 10.0
-        if cur_users == self.max_users:
-            logging.info("Ramp completed.")
+        self._p50: int = self.runner.stats.total.get_current_response_time_percentile(0.50) or 0
+        self._p99: int = self.runner.stats.total.get_current_response_time_percentile(0.99) or 0
+        logging.info(f"users: {cur_users} \t P50: {self._p50} \t P99: {self._p99}")
+        if cur_users < self.init_users:
+            return self.init_users, 10.0
+        # if cur_users == self.max_users:
+        #     logging.info("Ramp completed.")
         return self.max_users, self.ramp_speed

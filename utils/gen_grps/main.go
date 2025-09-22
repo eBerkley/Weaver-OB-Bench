@@ -11,11 +11,11 @@ type Params struct {
 }
 
 var OBStateless = Params{
-	Clist: []string{"M", "Ch", "R", "S", "A", "Cu", "Ca", "E", "Pa", "Cc", "Pr"},
+	Clist: []string{"M", "Ch", "R", "S", "A", "Cu", "Ca", "E", "Pa", "Pr"},
 	Top: map[string][]string{
-		"M":  {"R", "S", "Ch", "A", "Cu", "Ca"},
-		"Ch": {"R", "Ca", "S", "E", "Pa", "Cu"},
-		// "R":  {"Pr"},
+		"M":  {"R", "S", "Ch", "A", "Cu", "Ca", "Pr"},
+		"Ch": {"R", "Ca", "S", "E", "Pa", "Cu", "Pr"},
+		"R":  {"Pr"},
 		// "Ca": {"Cc"},
 	},
 }

@@ -38,9 +38,6 @@ done
 
 rm cfgs/* &>/dev/null
 
-minikube delete
-
-
 
 line=$(lscpu | grep 'Core(s) per socket')
 pat="([0-9]+)"
@@ -55,35 +52,6 @@ fi
 sed -i -E "s/MAX_CORES=[0-9\-]+/MAX_CORES=$MAX_CORES/" .env
 
 scheme_suffix="-no_turbo"
-# scheme_suffix=""
-
-if [[ $simple = 1 ]]; then
-  echo simple checkout enabled
-  scheme_suffix+="-simple_checkout"
-  sed -i -E 's/CHECKOUT_FUNCTIONALITY=[a-z\_]+/CHECKOUT_FUNCTIONALITY=simple_checkout/' .env
-else
-  sed -i -E 's/CHECKOUT_FUNCTIONALITY=[a-z\_]+/CHECKOUT_FUNCTIONALITY=full_checkout/' .env
-fi
-
-if [[ $freq = 3 ]]; then
-  echo Warning: Setting cpu frequency to 3GHz!
-  scheme_suffix+="-freq3"
-  sudo cpupower frequency-set -f 3GHz
-
-elif [[ $freq = 2 ]]; then
-  echo Warning: Setting cpu frequency to **2**GHz!
-  scheme_suffix+="-freq2"
-  sudo cpupower frequency-set -f 2GHz
-fi
-
-
-if [[ $x4ch = 1 ]]; then
-  echo x4ch enabled
-  scheme_suffix+="-x4ch"
-  sed -i -E 's/LOCUST_CHECKOUT_MOD=[0-9]+/LOCUST_CHECKOUT_MOD=4/' locust.env
-else
-  sed -i -E 's/LOCUST_CHECKOUT_MOD=[0-9]+/LOCUST_CHECKOUT_MOD=1/' locust.env
-fi
 
 if [[ $arm = 1 ]]; then
   echo ARM enabled
@@ -107,9 +75,9 @@ for a in $(cat new.txt); do
     cp -r release/base/colocation/$a/ release/base/colocation/"$a""$scheme_suffix"/
   fi
 
-  if [[ $arm = 1 ]]; then
-    sed -i 's/pr=1/pr=2/' release/base/colocation/"$a""$scheme_suffix"/groups_height.cfg
-  fi
+  # if [[ $arm = 1 ]]; then
+  #   sed -i 's/pr=1/pr=2/' release/base/colocation/"$a""$scheme_suffix"/groups_height.cfg
+  # fi
   ./utils/make_cfg.sh "$a""$scheme_suffix"
 done
 
@@ -145,9 +113,5 @@ sed -i -E 's/CHECKOUT_FUNCTIONALITY=[a-z\_]+/CHECKOUT_FUNCTIONALITY=full_checkou
 sed -i -E 's/KUBE_CORES=[0-9\-]+/KUBE_CORES=0-2/' .env
 sed -i -E 's/LOCUST_CHECKOUT_MOD=[0-9]+/LOCUST_CHECKOUT_MOD=1/' locust.env
 
-if [[ $freq != 4 ]]; then
-  echo Returning cpu frequency to 4GHz.
-  sudo cpupower frequency-set -f 4GHz  
-fi
 
 echo Done.

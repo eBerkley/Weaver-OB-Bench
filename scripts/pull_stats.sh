@@ -26,7 +26,7 @@ echo Seconds,CPU Cores > ../benchmark/stats/cpu.csv
 log_debug_info() {  
   local val=$1
 
-  if [ $(( val % $DEBUG_FREQUENCY )) -eq 0 ]; then
+  # if [ $(( val % $DEBUG_FREQUENCY )) -eq 0 ]; then
 
     # echo "=*=*=*=*=*=*=*=*= DEBUG INFO =*=*=*=*=*=*=*=*="
     
@@ -44,7 +44,7 @@ log_debug_info() {
     
     # echo "=*=*=*=*=*=*=*=*= END DEBUG. =*=*=*=*=*=*=*=*="
 
-  fi
+  # fi
 }
 
 iterations=0

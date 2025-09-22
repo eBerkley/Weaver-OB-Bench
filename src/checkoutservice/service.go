@@ -18,7 +18,6 @@ import (
 	"context"
 	"fmt"
 	goruntime "runtime"
-	"strings"
 	"time"
 
 	"github.com/eBerkley/Weaver-OB-Bench/cartservice"
@@ -28,7 +27,6 @@ import (
 	"github.com/eBerkley/Weaver-OB-Bench/types"
 	"github.com/eBerkley/Weaver-OB-Bench/types/money"
 	"github.com/eberkley/weaver"
-	"github.com/eberkley/weaver/runtime"
 	imetrics "github.com/eberkley/weaver/runtime/codegen"
 
 	_ "go.uber.org/automaxprocs"
@@ -53,11 +51,11 @@ type SimpleCheckoutService interface {
 
 func (s *impl) Init(ctx context.Context) error {
 
-	if s.catalogReplicas == 0 {
-		s.catalogReplicas = productcatalogservice.ProductCatalogReplicas
-	}
+	// if s.catalogReplicas == 0 {
+	// 	s.catalogReplicas = productcatalogservice.ProductCatalogReplicas
+	// }
 
-	s.UpdateCatalogService(ctx, s.catalogReplicas)
+	// s.UpdateCatalogService(ctx, s.catalogReplicas)
 
 	go func() {
 		ticker := time.NewTicker(time.Second)
@@ -75,57 +73,57 @@ func (s *impl) Init(ctx context.Context) error {
 	return nil
 }
 
-func (s *impl) UpdateCatalogService(ctx2 context.Context, replicas int) {
-	ctx, cancelFn := context.WithCancel(ctx2)
+// func (s *impl) UpdateCatalogService(ctx2 context.Context, replicas int) {
+// 	ctx, cancelFn := context.WithCancel(ctx2)
 
-	if s.cancelFn != nil {
-		s.cancelFn()
-	}
-	s.cancelFn = cancelFn
+// 	if s.cancelFn != nil {
+// 		s.cancelFn()
+// 	}
+// 	s.cancelFn = cancelFn
 
-	updateCatalogInfo := func() {
-		s.catalogMu.Lock()
-		s.catalogReplicas = replicas
-		s.catalogInit = true
-		s.catalogMu.Unlock()
-	}
+// 	updateCatalogInfo := func() {
+// 		s.catalogMu.Lock()
+// 		s.catalogReplicas = replicas
+// 		s.catalogInit = true
+// 		s.catalogMu.Unlock()
+// 	}
 
-	if !s.catalogInit {
-		updateCatalogInfo()
-		s.catalogInit = true
-		return
-	}
+// 	if !s.catalogInit {
+// 		updateCatalogInfo()
+// 		s.catalogInit = true
+// 		return
+// 	}
 
-	timer := time.NewTimer(time.Duration(20) * time.Second)
-	go func() {
-		select {
-		case <-timer.C:
-			updateCatalogInfo()
+// 	timer := time.NewTimer(time.Duration(20) * time.Second)
+// 	go func() {
+// 		select {
+// 		case <-timer.C:
+// 			updateCatalogInfo()
 
-		case <-ctx.Done():
+// 		case <-ctx.Done():
 
-		}
+// 		}
 
-	}()
+// 	}()
 
-}
+// }
 
-func (s *impl) UpdateRoutingHook(ctx context.Context, componentName string, replicas int) error {
+// func (s *impl) UpdateRoutingHook(ctx context.Context, componentName string, replicas int) error {
 
-	if !strings.HasSuffix(componentName, "ProductCatalogService") {
-		if strings.HasSuffix(componentName, "CheckoutService") {
-			return runtime.RoutingDontCareError
-		}
-		return nil
-	}
-	if replicas == -1 {
-		return nil
-	}
+// 	if !strings.HasSuffix(componentName, "ProductCatalogService") {
+// 		if strings.HasSuffix(componentName, "CheckoutService") {
+// 			return runtime.RoutingDontCareError
+// 		}
+// 		return nil
+// 	}
+// 	if replicas == -1 {
+// 		return nil
+// 	}
 
-	s.UpdateCatalogService(ctx, replicas)
+// 	s.UpdateCatalogService(ctx, replicas)
 
-	return nil
-}
+// 	return nil
+// }
 
 type orderPrep struct {
 	orderItems            []types.OrderItem
@@ -179,18 +177,18 @@ func (s *impl) prepareOrderItemsAndShippingQuoteFromCart(ctx context.Context, us
 
 func (s *impl) prepOrderItems(ctx context.Context, items []cartservice.CartItem, userCurrency string) (out []types.OrderItem, duration time.Duration, err error) {
 	out = make([]types.OrderItem, len(items))
-	s.catalogMu.RLock()
-	repls := s.catalogReplicas
-	s.catalogMu.RUnlock()
+	// s.catalogMu.RLock()
+	// repls := s.catalogReplicas
+	// s.catalogMu.RUnlock()
 	for i, item := range items {
 		var product productcatalogservice.Product
 
-		s.catalogMu.RLock()
-		shard := productcatalogservice.HashProductID(item.ProductID, repls)
-		s.catalogMu.RUnlock()
+		// s.catalogMu.RLock()
+		// shard := productcatalogservice.HashProductID(item.ProductID, repls)
+		// s.catalogMu.RUnlock()
 
 		getProductTime := time.Now()
-		product, err = s.catalogService.Get().GetProduct(ctx, item.ProductID, shard)
+		product, err = s.catalogService.Get().GetProduct(ctx, item.ProductID)
 		duration += time.Since(getProductTime)
 
 		if err != nil {

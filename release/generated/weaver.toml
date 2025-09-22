@@ -8,6 +8,19 @@ listeners.boutique = {address = "localhost:12345"}
 [multi]
 listeners.boutique = {address = "localhost:12345"}
 
+["github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService"]
+# MongoURI = "mongo-mongodb-sharded-headless"
+MongoURI = "mongo-mongodb-sharded.default.svc.cluster.local"
+ProductDatabase = "product-db"
+ProductCollection = "products"
+MongoUser = "root"
+MongoPassword = "productDB"
+
+RedisAddr = "product-redis:6379"
+
+["github.com/eBerkley/Weaver-OB-Bench/cartservice/CartService"]
+RedisAddr = "cart-redis:6379"
+
 [gke]
 regions = ["us-west1"]
 listeners.boutique = {is_public = true, hostname = "onlineboutique.serviceweaver.dev"}

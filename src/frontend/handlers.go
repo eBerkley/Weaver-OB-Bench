@@ -94,26 +94,33 @@ func (fe *Server) homeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// Begin fetching list of products from shard
-	var products []productcatalogservice.Product
+	// var products []productcatalogservice.Product
 
 	// We gotta do this first sadly, could be bad if routing table updates mid loop
-	fe.catalogMu.RLock()
-	repls := fe.catalogReplicas
-	fe.catalogMu.RUnlock()
-
-	for shard := 0; shard < repls; shard++ {
-
-		listTime := time.Now()
-		prods, err := fe.catalogService.Get().ListProducts(r.Context(), shard)
-		duration += time.Since(listTime)
-
-		if err != nil {
-			fe.renderHTTPError(r, w, fmt.Errorf("could not retrieve products: %w", err), http.StatusInternalServerError)
-			return
-		}
-
-		products = append(products, prods...)
+	// fe.catalogMu.RLock()
+	// repls := fe.catalogReplicas
+	// fe.catalogMu.RUnlock()
+	listTime := time.Now()
+	products, err := fe.catalogService.Get().ListProducts(r.Context())
+	if err != nil {
+		fe.renderHTTPError(r, w, fmt.Errorf("could not retrieve products: %w", err), http.StatusInternalServerError)
+		return
 	}
+	duration += time.Since(listTime)
+
+	// for shard := 0; shard < repls; shard++ {
+
+	// 	listTime := time.Now()
+	// 	prods, err := fe.catalogService.Get().ListProducts(r.Context(), shard)
+	// 	duration += time.Since(listTime)
+
+	// 	if err != nil {
+	// 		fe.renderHTTPError(r, w, fmt.Errorf("could not retrieve products: %w", err), http.StatusInternalServerError)
+	// 		return
+	// 	}
+
+	// 	products = append(products, prods...)
+	// }
 
 	getCartTime := time.Now()
 	cart, err := fe.cartService.Get().GetCart(r.Context(), sessionID(r))
@@ -183,16 +190,16 @@ func (fe *Server) productHandler(w http.ResponseWriter, r *http.Request) {
 
 	logger.Debug("serving product page", "id", id, "currency", currentCurrency(r))
 
-	fe.catalogMu.RLock()
-	shard := productcatalogservice.HashProductID(id, fe.catalogReplicas)
-	fe.catalogMu.RUnlock()
+	// fe.catalogMu.RLock()
+	// shard := productcatalogservice.HashProductID(id, fe.catalogReplicas)
+	// fe.catalogMu.RUnlock()
 
 	getProductTime := time.Now()
-	p, err := fe.catalogService.Get().GetProduct(r.Context(), id, shard)
+	p, err := fe.catalogService.Get().GetProduct(r.Context(), id)
 	duration += time.Since(getProductTime)
 
 	if err != nil {
-		fe.renderHTTPError(r, w, fmt.Errorf("could not retrieve product in shard %v: %w", shard, err), http.StatusInternalServerError)
+		fe.renderHTTPError(r, w, fmt.Errorf("could not retrieve product: %w", err), http.StatusInternalServerError)
 		return
 	}
 
@@ -219,7 +226,7 @@ func (fe *Server) productHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	recommendations, d, err := fe.getRecommendations(r.Context(), sessionID(r), []string{id})
+	recommendations, d, err := fe.getRecommendations(r.Context(), []string{id})
 	duration += d
 
 	if err != nil {
@@ -289,16 +296,16 @@ func (fe *Server) addToCartHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	logger.Debug("adding to cart", "product", productID, "quantity", quantity)
 
-	fe.catalogMu.RLock()
-	shard := productcatalogservice.HashProductID(productID, fe.catalogReplicas)
-	fe.catalogMu.RUnlock()
+	// fe.catalogMu.RLock()
+	// shard := productcatalogservice.HashProductID(productID, fe.catalogReplicas)
+	// fe.catalogMu.RUnlock()
 
 	getProductTime := time.Now()
-	p, err := fe.catalogService.Get().GetProduct(r.Context(), productID, shard)
+	p, err := fe.catalogService.Get().GetProduct(r.Context(), productID)
 	duration += time.Since(getProductTime)
 
 	if err != nil {
-		fe.renderHTTPError(r, w, fmt.Errorf("could not retrieve product at shard %v: %w", shard, err), http.StatusInternalServerError)
+		fe.renderHTTPError(r, w, fmt.Errorf("could not retrieve product: %w", err), http.StatusInternalServerError)
 		return
 	}
 	addItemTime := time.Now()
@@ -371,7 +378,7 @@ func (fe *Server) viewCartHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	recommendations, d, err := fe.getRecommendations(r.Context(), sessionID(r), cartIDs(cart))
+	recommendations, d, err := fe.getRecommendations(r.Context(), cartIDs(cart))
 	duration += d
 
 	if err != nil {
@@ -394,19 +401,17 @@ func (fe *Server) viewCartHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	items := make([]cartItemView, len(cart))
 	totalPrice := money.T{CurrencyCode: currentCurrency(r)}
-	fe.catalogMu.RLock()
-	repls := fe.catalogReplicas
-	fe.catalogMu.RUnlock()
+
 	for i, item := range cart {
 
-		shard := productcatalogservice.HashProductID(item.ProductID, repls)
+		// shard := productcatalogservice.HashProductID(item.ProductID, repls)
 
 		getProductTime := time.Now()
-		p, err := fe.catalogService.Get().GetProduct(r.Context(), item.ProductID, shard)
+		p, err := fe.catalogService.Get().GetProduct(r.Context(), item.ProductID)
 		duration += time.Since(getProductTime)
 
 		if err != nil {
-			fe.renderHTTPError(r, w, fmt.Errorf("could not retrieve product #%s at %v: %w", item.ProductID, shard, err), http.StatusInternalServerError)
+			fe.renderHTTPError(r, w, fmt.Errorf("could not retrieve product #%s: %w", item.ProductID, err), http.StatusInternalServerError)
 			return
 		}
 
@@ -560,47 +565,52 @@ func (fe *Server) getShippingQuote(ctx context.Context, items []cartservice.Cart
 	return money, duration, err
 }
 
-func (fe *Server) getRecommendations(ctx context.Context, userID string, productIDs []string) ([]productcatalogservice.Product, time.Duration, error) {
+func (fe *Server) getRecommendations(ctx context.Context, productIDs []string) ([]productcatalogservice.Product, time.Duration, error) {
 	var duration time.Duration
 
 	listRecsTime := time.Now()
-	recommendationIDs, err := fe.recommendationService.Get().ListRecommendations(ctx, userID, productIDs)
+	recommendationIDs, err := fe.recommendationService.Get().ListRecommendations(ctx, productIDs)
 	duration += time.Since(listRecsTime)
 
 	if err != nil {
 		return nil, duration, err
 	}
 
-	out := make([]productcatalogservice.Product, 0, len(recommendationIDs))
+	// out := make([]productcatalogservice.Product, 0, len(recommendationIDs))
 
-	fe.catalogMu.RLock()
-	repls := fe.catalogReplicas
-	fe.catalogMu.RUnlock()
+	// fe.catalogMu.RLock()
+	// repls := fe.catalogReplicas
+	// fe.catalogMu.RUnlock()
 
-	productShardMap := make([][]string, repls)
+	// productShardMap := make([][]string, repls)
 
-	for _, id := range recommendationIDs {
-		shard := productcatalogservice.HashProductID(id, repls)
-		productShardMap[shard] = append(productShardMap[shard], id)
+	// for _, id := range recommendationIDs {
+	// 	shard := productcatalogservice.HashProductID(id, repls)
+	// 	productShardMap[shard] = append(productShardMap[shard], id)
+	// }
+	getProductsTime := time.Now()
+	out, err := fe.catalogService.Get().GetProducts(ctx, recommendationIDs)
+	duration += time.Since(getProductsTime)
+	if err != nil {
+		return nil, duration, fmt.Errorf("failed to get recommended product info: %w", err)
 	}
-
 	// Because of the large number of goroutines active in main, we send an RPC to each replica serially, rather than concurrently.
-	for shard := 0; shard < repls; shard++ {
+	// for shard := 0; shard < repls; shard++ {
 
-		if len(productShardMap[shard]) == 0 {
-			continue
-		}
+	// 	if len(productShardMap[shard]) == 0 {
+	// 		continue
+	// 	}
 
-		getProductsTime := time.Now()
-		prods, err := fe.catalogService.Get().
-			GetProducts(ctx, productShardMap[shard], shard)
-		duration += time.Since(getProductsTime)
+	// 	getProductsTime := time.Now()
+	// 	prods, err := fe.catalogService.Get().
+	// 		GetProducts(ctx, productShardMap[shard], shard)
+	// 	duration += time.Since(getProductsTime)
 
-		if err != nil {
-			return nil, duration, fmt.Errorf("failed to get recommended product info at shard %v: %w", shard, err)
-		}
-		out = append(out, prods...)
-	}
+	// 	if err != nil {
+	// 		return nil, duration, fmt.Errorf("failed to get recommended product info at shard %v: %w", shard, err)
+	// 	}
+	// 	out = append(out, prods...)
+	// }
 	if len(out) > 4 {
 		out = out[:4] // take only first four to fit the UI
 	}

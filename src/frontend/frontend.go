@@ -24,8 +24,6 @@ import (
 	"os"
 	goruntime "runtime"
 	"slices"
-	"strings"
-	"sync"
 	"time"
 
 	"github.com/eBerkley/Weaver-OB-Bench/adservice"
@@ -36,7 +34,6 @@ import (
 	"github.com/eBerkley/Weaver-OB-Bench/recommendationservice"
 	"github.com/eBerkley/Weaver-OB-Bench/shippingservice"
 	"github.com/eberkley/weaver"
-	"github.com/eberkley/weaver/runtime"
 	imetrics "github.com/eberkley/weaver/runtime/codegen"
 	_ "go.uber.org/automaxprocs"
 )
@@ -78,19 +75,14 @@ type Server struct {
 	adService             weaver.Ref[adservice.AdService]
 
 	boutique weaver.Listener
-
-	catalogMu       sync.RWMutex
-	catalogReplicas int
-	catalogInit     bool
-	cancelFn        context.CancelFunc
 }
 
 func (fe *Server) Init(ctx context.Context) error {
 
-	if fe.catalogReplicas == 0 {
-		fe.catalogReplicas = productcatalogservice.ProductCatalogReplicas
-		fe.UpdateCatalogService(ctx, fe.catalogReplicas)
-	}
+	// if fe.catalogReplicas == 0 {
+	// 	fe.catalogReplicas = productcatalogservice.ProductCatalogReplicas
+	// 	fe.UpdateCatalogService(ctx, fe.catalogReplicas)
+	// }
 	fe.Logger(ctx).Debug("Init")
 	go func() {
 		ticker := time.NewTicker(time.Second)
@@ -108,62 +100,62 @@ func (fe *Server) Init(ctx context.Context) error {
 	return nil
 }
 
-func (fe *Server) UpdateRoutingHook(ctx context.Context, componentName string, replicas int) error {
-	if componentName == runtime.Main {
-		return runtime.RoutingDontCareError
-	}
-	if !strings.HasSuffix(componentName, "ProductCatalogService") {
-		return nil
-	}
-	if replicas == -1 {
-		return nil
-	}
+// func (fe *Server) UpdateRoutingHook(ctx context.Context, componentName string, replicas int) error {
+// 	if componentName == runtime.Main {
+// 		return runtime.RoutingDontCareError
+// 	}
+// 	if !strings.HasSuffix(componentName, "ProductCatalogService") {
+// 		return nil
+// 	}
+// 	if replicas == -1 {
+// 		return nil
+// 	}
 
-	fe.UpdateCatalogService(ctx, replicas)
+// 	fe.UpdateCatalogService(ctx, replicas)
 
-	return nil
-}
+// 	return nil
+// }
 
-func (s *Server) UpdateCatalogService(ctx2 context.Context, replicas int) {
-	ctx, cancelFn := context.WithCancel(ctx2)
+// func (s *Server) UpdateCatalogService(ctx2 context.Context, replicas int) {
+// 	ctx, cancelFn := context.WithCancel(ctx2)
 
-	if s.cancelFn != nil {
-		s.cancelFn()
-	}
+// 	if s.cancelFn != nil {
+// 		s.cancelFn()
+// 	}
 
-	s.cancelFn = cancelFn
-	s.Logger(ctx).Debug("running UpdateCatalogService", "replicas", replicas)
+// 	s.cancelFn = cancelFn
+// 	s.Logger(ctx).Debug("running UpdateCatalogService", "replicas", replicas)
 
-	updateCatalogInfo := func() {
-		// We ***reeeeaaaaalllly*** don't want to hold the lock while forming table...
-		s.Logger(ctx).Debug("UpdateCatalogService: in updateCatalogInfo", "replicas", replicas)
+// 	updateCatalogInfo := func() {
+// 		// We ***reeeeaaaaalllly*** don't want to hold the lock while forming table...
+// 		s.Logger(ctx).Debug("UpdateCatalogService: in updateCatalogInfo", "replicas", replicas)
 
-		s.catalogMu.Lock()
-		s.catalogReplicas = replicas
-		s.catalogMu.Unlock()
-	}
+// 		s.catalogMu.Lock()
+// 		s.catalogReplicas = replicas
+// 		s.catalogMu.Unlock()
+// 	}
 
-	if !s.catalogInit {
-		s.Logger(ctx).Debug("UpdateCatalogService: s.catalogInit == false, not waiting", "replicas", replicas)
-		updateCatalogInfo()
-		s.catalogInit = true
-		return
-	}
+// 	if !s.catalogInit {
+// 		s.Logger(ctx).Debug("UpdateCatalogService: s.catalogInit == false, not waiting", "replicas", replicas)
+// 		updateCatalogInfo()
+// 		s.catalogInit = true
+// 		return
+// 	}
 
-	timer := time.NewTimer(time.Duration(5) * time.Second)
-	go func() {
-		select {
-		case <-timer.C:
-			updateCatalogInfo()
-			s.Logger(context.TODO()).Debug("UpdateCatalogService: updateCatalogInfo returning. ", "replicas'", replicas)
+// 	timer := time.NewTimer(time.Duration(5) * time.Second)
+// 	go func() {
+// 		select {
+// 		case <-timer.C:
+// 			updateCatalogInfo()
+// 			s.Logger(context.TODO()).Debug("UpdateCatalogService: updateCatalogInfo returning. ", "replicas'", replicas)
 
-		case <-ctx.Done():
-			s.Logger(context.TODO()).Debug("UpdateCatalogService: context cancelled", "replicas", replicas)
-		}
+// 		case <-ctx.Done():
+// 			s.Logger(context.TODO()).Debug("UpdateCatalogService: context cancelled", "replicas", replicas)
+// 		}
 
-	}()
+// 	}()
 
-}
+// }
 
 func Serve(ctx context.Context, s *Server) error {
 	// Find out where we're running.

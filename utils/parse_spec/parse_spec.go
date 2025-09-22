@@ -10,8 +10,6 @@ import (
 	"strings"
 	"unicode"
 
-	"slices"
-
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -41,9 +39,9 @@ func addIndent(b []byte, i int) []byte {
 func (g *Group) GetTags() string {
 	s := fmt.Sprintf("\n<%s_RESOURCE_SPEC>\n", g.Name)
 	s += fmt.Sprintf("<%s_SCALING_SPEC>\n", g.Name)
-	if slices.Contains(g.Components, "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService") {
-		s += fmt.Sprintf("<%s_STATEFUL_SPEC>\n", g.Name)
-	}
+	// if slices.Contains(g.Components, "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService") {
+	// 	s += fmt.Sprintf("<%s_STATEFUL_SPEC>\n", g.Name)
+	// }
 	return s + "\n"
 }
 

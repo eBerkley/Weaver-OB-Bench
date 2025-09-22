@@ -17,20 +17,16 @@ package recommendationservice
 import (
 	"context"
 	"fmt"
-	goruntime "runtime"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/eBerkley/Weaver-OB-Bench/productcatalogservice"
 	"github.com/eberkley/weaver"
-	"github.com/eberkley/weaver/runtime"
-	imetrics "github.com/eberkley/weaver/runtime/codegen"
 	_ "go.uber.org/automaxprocs"
 )
 
 type RecService interface {
-	ListRecommendations(ctx context.Context, userID string, productIDs []string) ([]string, error)
+	ListRecommendations(ctx context.Context, productIDs []string) ([]string, error)
 }
 
 type impl struct {
@@ -47,214 +43,82 @@ func (s *impl) Init(ctx context.Context) error {
 
 	s.Logger(ctx).Info("in Init function")
 
-	if s.catalogReplicas == 0 {
-		s.UpdateCatalogService(ctx, productcatalogservice.ProductCatalogReplicas)
-	}
-
-	// s.UpdateCatalogService(ctx, s.catalogReplicas)
-	go func() {
-		ticker := time.NewTicker(time.Second)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-ticker.C:
-				imetrics.GroupGoroutineFor(imetrics.ComponentLabels{Component: "github.com/eBerkley/Weaver-OB-Bench/recommendationservice/RecService"}).Set(float64(goruntime.NumGoroutine()))
-			}
-		}
-	}()
+	// go func() {
+	// 	ticker := time.NewTicker(time.Second)
+	// 	defer ticker.Stop()
+	// 	for {
+	// 		select {
+	// 		case <-ctx.Done():
+	// 			return
+	// 		case <-ticker.C:
+	// 			imetrics.GroupGoroutineFor(imetrics.ComponentLabels{Component: "github.com/eBerkley/Weaver-OB-Bench/recommendationservice/RecService"}).Set(float64(goruntime.NumGoroutine()))
+	// 		}
+	// 	}
+	// }()
 
 	return nil
 }
 
-func (s *impl) UpdateCatalogService(ctx2 context.Context, replicas int) {
-	ctx, cancelFn := context.WithCancel(ctx2)
+func (s *impl) ListRecommendations(ctx context.Context, userProductIDs []string) ([]string, error) {
+	// initTime := time.Now()
+	// var duration time.Duration
 
-	if s.cancelFn != nil {
-		s.cancelFn()
+	// defer func() {
+	// 	totalDuration := time.Since(initTime) - duration
+	// 	imetrics.InternalMetricsFor(imetrics.InternalMethodLabels{Component: "github.com/eBerkley/Weaver-OB-Bench/recommendationservice/RecService", Method: "ListRecommendations"}).Put(float64(totalDuration.Microseconds()))
+	// }()
+	if len(userProductIDs) == 0 {
+		return []string{}, nil
 	}
-
-	s.cancelFn = cancelFn
-	s.Logger(ctx).Debug("running UpdateCatalogService", "replicas", replicas)
-
-	updateCatalogInfo := func() {
-		s.Logger(ctx).Debug("UpdateCatalogService: in updateCatalogInfo", "replicas", replicas)
-
-		s.catalogMu.Lock()
-		s.catalogReplicas = replicas
-		s.catalogMu.Unlock()
+	products, err := s.catalogService.Get().GetProducts(ctx, userProductIDs)
+	if err != nil {
+		s.Logger(ctx).Error("ListRecommendations: GetProducts", "err", err, "products", userProductIDs)
+		return nil, fmt.Errorf("GetProducts: %w", err)
 	}
-
-	if !s.catalogInit {
-		s.Logger(ctx).Debug("UpdateCatalogService: s.catalogInit == false, not waiting", "replicas", replicas)
-		updateCatalogInfo()
-		s.catalogInit = true
-		return
-	}
-
-	timer := time.NewTimer(time.Duration(5) * time.Second)
-	go func() {
-		select {
-		case <-timer.C:
-			updateCatalogInfo()
-			s.Logger(context.TODO()).Debug("UpdateCatalogService: updateCatalogInfo returning. ", "replicas'", replicas)
-
-		case <-ctx.Done():
-			s.Logger(context.TODO()).Debug("UpdateCatalogService: context cancelled", "replicas", replicas)
-		}
-
-	}()
-
-}
-
-func (s *impl) UpdateRoutingHook(ctx context.Context, componentName string, replicas int) error {
-	s.Logger(ctx).Info("in UpdateRoutingHook", "componentName", componentName, "replicas", replicas)
-
-	if !strings.HasSuffix(componentName, "ProductCatalogService") {
-		if strings.HasSuffix(componentName, "RecService") {
-			return runtime.RoutingDontCareError
-		}
-		return nil
-	}
-
-	if replicas == -1 {
-		return nil
-	}
-
-	s.UpdateCatalogService(ctx, replicas)
-	return nil
-}
-
-func (s *impl) ListRecommendations(ctx context.Context, userID string, userProductIDs []string) ([]string, error) {
-	initTime := time.Now()
-	var duration time.Duration
-
-	defer func() {
-		totalDuration := time.Since(initTime) - duration
-		imetrics.InternalMetricsFor(imetrics.InternalMethodLabels{Component: "github.com/eBerkley/Weaver-OB-Bench/recommendationservice/RecService", Method: "ListRecommendations"}).Put(float64(totalDuration.Microseconds()))
-	}()
-
-	// Get the shards for each productID
-
-	// A call to ListRecommendations will use the same routing info for the full run
-	s.catalogMu.RLock()
-	repls := s.catalogReplicas
-	s.catalogMu.RUnlock()
-
-	productShardMap := make([][]string, repls)
-	for _, pid := range userProductIDs {
-		shard := productcatalogservice.HashProductID(pid, repls)
-		productShardMap[shard] = append(productShardMap[shard], pid)
-	}
-
-	productShards := make([][]productcatalogservice.Product, repls)
-
-	// shard index => list of products
-
-	// Concurrently send an RPC to each product catalog service. Wait until there's a response from all of them.
-	// If one returns an error, this function returns an error.
-	// errChan := make(chan error, repls)
-
-	concurrentGetProductsTime := time.Now()
-	for shard := 0; shard < repls; shard++ {
-		// Don't send RPC if we aren't requesting any products.
-		if len(productShardMap[shard]) == 0 {
-			continue
-		}
-		// Routing key that will route to the correct shard.
-		prods, err := s.catalogService.Get().GetProducts(ctx, productShardMap[shard], shard)
-
-		if err != nil {
-			s.Logger(ctx).Error("ListRecommendations: GetProducts error", "productIDs", userProductIDs, "err", err, "shard", shard)
-			// errChan <- err
-			// break
-			return nil, err
-		} else {
-			productShards[shard] = prods
-		}
-	}
-	// Halt thread until all requests have responses.
-	// If theres an error from one, return it. If not, continue on.
-	duration += time.Since(concurrentGetProductsTime)
-
-	// select {
-	// case err := <-errChan:
-	// 	return nil, err
-	// default:
-	// 	// no-op
-	// }
 
 	// Each product name is 3 words: color, material, object.
-	// We split them up into words, give material 2x as much
+	// We split them up into words, give object 2x as much
 	freq := make(map[string]int)
 
-	for _, s := range productShards {
-		for _, product := range s {
-			words := strings.Split(product.Name, " ")
-			if len(words) != 3 {
-				return nil, fmt.Errorf("product with name %v couldn't be parsed", product.Name)
-			}
-			freq[words[0]]++
-			freq[words[1]]++
-			freq[words[2]] += 2
+	for _, product := range products {
+		words := strings.Split(product.Name, " ")
+		if len(words) != 3 {
+			return nil, fmt.Errorf("product with name %v couldn't be parsed", product.Name)
 		}
+		freq[words[0]]++
+		freq[words[1]]++
+		freq[words[2]] += 2
 	}
+
 	var searchQuery string
 	highestFreq := 0
 	for k, v := range freq {
 		if v > highestFreq {
 			searchQuery = k
+			highestFreq = v
 		}
 	}
-	// shard index => list of similar products
-	productStringShards := make([][]string, repls)
 
-	// Concurrently send another RPC to each product catalog service. Wait until there's a response from all of them.
-	// If one returns an error, this function returns an error.
-	// errChan2 := make(chan error, repls)
-	concurrentSearchProductsTime := time.Now()
-	for shard := 0; shard < repls; shard++ {
-		// Get all similar products
-		prods, err := s.catalogService.Get().SearchProducts(ctx, searchQuery, shard)
+	found, err := s.catalogService.Get().SearchProducts(ctx, searchQuery)
+	if err != nil {
+		s.Logger(ctx).Error("ListRecommendations: SearchProducts", "err", err, "query", searchQuery)
+		return nil, fmt.Errorf("SearchProducts: %w", err)
+	}
+	ret := make([]string, 0)
+	for _, prod := range found {
+		skip := false
+		for _, userProd := range userProductIDs {
 
-		if err != nil {
-			// errChan2 <- err
-			// break
-			return nil, err
-		}
-		// remove ones in userProductIDs paramater.
-		// Since only the products in this shard could be returned by
-		// this method call, we just use the products in productShards[shard].
-		for _, prod := range prods {
-			SkipFlag := false
-			for _, userProd := range productShards[shard] {
-				if prod.ID == userProd.ID {
-					SkipFlag = true
-					break
-				}
-			}
-			if !SkipFlag {
-				productStringShards[shard] = append(productStringShards[shard], prod.ID)
+			if userProd == prod.ID {
+				skip = true
+				break
 			}
 		}
+
+		if !skip {
+			ret = append(ret, prod.ID)
+		}
 	}
-
-	// Halt thread until all requests have responses.
-	// If theres an error from one, return it. If not, continue on.
-	duration += time.Since(concurrentSearchProductsTime)
-	// select {
-	// case err := <-errChan2:
-	// 	return nil, err
-	// default:
-	// 	break
-	// }
-
-	// Get the aggregate of products.
-	var ret []string
-	for _, s := range productStringShards {
-		ret = append(ret, s...)
-	}
-
 	return ret, nil
+
 }

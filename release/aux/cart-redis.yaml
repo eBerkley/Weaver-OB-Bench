@@ -1,0 +1,99 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: cart-redis
+  name: cart-redis
+spec:
+  ports:
+  - port: 6379
+    name: cart-redis
+  
+  selector:
+    app: cart-redis
+  type: ClusterIP
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cart-redis
+  labels:
+    app: cart-redis
+spec:
+  selector:
+    matchLabels:
+      app: cart-redis
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: cart-redis
+    spec:
+      terminationGracePeriodSeconds: 5
+      restartPolicy: Always
+      securityContext: 
+        fsGroup: 1000
+        runAsGroup: 1000
+        runAsNonRoot: true
+        runAsUser: 1000
+  
+      containers:
+      - name: cart-redis
+        image: redis:alpine
+        command:
+        - redis-server
+        - "/redis-config/redis.conf"
+        ports:
+        - containerPort: 6379
+          name: redis
+          
+        volumeMounts:
+        - name: redis-data
+          mountPath: /data        
+        - name: redis-config
+          mountPath: /redis-config
+
+        resources:
+          limits:
+            cpu: "1"
+            memory: 3Gi
+          requests:
+            cpu: "1"
+            memory: 3Gi
+        
+        livenessProbe:
+          exec:
+            command:
+            - redis-cli
+            - ping
+          initialDelaySeconds: 5
+          timeoutSeconds: 5
+        readinessProbe:
+          exec:
+            command:
+            - redis-cli
+            - ping
+          initialDelaySeconds: 5
+          timeoutSeconds: 5
+        
+      volumes:
+      - name: redis-data
+        emptyDir: 
+          sizeLimit: 15Gi
+      - name: redis-config
+        configMap:
+          name: redis-config
+          items:
+          - key: redis-config
+            path: redis.conf
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redis-config
+  labels:
+    app: cart-redis
+data:
+  redis-config: |
+    dir /data

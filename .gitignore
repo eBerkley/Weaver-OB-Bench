@@ -29,11 +29,15 @@ inst_fp_collection
 latency_parsing_test
 vertical_profs
 colocation_old
+benchmark/out-9
+release/base/colocation-9
 
 alloc/*-perf*
 alloc/*-freq3*
 alloc/*-x4ch*
 alloc/*-simple*
+
+src/productcatalogservice/products/*
 
 scripts/vtune_results/*.old
 scripts/vtune_results_backup

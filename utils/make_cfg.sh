@@ -9,10 +9,11 @@ load_replicas=
 if [[ $name =~ "-arm" ]]; then
   load_replicas=74
 else
-  load_replicas=31
+  load_replicas=22
 fi
-# LOADGEN_REPLICAS=31 for 36 cores per socket servers
-## 31 workers + 3 kube cores + 1 master + 1 overflow = 36
+# LOADGEN_REPLICAS=26 for 36 cores per socket servers
+## 22 workers + 3 kube cores + 1 master + 1 overflow = 27
+## Add 1 mongo configsvc + 3 mongos + (2 mongo shards * 2 replicas) + 1 redis = 36
 # LOADGEN_REPLICAS=74 for 80 cores per socket servers
 ## 74 workers + 5 kube cores + 1 master + 0 overflow = 80
 # TODO: Verify that altra never makes overflow alloc. 
@@ -31,7 +32,7 @@ ALLOC_FILE=*
 CRITICAL_SCALE_UTIL=75
 NONCRITICAL_SCALE_UTIL=75
 TRIVIAL_SCALE_UTIL=75
-FALLBACK_SCALE_UTIL=65
+FALLBACK_SCALE_UTIL=60
 CRITICAL_MIN_REPLICAS=1
 NONCRITICAL_MIN_REPLICAS=1
 TRIVIAL_MIN_REPLICAS=1

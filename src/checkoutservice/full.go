@@ -1,12 +1,11 @@
-//go:build full_checkout
-// +build full_checkout
+// //go:build full_checkout
+// // +build full_checkout
 
 package checkoutservice
 
 import (
 	"context"
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/eBerkley/Weaver-OB-Bench/cartservice"
@@ -38,11 +37,6 @@ type impl struct {
 	emailService    weaver.Ref[emailservice.EmailService]
 	paymentService  weaver.Ref[paymentservice.PaymentService]
 	recService      weaver.Ref[recommendationservice.RecService]
-
-	catalogMu       sync.RWMutex
-	catalogReplicas int
-	catalogInit     bool
-	cancelFn        context.CancelFunc
 }
 
 func (s *impl) PlaceOrder(ctx context.Context, req PlaceOrderRequest) (types.Order, []productcatalogservice.Product, error) {
@@ -61,42 +55,50 @@ func (s *impl) PlaceOrder(ctx context.Context, req PlaceOrderRequest) (types.Ord
 	}
 
 	listRecsTime := time.Now()
-	recommendationIDs, err := s.recService.Get().ListRecommendations(ctx, req.UserID, productIDs)
+	recommendationIDs, err := s.recService.Get().ListRecommendations(ctx, productIDs)
 	duration += time.Since(listRecsTime)
 	if err != nil {
 		return types.Order{}, nil, err
 	}
 
-	out := make([]productcatalogservice.Product, 0, len(recommendationIDs))
+	// out := make([]productcatalogservice.Product, 0, len(recommendationIDs))
 
-	s.catalogMu.RLock()
-	repls := s.catalogReplicas
-	s.catalogMu.RUnlock()
+	// s.catalogMu.RLock()
+	// repls := s.catalogReplicas
+	// s.catalogMu.RUnlock()
 
-	productShardMap := make([][]string, repls)
+	// productShardMap := make([][]string, repls)
 
-	for _, id := range recommendationIDs {
-		shard := productcatalogservice.HashProductID(id, repls)
-		productShardMap[shard] = append(productShardMap[shard], id)
+	getProductsTime := time.Now()
+	out, err := s.catalogService.Get().GetProducts(ctx, recommendationIDs)
+	duration += time.Since(getProductsTime)
+	if err != nil {
+		s.Logger(ctx).Error("PlaceOrder: GetProducts", "recommendationIDs", recommendationIDs, "err", err)
+		return types.Order{}, nil, fmt.Errorf("failed to get recommended product info: %w", err)
 	}
+
+	// for _, id := range recommendationIDs {
+	// 	shard := productcatalogservice.HashProductID(id, repls)
+	// 	productShardMap[shard] = append(productShardMap[shard], id)
+	// }
 
 	// we send an RPC to each replica serially, rather than concurrently.
-	for shard := 0; shard < repls; shard++ {
+	// for shard := 0; shard < repls; shard++ {
 
-		if len(productShardMap[shard]) == 0 {
-			continue
-		}
+	// 	if len(productShardMap[shard]) == 0 {
+	// 		continue
+	// 	}
 
-		getProductsTime := time.Now()
-		prods, err := s.catalogService.Get().
-			GetProducts(ctx, productShardMap[shard], shard)
-		duration += time.Since(getProductsTime)
+	// 	getProductsTime := time.Now()
+	// 	prods, err := s.catalogService.Get().
+	// 		GetProducts(ctx, productShardMap[shard], shard)
+	// 	duration += time.Since(getProductsTime)
 
-		if err != nil {
-			return types.Order{}, nil, fmt.Errorf("failed to get recommended product info at shard %v: %w", shard, err)
-		}
-		out = append(out, prods...)
-	}
+	// 	if err != nil {
+	// 		return types.Order{}, nil, fmt.Errorf("failed to get recommended product info at shard %v: %w", shard, err)
+	// 	}
+	// 	out = append(out, prods...)
+	// }
 	if len(out) > 4 {
 		out = out[:4] // take only first four to fit the UI
 	}

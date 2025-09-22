@@ -42,21 +42,18 @@ get_group_names () {
 for name in $(get_group_names); do
   pattern="^$name=([A-Z]+)"
   type=FALLBACK
-  if [[ $BENCH_TYPE = 'FIXED' ]] && [[ $name = $FIXED ]]; 
-    then type='FIXED'; 
+  # if [[ $BENCH_TYPE = 'FIXED' ]] && [[ $name = $FIXED ]]; 
+  #   then type='FIXED'; 
 
-  else
-    for scale_def in $(cat $SCALING_DEFS_FILE); do
-      if [[ $scale_def =~ $pattern ]]; then
-        type=${BASH_REMATCH[1]}
-        break
-      fi
-    done
+  # else
+  #   for scale_def in $(cat $SCALING_DEFS_FILE); do
+  #     if [[ $scale_def =~ $pattern ]]; then
+  #       type=${BASH_REMATCH[1]}
+  #       break
+  #     fi
+  #   done
     
-  fi
-
-  # for statefulspec stuff, see below.
-  stateful_replicas=
+  # fi
 
   # -e expressions, in order:
   # 1: define MIN_REPLICAS to be that of the scaling type
@@ -84,9 +81,6 @@ for name in $(get_group_names); do
       max_replicas=${BASH_REMATCH[2]}
       cpu_util=${BASH_REMATCH[3]}
       
-      if grep -e "$name"_STATEFUL_SPEC $SCHEME_FILE >/dev/null; then # detect productcatalogservice replicas
-        stateful_replicas=$min_replicas
-      fi
 
     elif [[ $line =~ $less_alloc_pattern ]]; then
       
@@ -94,17 +88,10 @@ for name in $(get_group_names); do
       max_replicas=${BASH_REMATCH[2]}
       cpu_util=\<"$type"_SCALE_UTIL\>
       
-      if grep -e "$name"_STATEFUL_SPEC $SCHEME_FILE >/dev/null; then 
-        stateful_replicas=$min_replicas
-      fi
     elif [[ $line =~ $min_alloc_pattern ]]; then
       min_replicas=${BASH_REMATCH[1]}
       max_replicas=\<OB_REPLICAS\>
       cpu_util=\<"$type"_SCALE_UTIL\>
-
-      if grep -e "$name"_STATEFUL_SPEC $SCHEME_FILE >/dev/null; then 
-        stateful_replicas=$min_replicas
-      fi
 
     else
       min_replicas=\<"$type"_MIN_REPLICAS\>
@@ -125,22 +112,6 @@ for name in $(get_group_names); do
   # After the for loop is done, we fix the indentation.
   str=s/\<"$name"_SCALING_SPEC\>/$scaling_spec
   str2=$(echo "$str" | awk '{printf "%s\\n", $0}')
-  sed -i "$str2/g" $GROUPS_FILE
-
-
-  # Now we do the stuff for statefulSpec attributes.
-  if [[ $type = 'FIXED' ]]; then
-    replicas=$FIXED_WIDTH
-  else
-    replicas=${stateful_replicas:-$PRODUCT_CATALOG_REPLICAS}
-  fi
-  stateful_spec="
-    statefulSpec:
-      replicas: $replicas"
-
-  str=s/\<"$name"_STATEFUL_SPEC\>/$stateful_spec
-  str2=$(echo "$str" | awk '{printf "%s\\n", $0}')
-
   sed -i "$str2/g" $GROUPS_FILE
   
   

@@ -54,7 +54,7 @@ type recService_local_stub struct {
 // Check that recService_local_stub implements the RecService interface.
 var _ RecService = (*recService_local_stub)(nil)
 
-func (s recService_local_stub) ListRecommendations(ctx context.Context, a0 string, a1 []string) (r0 []string, err error) {
+func (s recService_local_stub) ListRecommendations(ctx context.Context, a0 []string) (r0 []string, err error) {
 	// Update metrics.
 	begin := s.listRecommendationsMetrics.Begin()
 	defer func() { s.listRecommendationsMetrics.End(begin, err != nil, 0, 0) }()
@@ -71,7 +71,7 @@ func (s recService_local_stub) ListRecommendations(ctx context.Context, a0 strin
 		}()
 	}
 
-	return s.impl.ListRecommendations(ctx, a0, a1)
+	return s.impl.ListRecommendations(ctx, a0)
 }
 
 // Client stub implementations.
@@ -84,7 +84,7 @@ type recService_client_stub struct {
 // Check that recService_client_stub implements the RecService interface.
 var _ RecService = (*recService_client_stub)(nil)
 
-func (s recService_client_stub) ListRecommendations(ctx context.Context, a0 string, a1 []string) (r0 []string, err error) {
+func (s recService_client_stub) ListRecommendations(ctx context.Context, a0 []string) (r0 []string, err error) {
 	// Update metrics.
 	var requestBytes, replyBytes int
 	begin := s.listRecommendationsMetrics.Begin()
@@ -115,8 +115,7 @@ func (s recService_client_stub) ListRecommendations(ctx context.Context, a0 stri
 
 	// Encode arguments.
 	enc := codegen.NewEncoder()
-	enc.String(a0)
-	serviceweaver_enc_slice_string_4af10117(enc, a1)
+	serviceweaver_enc_slice_string_4af10117(enc, a0)
 	var shardKey uint64
 
 	// Call the remote method.
@@ -149,7 +148,7 @@ type recService_routed_local_stub struct {
 // Check that recService_routed_local_stub implements the RecService interface.
 var _ RecService = (*recService_routed_local_stub)(nil)
 
-func (s recService_routed_local_stub) ListRecommendations(ctx context.Context, a0 string, a1 []string) (r0 []string, err error) {
+func (s recService_routed_local_stub) ListRecommendations(ctx context.Context, a0 []string) (r0 []string, err error) {
 	err = errors.New("can not call routed local method on unrouted component")
 	err = errors.Join(weaver.RemoteCallError, err)
 	return
@@ -160,7 +159,7 @@ func (s recService_routed_local_stub) ListRecommendations(ctx context.Context, a
 // you run "go build" or "go run".
 var _ codegen.LatestVersion = codegen.Version[[0][24]struct{}](`
 
-ERROR: You generated this file with 'weaver generate' (devel) (codegen
+ERROR: You generated this file with 'weaver generate' v0.0.0-20250918144923-6c2edaca373f+dirty (codegen
 version v0.24.0). The generated code is incompatible with the version of the
 github.com/eberkley/weaver module that you're using. The weaver module
 version can be found in your go.mod file or by running the following command.
@@ -211,15 +210,13 @@ func (s recService_server_stub) listRecommendations(ctx context.Context, args []
 
 	// Decode arguments.
 	dec := codegen.NewDecoder(args)
-	var a0 string
-	a0 = dec.String()
-	var a1 []string
-	a1 = serviceweaver_dec_slice_string_4af10117(dec)
+	var a0 []string
+	a0 = serviceweaver_dec_slice_string_4af10117(dec)
 
 	// TODO(rgrandl): The deferred function above will recover from panics in the
 	// user code: fix this.
 	// Call the local method.
-	r0, appErr := s.impl.ListRecommendations(ctx, a0, a1)
+	r0, appErr := s.impl.ListRecommendations(ctx, a0)
 
 	// Encode the results.
 	enc := codegen.NewEncoder()
@@ -237,8 +234,8 @@ type recService_reflect_stub struct {
 // Check that recService_reflect_stub implements the RecService interface.
 var _ RecService = (*recService_reflect_stub)(nil)
 
-func (s recService_reflect_stub) ListRecommendations(ctx context.Context, a0 string, a1 []string) (r0 []string, err error) {
-	err = s.caller("ListRecommendations", ctx, []any{a0, a1}, []any{&r0})
+func (s recService_reflect_stub) ListRecommendations(ctx context.Context, a0 []string) (r0 []string, err error) {
+	err = s.caller("ListRecommendations", ctx, []any{a0}, []any{&r0})
 	return
 }
 

@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: fixer
+spec:
+  selector:
+    matchLabels:
+      name: fixer
+  template:
+    metadata:
+      labels:
+        name: fixer
+    spec:
+      # nodeSelector:
+      #   kubernetes.io/os: linux
+# {{- if .Values.podSecurityPolicy.enabled }}
+#       serviceAccount: {{ .Release.Name }}
+# {{- end }}
+      terminationGracePeriodSeconds: 3
+      containers:
+      - name: fixer
+        image: busybox:stable
+        securityContext:
+          privileged: true
+          runAsUser: 0
+        resources:
+          requests:
+            cpu: 1m
+            memory: 1Mi
+        command:
+        - sh
+        - -c
+        - |
+          set -ex
+          sysctl -w fs.nr_open=1048575
+          sleep infinity

@@ -17,22 +17,21 @@ package productcatalogservice
 import (
 	"context"
 	"encoding/json"
-	"math/rand"
-	"path"
-	"sync"
 	"time"
 
 	"embed"
 	"fmt"
-	"os"
-	goruntime "runtime"
-	"strconv"
-	"strings"
 
 	"github.com/eBerkley/Weaver-OB-Bench/types/money"
 	"github.com/eberkley/weaver"
-	"github.com/eberkley/weaver/runtime"
-	imetrics "github.com/eberkley/weaver/runtime/codegen"
+	"github.com/redis/go-redis/v9"
+
+	// "go.mongodb.org/mongo-driver/mongo"
+	// "go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/v2/mongo"
+	"go.mongodb.org/mongo-driver/v2/mongo/options"
+	"go.mongodb.org/mongo-driver/v2/mongo/readpref"
 	_ "go.uber.org/automaxprocs"
 )
 
@@ -45,307 +44,357 @@ var (
 	catalogFileData embed.FS
 )
 
+var (
+	listProductsFilter = mongo.Pipeline{
+		bson.D{{
+			Key: "$sample",
+			Value: bson.D{{
+				Key:   "size",
+				Value: maxProducts,
+			}},
+		}},
+	}
+	nearest = options.Collection().SetReadPreference(readpref.Nearest())
+)
+
 type Product struct {
 	weaver.AutoMarshal
-	ID          string  `json:"id"`
-	Name        string  `json:"name"`
-	Description string  `json:"description"`
-	Picture     string  `json:"picture"`
-	PriceUSD    money.T `json:"priceUsd"`
+	ID          string  `json:"id" bson:"id"`
+	Name        string  `json:"name" bson:"name"`
+	Description string  `json:"description" bson:"description"`
+	Picture     string  `json:"picture" bson:"picture"`
+	PriceUSD    money.T `json:"priceUsd" bson:"priceUsd"`
 
 	// Categories such as "clothing" or "kitchen" that can be used to look up
 	// other related products.
-	Categories []string `json:"categories"`
+	Categories []string `json:"categories" bson:"categories"`
 }
 
 type ProductCatalogService interface {
-	ListProducts(ctx context.Context, routingKey int) ([]Product, error)
-	GetProduct(ctx context.Context, productID string, routingKey int) (Product, error)
-	GetProducts(ctx context.Context, productIDs []string, routingKey int) ([]Product, error)
-	SearchProducts(ctx context.Context, query string, routingKey int) ([]Product, error)
-	GetIndex(ctx context.Context, shard int) (int, error)
+	ListProducts(ctx context.Context) ([]Product, error)
+	GetProduct(ctx context.Context, productID string) (Product, error)
+	GetProducts(ctx context.Context, productIDs []string) ([]Product, error)
+	SearchProducts(ctx context.Context, query string) ([]Product, error)
 }
 
-type ProductCatalogRouter struct{}
-
-func (r *ProductCatalogRouter) ListProducts(_ context.Context, shard int) weaver.StateKey {
-	return weaver.StateKey(shard)
-}
-func (r *ProductCatalogRouter) GetProduct(_ context.Context, _ string, shard int) weaver.StateKey {
-	return weaver.StateKey(shard)
-}
-func (r *ProductCatalogRouter) GetProducts(_ context.Context, _ []string, shard int) weaver.StateKey {
-	return weaver.StateKey(shard)
-}
-func (r *ProductCatalogRouter) SearchProducts(_ context.Context, _ string, shard int) weaver.StateKey {
-	return weaver.StateKey(shard)
-}
-func (r *ProductCatalogRouter) GetIndex(_ context.Context, shard int) weaver.StateKey {
-	return weaver.StateKey(shard)
+type productCatalogConfig struct {
+	MongoURI          string
+	ProductDatabase   string
+	ProductCollection string
+	MongoUser         string
+	MongoPassword     string
+	RedisAddr         string
 }
 
 type impl struct {
 	weaver.Implements[ProductCatalogService]
-	weaver.WithStatefulRouter[ProductCatalogRouter]
+	weaver.WithConfig[productCatalogConfig]
 
-	// Doesn't change.
-	myIndex int
-
-	mu              sync.RWMutex
-	prevCtx         context.Context    // Cancel if we should NOT delete the contents of db when timer expires
-	prevCtxCancelFn context.CancelFunc // see impl.prevCtx
-	db              map[string]Product
-	prevDb          map[string]Product // temporarily stores the previous contents of db
-	catalogReplicas int
+	mongoClient *mongo.Client
+	redisClient *redis.ClusterClient // *redis.Client
 }
 
 var _ ProductCatalogService = (*impl)(nil)
 
 func (s *impl) Init(ctx context.Context) error {
+	s.redisClient = redis.NewClusterClient(&redis.ClusterOptions{
+		ReadOnly:       true,
+		Addrs:          []string{s.Config().RedisAddr},
+		RouteByLatency: true,
+	})
+
+	var res string
 	var err error
-	indexStr := os.Getenv("MY_INDEX")
-	s.myIndex, err = strconv.Atoi(indexStr)
-
-	s.db = make(map[string]Product)
-	s.prevDb = make(map[string]Product)
-
-	if err != nil {
-		s.myIndex = rand.Intn(2)
-		s.Logger(ctx).Warn("Envvar MY_INDEX is non-int value. Randomly setting to either 0 or 1:", "value", s.myIndex)
-	}
-	s.Logger(ctx).Info(fmt.Sprintf("myIndex: %v", s.myIndex))
-
-	// Since we can't do anything until s.db is initialized anyways, we lock the db before calling refreshCatalogFile.
-	s.mu.Lock()
-	if s.catalogReplicas == 0 {
-		s.catalogReplicas = ProductCatalogReplicas
-	}
-	s.prevCtx, s.prevCtxCancelFn = context.WithCancel(ctx)
-	s.db, err = s.refreshCatalogFile(s.prevCtx, s.catalogReplicas)
-	s.mu.Unlock()
-
-	if err != nil {
-		return fmt.Errorf("could not parse product catalog: %w", err)
-	}
-
-	go func() {
-		ticker := time.NewTicker(time.Second)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case <-ticker.C:
-				imetrics.GroupGoroutineFor(imetrics.ComponentLabels{Component: "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService"}).Set(float64(goruntime.NumGoroutine()))
-			}
-		}
-	}()
-
-	return nil
-}
-
-func (s *impl) UpdateRoutingHook(ctx context.Context, componentName string, replicas int) error {
-
-	if !strings.HasSuffix(componentName, "ProductCatalogService") {
-		return runtime.RoutingDontCareError
-	}
-	s.Logger(ctx).Info("running UpdateRoutingHook", "replicas", replicas)
-	if replicas == -1 {
-		return nil
-	}
-	// Will halt previous s.refreshCatalogFile() invocation, if one is running.
-	// Will prevent prevDb from being cleared, if it hasn't already.
-	if s.prevCtxCancelFn != nil {
-		s.prevCtxCancelFn()
-	}
-
-	// Do we need to lock here?
-	s.prevCtx, s.prevCtxCancelFn = context.WithCancel(ctx)
-
-	db, _ := s.refreshCatalogFile(s.prevCtx, replicas)
-	if db == nil {
-		return nil // Fix later if necessary
-	}
-	s.Logger(ctx).Info("refreshCatalogFile ran successfully.")
-
-	s.mu.Lock()
-	s.catalogReplicas = replicas
-
-	// TODO: verify that this kind of swap is ok
-	s.prevDb = s.db
-	s.db = db
-
-	s.mu.Unlock()
-
-	t := time.NewTimer(time.Duration(1) * time.Minute)
-	go func() {
-		prevCtx := s.prevCtx
-		select {
-		case <-t.C: // If timer expires before a new replica is created, delete old db.
-			s.Logger(ctx).Info("Timer expired, deleting old db.")
-			// We optimistically assume it's ok to delete stuff
-			// out of the old database without locking.
-			for k := range s.prevDb {
-				delete(s.prevDb, k)
-			}
-
-		case <-prevCtx.Done(): // if we reset db, we don't want to prematurely delete old db.
-			s.Logger(s.prevCtx).Info("Context cancelled, keeping db!")
-			// Do we need to do anything with db or prevDB to store intermediate databases?
-			return
-		}
-	}()
-
-	return nil
-}
-
-func (s *impl) fillDB(agg []Product, db map[string]Product, repls int) {
-
-	for _, p := range agg {
-		if HashProductID(p.ID, repls) == s.myIndex {
-			db[p.ID] = p
-		}
-	}
-}
-
-func (s *impl) refreshCatalogFile(ctx context.Context, repls int) (map[string]Product, error) {
-
-	dir, err := catalogFileData.ReadDir("products")
-	if err != nil {
-		return nil, err
-	}
-	db := make(map[string]Product)
-
-	for _, entry := range dir {
-		select {
-		case <-ctx.Done(): // If a new UpdateRoutingHook is getting fired, stop running this.
-			return nil, ctx.Err()
-		default:
-
-			data, err := catalogFileData.ReadFile(path.Join("products", entry.Name()))
-
-			if err != nil {
-				return nil, err
-			}
-
-			var products []Product
-
-			if err := json.Unmarshal(data, &products); err != nil {
-				return nil, err
-			}
-
-			s.fillDB(products, db, repls)
-		}
-	}
-
-	return db, nil
-
-}
-
-func (s *impl) ListProducts(ctx context.Context, _ int) ([]Product, error) {
-	initTime := time.Now()
-	defer func() {
-		imetrics.InternalMetricsFor(imetrics.InternalMethodLabels{Component: "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService", Method: "ListProducts"}).Put(float64(time.Since(initTime).Microseconds()))
-	}()
-
-	maxProds := maxProducts / s.catalogReplicas
-
-	ls := make([]Product, maxProds)
 	i := 0
-	for _, p := range s.db {
-		ls[i] = p
-		i++
-		if i >= maxProds {
+	for i = range 25 {
+		res, err = s.redisClient.Ping(ctx).Result()
+		if err != nil {
+			s.Logger(ctx).Error("Init: redis.Ping", "err", err)
+		} else {
 			break
 		}
+
+		time.Sleep(time.Second)
 	}
-	return ls, nil
+
+	if err != nil {
+		return fmt.Errorf("Could not connect to redis in 25 tries. Err: %w", err)
+	} else {
+		s.Logger(ctx).Info("Successfully pinged redis.", "attempts", i, "response", res)
+	}
+
+	uri := fmt.Sprintf("mongodb+srv://%s:%s@%s/?tls=false&authSource=admin", s.Config().MongoUser, s.Config().MongoPassword, s.Config().MongoURI)
+	s.Logger(ctx).Info("Preparing to try to connect to Mongo", "uri", uri)
+	serverAPI := options.ServerAPI(options.ServerAPIVersion1)
+	opts := options.Client().
+		ApplyURI(uri).
+		SetServerAPIOptions(serverAPI).
+		SetReadPreference(readpref.Nearest()).
+		SetTimeout(time.Second * 2)
+
+	s.mongoClient, err = mongo.Connect(opts)
+	if err != nil {
+		return fmt.Errorf("mongo.Connect: %w", err)
+	}
+
+	for i = range 25 {
+		err = s.mongoClient.Ping(ctx, nil)
+		if err != nil {
+			s.Logger(ctx).Error("Init: mongo.Ping", "err", err)
+		} else {
+			break
+		}
+
+		time.Sleep(time.Second)
+	}
+
+	if err != nil {
+		return fmt.Errorf("Could not connect to mongo in 25 tries. Err: %w", err)
+	} else {
+		s.Logger(ctx).Info("Successfully pinged mongo.", "attempts", i)
+	}
+	return nil
 }
 
-func (s *impl) GetProduct(ctx context.Context, productID string, _ int) (Product, error) {
-	initTime := time.Now()
-	defer func() {
-		imetrics.InternalMetricsFor(imetrics.InternalMethodLabels{Component: "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService", Method: "GetProduct"}).Put(float64(time.Since(initTime).Microseconds()))
-	}()
+// We get these from redis if possible,
+// But if we don't get 10 unique prod-keys we get from mongo.
+func (s *impl) ListProducts(ctx context.Context) ([]Product, error) {
 
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	var p Product
-	var ok bool
+	pl := s.redisClient.Pipeline()
+	for range maxProducts {
+		pl.RandomKey(ctx)
+	}
+	rnd := make(map[string]struct{})
+	cmds, err := pl.Exec(ctx)
+	for _, cmd := range cmds {
 
-	p, ok = s.db[productID]
+		v, err := cmd.(*redis.StringCmd).Result()
 
-	// If it wasn't in the original db, try the old one...
-	if !ok {
-		p, ok = s.prevDb[productID]
+		if err != nil || v[len(v)-3:] != "-pr" {
+			break
+		}
+		rnd[v] = struct{}{}
+	}
 
-		// if we STILL haven't found it...
-		if !ok {
-			idx := s.myIndex
-			needed := HashProductID(productID, s.catalogReplicas)
-			return Product{}, fmt.Errorf("request for productID %v made to shard %v, but needed to be %v", productID, idx, needed)
+	results := make([]Product, 0)
+	if len(rnd) == maxProducts {
+		keys := make([]string, 0, maxProducts)
+		for k := range rnd {
+			keys = append(keys, k)
+		}
+		prods, err := s.redisClient.MGet(ctx, keys...).Result()
+		if err != nil {
+			return nil, err
+		}
+		for _, prod := range prods {
+			str, ok := prod.(string)
+			// Happens if in time between getting the keys and getting their values,
+			// one of the keys got evicted.
+			if !ok {
+				break
+			}
+			var p Product
+			json.Unmarshal([]byte(str), &p)
+			results = append(results, p)
+		}
+
+		if len(results) == maxProducts {
+			return results, nil
+		} else {
+			results = make([]Product, 0)
 		}
 	}
+
+	col := s.mongoClient.Database(s.Config().ProductDatabase).Collection(s.Config().ProductCollection)
+	cur, err := col.Aggregate(ctx, listProductsFilter)
+
+	if err != nil {
+		s.Logger(ctx).Error("ListProduct: Aggregate", "query", listProductsFilter, "err", err)
+		return nil, fmt.Errorf("Aggregate: %v", err)
+	}
+
+	if err = cur.All(ctx, &results); err != nil {
+		s.Logger(ctx).Error("ListProduct: cursor.All", "err", err)
+		return nil, fmt.Errorf("cursor.All: %v", err)
+	}
+
+	return results, nil
+}
+
+func (s *impl) GetProduct(ctx context.Context, productID string) (Product, error) {
+
+	var p Product
+	red, err := s.redisClient.Get(ctx, redisProductKey(productID)).Result()
+	if err == nil {
+		json.Unmarshal([]byte(red), &p)
+		return p, nil
+
+	} else if err != redis.Nil {
+		s.Logger(ctx).Error("Error with Redis. Will continue...", "err", err, "id", productID)
+	} else {
+		s.Logger(ctx).Error("GetProduct: Not in redis", "id", productID)
+	}
+
+	col := s.mongoClient.Database(s.Config().ProductDatabase).Collection(s.Config().ProductCollection)
+	filter := bson.D{
+		{Key: "id", Value: productID},
+	}
+
+	err = col.FindOne(ctx, filter).Decode(&p)
+	if err != nil {
+		s.Logger(ctx).Error("GetProduct: col.FindOne.Decode", "filter", filter, "err", err)
+		return Product{}, fmt.Errorf("FindOne.Decode: %v", err.Error())
+	}
+
+	// Put into memcache
+	// We assume no err, since we could decode just fine...
+	item, _ := json.Marshal(p)
+	s.redisClient.Set(ctx, redisProductKey(productID), item, 0)
 
 	return p, nil
 }
 
-func (s *impl) GetProducts(ctx context.Context, productIDs []string, _ int) ([]Product, error) {
-	initTime := time.Now()
-	defer func() {
-		imetrics.InternalMetricsFor(imetrics.InternalMethodLabels{Component: "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService", Method: "GetProducts"}).Put(float64(time.Since(initTime).Microseconds()))
-	}()
+func (s *impl) GetProducts(ctx context.Context, productIDs []string) ([]Product, error) {
 
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	products := make([]Product, len(productIDs))
-	for i, pid := range productIDs {
-
-		var p Product
-		var ok bool
-
-		p, ok = s.db[pid]
-
-		if !ok {
-			p, ok = s.prevDb[pid]
-
-			if !ok {
-				idx := s.myIndex
-				needed := HashProductID(pid, s.catalogReplicas)
-				return nil, fmt.Errorf("request for productID %v made to shard %v, but needed to be %v", pid, idx, needed)
-			}
-		}
-
-		products[i] = p
+	found := make([]Product, 0)
+	if len(productIDs) == 0 {
+		return found, nil
 	}
-	return products, nil
+	missing := make([]string, 0)
+
+	redIDs := make([]string, len(productIDs))
+	for i, p := range productIDs {
+		redIDs[i] = redisProductKey(p)
+	}
+	res, err := s.redisClient.MGet(ctx, redIDs...).Result()
+
+	if err != nil && err != redis.Nil {
+		s.Logger(ctx).Error("Problem with Redis. Will continue...", "err", err, "ids", productIDs)
+
+	} else {
+		for i, it := range res {
+			// it = string | nil
+			str, ok := it.(string)
+			if !ok {
+				// it = nil, so value is missing
+				missing = append(missing, productIDs[i])
+				continue
+			}
+			var p Product
+			err := json.Unmarshal([]byte(str), &p)
+			if err != nil {
+				s.Logger(ctx).Error("Redis unmarshal", "err", err, "value", str)
+				missing = append(missing, productIDs[i])
+				continue
+			}
+
+			found = append(found, p)
+		}
+	}
+
+	// No cache misses
+	if len(missing) == 0 {
+		return found, nil
+	}
+
+	s.Logger(ctx).Info("GetProducts: cache miss", "numIDs", len(productIDs), "num missing", len(missing))
+
+	// Have to fetch some data from mongo...
+	col := s.mongoClient.Database(s.Config().ProductDatabase).Collection(s.Config().ProductCollection)
+
+	filter := bson.D{{
+		Key: "id",
+		Value: bson.D{{
+			Key:   "$in",
+			Value: missing,
+		}},
+	}}
+
+	cur, err := col.Find(ctx, filter)
+	if err != nil {
+		s.Logger(ctx).Error("GetProducts: col.Find", "filter", filter, "err", err)
+		return nil, fmt.Errorf("Find: %v", err.Error())
+	}
+	var ps []Product
+	if err := cur.All(ctx, &ps); err != nil {
+		s.Logger(ctx).Error("GetProducts: cursor.All", "err", err)
+		return nil, fmt.Errorf("cursor.All: %v", err.Error())
+	}
+
+	// ps now has all the missing data.
+	// We have to send a separate memcached.Set req for each key,
+	//	so we do it in the background.
+	redisSet := make(map[string]string)
+	for _, p := range ps {
+		b, err := json.Marshal(p)
+		if err != nil {
+			s.Logger(ctx).Error("json.Marshal", "err", err, "product", p)
+			return nil, err
+		}
+		redisSet[redisProductKey(p.ID)] = string(b)
+	}
+	err = s.redisClient.MSet(ctx, redisSet).Err()
+
+	return append(found, ps...), nil
 }
 
-func (s *impl) SearchProducts(ctx context.Context, query string, _ int) ([]Product, error) {
-	initTime := time.Now()
-	defer func() {
-		imetrics.InternalMetricsFor(imetrics.InternalMethodLabels{Component: "github.com/eBerkley/Weaver-OB-Bench/productcatalogservice/ProductCatalogService", Method: "SearchProducts"}).Put(float64(time.Since(initTime).Microseconds()))
-	}()
-	// Interpret query as a substring match in name or description.
+func (s *impl) SearchProducts(ctx context.Context, query string) ([]Product, error) {
 	var ps []Product
-	i := 0
-	q := strings.ToLower(query)
 
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	maxProds := maxProducts / s.catalogReplicas
+	// Check in Redis
+	redisResult, err := s.redisClient.Get(ctx, redisSearchKey(query)).Result()
+	if err == nil {
 
-	for _, p := range s.db {
-		if strings.Contains(strings.ToLower(p.Name), q) {
-			ps = append(ps, p)
-			i++
-			if i >= maxProds {
-				break
-			}
+		err = json.Unmarshal([]byte(redisResult), &ps)
+
+		if err != nil {
+			err = fmt.Errorf("SearchProducts: json.Unmarshal(redis): %v, redisResult: %v", err, redisResult)
+			s.Logger(ctx).Error(err.Error())
+			return nil, err
 		}
+		return ps, nil
+
+	} else if err != redis.Nil {
+		s.Logger(ctx).Error("SearchProducts: redis.Get. Continuing...", "err", err, "query", redisSearchKey(query))
+	} else {
+		s.Logger(ctx).Info("SearchProducts: not in redis", "query", query)
 	}
+
+	// not in redis
+
+	col := s.mongoClient.Database(s.Config().ProductDatabase).Collection(s.Config().ProductCollection, nearest)
+
+	filter := bson.D{
+		{Key: "name", Value: bson.D{
+			{Key: "$regex", Value: query},
+		}},
+	}
+
+	opts := options.Find().SetLimit(maxProducts)
+
+	cur, err := col.Find(ctx, filter, opts)
+	if err != nil {
+		s.Logger(ctx).Error("SearchProducts: col.Find", "filter", filter, "err", err)
+		return nil, fmt.Errorf("Find: %v", err.Error())
+	}
+
+	if err := cur.All(ctx, &ps); err != nil {
+		s.Logger(ctx).Error("SearchProducts: cursor.All", "err", err)
+		return nil, fmt.Errorf("cursor.All: %v", err.Error())
+	}
+
+	// Add to redis
+	bs, err := json.Marshal(ps)
+	if err != nil {
+		s.Logger(ctx).Error("SearchProducts: Marshal redis value", "err", err)
+		return ps, err
+	}
+
+	err = s.redisClient.Set(ctx, redisSearchKey(query), string(bs), 0).Err()
+	if err != nil {
+		s.Logger(ctx).Error("SearchProducts: set redis value", "err", err, "key", redisSearchKey(query), "val", string(bs))
+		return ps, err
+	}
+
 	return ps, nil
 }
-
-func (s *impl) GetIndex(_ context.Context, _ int) (int, error) { return s.myIndex, nil }

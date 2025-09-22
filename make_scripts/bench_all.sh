@@ -20,10 +20,10 @@ i=0
 
 maybe_clear_cache () {
   (( i++ ))
-  if [ $(( i % $DOCKER_CACHE_CLEAR_FREQ )) -eq 0 ]; then
-    minikube delete
-    docker system prune -af
-  fi
+  # if [ $(( i % $DOCKER_CACHE_CLEAR_FREQ )) -eq 0 ]; then
+  #   minikube delete
+  #   docker system prune -af
+  # fi
 }
 
 loop_body () {
@@ -44,7 +44,7 @@ loop_body () {
   end_time=$(date)
 
   # Terminate the benchmark
-  kubectl delete all --all
+  # kubectl delete all --all
   
   sleep 15
 

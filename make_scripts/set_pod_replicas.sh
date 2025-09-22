@@ -43,15 +43,7 @@ for l in $alloc_lines; do
     str2=$(echo "$str" | awk '{printf "%s\\n", $0}')
     sed -i "$str2/g" $GROUPS_FILE
 
-    # Now we do the stuff for statefulSpec attributes.
-    stateful_spec="
-    statefulSpec:
-      replicas: $replicas"
-
-    str=s/\<"$podname"_STATEFUL_SPEC\>/$stateful_spec
-    str2=$(echo "$str" | awk '{printf "%s\\n", $0}')
-
-    sed -i "$str2/g" $GROUPS_FILE
+    
   fi
 done
 

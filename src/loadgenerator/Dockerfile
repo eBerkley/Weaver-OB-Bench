@@ -25,7 +25,7 @@ COPY --from=builder /install /usr/local
 # Add application code.
 COPY locustfile.py .
 COPY entrypoint.sh .
-
+COPY products products
 COPY load_shapes/rampload.py .
 COPY load_shapes/dummyload.py .
 COPY load_shapes/constload.py .

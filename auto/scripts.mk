@@ -8,18 +8,21 @@ export_allocations:
 check_docker: 
 	@./make_scripts/check_docker.sh
 
-minikube_start:
-	@ lines=$(shell minikube status | wc -l);\
-	if [ $$lines -le 5 ]; then\
-		echo Starting minikube;\
-		./scripts/minikube_start.sh;\
-		if [[ $$BENCH_TYPE = "STATIC" ]]; then \
-			echo Using static bench config.; \
-			./scripts/pin_system.sh; \
-		fi \
-	else \
-		echo Minikube already running. ;\
-	fi 
+# minikube_start:
+# 	@ lines=$(shell minikube status | wc -l);\
+# 	if [ $$lines -le 5 ]; then\
+# 		echo Starting minikube;\
+# 		./scripts/minikube_start.sh;\
+# 		if [[ $$BENCH_TYPE = "STATIC" ]]; then \
+# 			echo Using static bench config.; \
+# 			./scripts/pin_system.sh; \
+# 		fi \
+# 	else \
+# 		echo Minikube already running. ;\
+# 	fi 
+
+k3s_start:
+	@sudo k3s server --kubelet-arg=config=$$PWD/release/aux/kubelet.conf --disable traefik
 
 graph:
 	python3 benchmark/analyze.py -m graph_many -n "$$NAME" -g "$$TYPE"

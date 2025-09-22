@@ -1,5 +1,5 @@
-//go:build full_checkout
-// +build full_checkout
+// //go:build full_checkout
+// // +build full_checkout
 
 package frontend
 

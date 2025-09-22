@@ -8,6 +8,8 @@ WEAVER ?= ./weaver/cmd/weaver/weaver # weaver
 SHELL := /bin/bash
 CONFIG_FILE ?= CONFIG.cfg
 
+INIT_VERSION=v0.0.11
+
 include .env 
 include locust.env
 include docker.env
@@ -102,7 +104,9 @@ else ifeq ($(BENCH_TYPE), ALLOC)
 	LOCUST_RESET_CONN := 1
 
 	LOCUST_SHAPE         := slowerload
-	LOCUST_SLOWLOAD_RAMP := 5000
+# 	LOCUST_SHAPE         := constload
+	LOCUST_CONST_USERS   := 2500
+	LOCUST_SLOWLOAD_RAMP := 1000
 	LOCUST_SLOWER_PAUSE  := 45
 	LOCUST_WAIT_TIME     := 300		
 
@@ -126,12 +130,12 @@ else # ifeq ($(BENCH_TYPE), CUSTOM)
 endif
 
 
-.PHONY: all clean minikube_start minikube_restart check_smt toggle_smt deploy bench bench_all stop clear_logs check_docker check_loadgen pre_deploy bench_once bin_build
+.PHONY: all clean k3s_start minikube_restart check_smt toggle_smt deploy bench bench_all stop clear_logs check_docker check_loadgen pre_deploy bench_once bin_build
 
 all:
 	@echo valid arguments:
 	@echo
-	@echo "minikube_[re]start   - [re]start minikube"
+# 	@echo "minikube_[re]start   - [re]start minikube"
 	@echo "check_smt            - View if hyperthreading is enabled"
 	@echo "toggle_smt           - Toggle hyperthreading. NOTE: May require root."
 	@echo "deploy               - Starts minikube / builds new version of app if necessary, then deploys."
@@ -200,19 +204,117 @@ pre_deploy: check_docker check_loadgen bin_build $(WEAVER_GEN_YAML) $(LOAD_GEN_Y
 	
 	@echo pre deploy check / code gen complete.
 
+rebuild_init: 
+	docker build . -f src/productcatalogservice/product_gen/Dockerfile \
+	 	--build-arg BASE_DIR=src/productcatalogservice \
+		-t docker.io/eberkley/ob-mongo-init:$(INIT_VERSION) && \
+		docker push docker.io/eberkley/ob-mongo-init:$(INIT_VERSION)
+
+# only do anything if the name 'mongo' is NOT found by helm
+# An explanation on these settings:
+# Requests and limits are set manually so that pods that receive traffic are in 'Guaranteed' QoS class.
+# Shards=2 is static, shardsvc.dataNode.replicaCount=3 is static, all other replica counts are dynamic.
+# We enable scaling out on both mongos and datanodes, which is not functionality provided by the chart originally.
+# To do this, we do the following:
+#		modify the dataNode yamls to give statefulsets a label that identifies their shard
+# 	Add three HPAs: one for mongos, and one for each shard.
+#		Set the service pointing to mongos instances to a headless service
+#		Use the `mongodb+srv` connection string type so that mongodb clients are aware of new mongos instances
+# 	Set readPreference=nearest for all clients, since it is a read-only but frequently accessed database.
+
+deploy_mongo:
+# 		helm install mongo bitnami/mongodb-sharded -f release/aux/mongo.yaml 
+	@if [[ -z "$(shell helm list --no-headers | awk '{print $$1}' | grep mongo)" ]]; then \
+		helm install mongo ./release/aux/helm/mongodb-sharded -f release/aux/mongo.yaml \
+			--set global.defaultStorageClass=local-path \
+			--set global.security.allowInsecureImages=true \
+			--set shards=2 \
+			--set shardsvr.dataNode.replicaCount=2 \
+			--set auth.rootPassword=productDB \
+			--set configsvr.replicaCount=3 \
+			--set configsvr.resources.requests.cpu=50m \
+			--set configsvr.resources.limits.cpu=50m \
+			--set configsvr.resources.requests.memory=1Gi \
+			--set configsvr.resources.limits.memory=1Gi \
+			--set mongos.resources.requests.cpu=1 \
+			--set mongos.resources.limits.cpu=1 \
+			--set mongos.resources.requests.memory=2Gi \
+			--set mongos.resources.limits.memory=2Gi \
+			--set shardsvr.dataNode.resources.requests.cpu=1 \
+			--set shardsvr.dataNode.resources.limits.cpu=1 \
+			--set shardsvr.dataNode.resources.requests.memory=2Gi \
+			--set shardsvr.dataNode.resources.limits.memory=2Gi \
+			--set mongos.replicaCount=2 \
+			--set service.clusterIP=None \
+			--timeout 15m \
+			--wait && \
+		kubectl apply -f release/aux/mongo-hpa.yaml && \
+		sleep 3 && \
+		kubectl run mongo-init-client \
+			--rm -it --image docker.io/eberkley/ob-mongo-init:$(INIT_VERSION) \
+			--image-pull-policy='IfNotPresent'; \
+	fi
+
+# 	--set common.mongodbEnableNumactl=true
+
+debug_mongo:
+	@echo 'mongosh admin --host mongo-mongodb-sharded --authenticationDatabase admin -u root -p productDB'
+	@echo "mongosh 'mongodb+srv://root:productDB@mongo-mongodb-sharded.default.svc.cluster.local/?tls=false&authSource=admin'"
+	@kubectl run --namespace default mongo-debug --rm -it --restart='Never' \
+		--image docker.io/eberkley/ob-mongo-init:$(INIT_VERSION) \
+		--image-pull-policy='IfNotPresent' \
+		--command bash
+
+mongo_logs:
+	kubectl exec -it $(N) -- tail -20 /opt/bitnami/mongodb/logs/mongodb.log
+
+logs:
+	@kubectl get po --selector=serviceweaver/group=$(N) -o name \
+		| head -1 | xargs -I % kubectl logs %
+
+delete_mongo:
+	-@if [[ -n "$(shell helm list --no-headers | awk '{print $$1}' | grep mongo)" ]]; then \
+		helm uninstall mongo; \
+		kubectl delete -f release/aux/mongo-hpa.yaml; \
+		kubectl delete pvc --selector=app.kubernetes.io/instance=mongo; \
+	fi
+
+delete_load:
+	-@kubectl delete deploy --selector=app=loadgenerator
+	-@kubectl delete deploy --selector=role=loadgenerator-worker
+	-@kubectl delete svc --selector=app=loadgenerator
+
+delete_app: 
+	-@kubectl delete deploy --selector=serviceweaver/app=ob
+	-@kubectl delete configmap --selector=serviceweaver/app=ob
+	-@kubectl delete hpa --selector=serviceweaver/app=ob
+	-@kubectl delete svc --selector=serviceweaver/app=ob
+
+	-@kubectl delete svc --selector=app=product-redis
+	-@kubectl delete configmap --selector=app=product-redis
+	-@kubectl delete svc --selector=app=cart-redis
+	-@kubectl delete configmap --selector=app=cart-redis
+	-@kubectl delete deploy --selector=app=product-redis
+	-@kubectl delete deploy --selector=app=cart-redis
+
+delete_all: delete_load delete_app delete_mongo
 
 
 # release/generated/gen.yaml and release/generated/loadgen.yaml
-deploy: minikube_start pre_deploy
+deploy: pre_deploy deploy_mongo delete_load delete_app
 	@echo deploying onlineboutique, loadgenerator...| tee -a $(LOGS_FILE)
 	@# Remove any old deployment.
-	@-kubectl delete all --all >>$(LOGS_FILE) 2>&1
-	@echo creating loadgenerator... >> $(LOGS_FILE)
-	@kubectl apply -f $(LOAD_GEN_YAML) >> $(LOGS_FILE) 2>&1
+# 	@-kubectl delete all --all >>$(LOGS_FILE) 2>&1
+	@kubectl apply -f release/aux/product-redis.yaml >> $(LOGS_FILE) 2>&1
+	@kubectl apply -f release/aux/cart-redis.yaml >> $(LOGS_FILE) 2>&1
 	@sleep 15
+
 	@echo creating OB ... >> $(LOGS_FILE)
 	@kubectl apply -f $(WEAVER_GEN_YAML) >> $(LOGS_FILE) 2>&1
 	sleep 10
+
+	@echo creating loadgenerator... >> $(LOGS_FILE)
+	@kubectl apply -f $(LOAD_GEN_YAML) >> $(LOGS_FILE) 2>&1
 	@if [ "$(TRACE_ENABLE)" = "true" ]; then \
 		echo "Jaeger is enabled, starting to collect trace" ; \
 	    kubectl apply -f $(JAEGER_TRACE_YAML) >> $(DEBUG_OUTPUT) 2>&1; \
@@ -254,6 +356,9 @@ bench: deploy
 	fi
 
 	@echo deleting deployment...
+	kubectl delete -f $(LOAD_GEN_YAML)
+	kubectl delete -f $(WEAVER_GEN_YAML)
+	kubectl delete -f release/base/redis.yaml
 	# @-kubectl delete all --all >> $(DEBUG_OUTPUT) 2>&1
 
 # Shouldn't be ran by user, used by bench_all.
@@ -281,16 +386,17 @@ $(KUBE_BIN): $(KUBE_SRC) $(WEAVER)
 	go build -C weaver-kube/cmd/weaver-kube
 	cp ./weaver-kube/cmd/weaver-kube/weaver-kube $(WEAVER_BIN_PATH)
 
-$(TRACE_BIN): weaver-kube/examples/telemetry-traces/main.go $(KUBE_SRC) $(WEAVER)
-	(cd weaver-kube/examples/telemetry-traces && go build -o telemetry-traces .)
-	cp ./weaver-kube/examples/telemetry-traces/telemetry-traces $(WEAVER_BIN_PATH)
+# $(TRACE_BIN): weaver-kube/examples/telemetry-traces/main.go $(KUBE_SRC) $(WEAVER)
+# 	(cd weaver-kube/examples/telemetry-traces && go build -o telemetry-traces .)
+# 	cp ./weaver-kube/examples/telemetry-traces/telemetry-traces $(WEAVER_BIN_PATH)
 
-$(METRIC_BIN): weaver-kube/examples/telemetry-metrics/main.go $(KUBE_SRC) $(WEAVER)
-	(cd weaver-kube/examples/telemetry-metrics && go build -o telemetry-metrics .)
-	cp ./weaver-kube/examples/telemetry-metrics/telemetry-metrics $(WEAVER_BIN_PATH)
+# $(METRIC_BIN): weaver-kube/examples/telemetry-metrics/main.go $(KUBE_SRC) $(WEAVER)
+# 	(cd weaver-kube/examples/telemetry-metrics && go build -o telemetry-metrics .)
+# 	cp ./weaver-kube/examples/telemetry-metrics/telemetry-metrics $(WEAVER_BIN_PATH)
 
 #rebuild the binary if weaver kube src was modified
-bin_build: $(KUBE_BIN) $(TRACE_BIN) $(METRIC_BIN)
+# bin_build: $(KUBE_BIN) $(TRACE_BIN) $(METRIC_BIN)
+bin_build: $(KUBE_BIN)
 
 # if deployment specifications or src code was modified,
 # 	Update Weaver kubernetes yaml
