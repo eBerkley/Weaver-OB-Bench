@@ -47,49 +47,52 @@ def aggregate_json_files_to_csv(input_dir):
     # Define CSV headers
     headers = [
         'traceID', 'spanID', 'operationName', 'refType', 'parentSpanID',
-        'startTime', 'duration', 'processID', 'spanKind'
+        'startTime', 'duration', 'processID', 'spanKind', 'warnings'
     ]
     
+    merged = []
     for filename in sorted(os.listdir(input_dir)):
         if filename.endswith(".json") and filename != "aggregated_traces.json":
             file_path = os.path.join(input_dir, filename)
-            
             with open(file_path, "r") as file:
                 try:
                     data = json.load(file)
-                    invalid_spans, total_spans, valid_traces = count_invalid_parent_spans(data)
-                    print(f"trace {filename}: total spans = {total_spans}, invalid spans = {invalid_spans}, valid traces = {len(valid_traces)}.")
-                    # Check filtering conditions
-                    if invalid_spans > 300 or (total_spans > 0 and invalid_spans / total_spans > 0.3):
-                        print(f"Skipping {filename} due to excessive invalid parent spans.")
-                        continue
-                    
-                    for trace in valid_traces:
-                        trace_id = trace["traceID"]
-                        if trace_id in seen_traces:
-                            continue
-                        seen_traces.add(trace_id)
-                        
-                        for span in trace["spans"]:
-                            refType = span["references"][0]["refType"] if span.get("references") else None
-                            parentSpanID = span["references"][0]["spanID"] if span.get("references") else None
-                            
-                            tags = {tag["key"]: tag["value"] for tag in span.get("tags", [])}
-                            aggregated_data.append({
-                                'traceID': span.get('traceID', ''),
-                                'spanID': span.get('spanID', ''),
-                                'operationName': span.get('operationName', ''),
-                                'refType': refType,
-                                'parentSpanID': parentSpanID,
-                                'startTime': span.get('startTime', ''),
-                                'duration': span.get('duration', ''),
-                                'processID': span.get('processID', ''),
-                                'spanKind': tags.get('span.kind', '')
-                            })
+                    merged += data['data']
                 except json.JSONDecodeError:
                     print(f"Skipping invalid JSON file: {filename}")
                     continue
+
+    invalid_spans, total_spans, valid_traces = count_invalid_parent_spans({"data": merged})
+    print(f"trace {filename}: total spans = {total_spans}, invalid spans = {invalid_spans}, valid traces = {len(valid_traces)}.")
+    # Check filtering conditions
+    if invalid_spans > 300 or (total_spans > 0 and invalid_spans / total_spans > 0.3):
+        print(f"Skipping  due to excessive invalid parent spans.")
+        # return
     
+    for trace in valid_traces:
+        trace_id = trace["traceID"]
+        if trace_id in seen_traces:
+            continue
+        seen_traces.add(trace_id)
+        
+        for span in trace["spans"]:
+            refType = span["references"][0]["refType"] if span.get("references") else None
+            parentSpanID = span["references"][0]["spanID"] if span.get("references") else None
+            
+            tags = {tag["key"]: tag["value"] for tag in span.get("tags", [])}
+            aggregated_data.append({
+                'traceID': span.get('traceID', ''),
+                'spanID': span.get('spanID', ''),
+                'operationName': span.get('operationName', ''),
+                'refType': refType,
+                'parentSpanID': parentSpanID,
+                'startTime': span.get('startTime', ''),
+                'duration': span.get('duration', ''),
+                'processID': span.get('processID', ''),
+                'spanKind': tags.get('span.kind', ''),
+                'warnings': span.get("warnings", '[]')
+            })
+
     with open(output_csv_file, "w", newline="") as csvfile:
         writer = csv.DictWriter(csvfile, fieldnames=headers)
         writer.writeheader()

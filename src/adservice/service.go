@@ -17,9 +17,9 @@ package adservice
 import (
 	"context"
 	"math/rand"
+	goruntime "runtime"
 	"strings"
 	"time"
-	goruntime "runtime"
 
 	"github.com/eberkley/weaver"
 	imetrics "github.com/eberkley/weaver/runtime/codegen"
@@ -71,15 +71,19 @@ func (s *impl) Init(ctx context.Context) error {
 // GetAds returns a list of ads that best match the given context keywords.
 func (s *impl) GetAds(ctx context.Context, keywords []string) ([]Ad, error) {
 	initTime := time.Now()
-
-	s.Logger(ctx).Info("received ad request", "keywords", keywords)
+	logger := s.Logger(ctx)
+	// logger.Info("received ad request", "keywords", keywords)
 	span := trace.SpanFromContext(ctx)
+	if span.SpanContext().IsValid() {
+		logger.Info("got valid span.")
+	}
 	var allAds []Ad
 	if len(keywords) > 0 {
 		span.AddEvent("Constructing Ads using context", trace.WithAttributes(
 			attribute.String("Context Keys", strings.Join(keywords, ",")),
 			attribute.Int("Context Keys length", len(keywords)),
 		))
+
 		for _, kw := range keywords {
 			allAds = append(allAds, s.getAdsByCategory(kw)...)
 		}

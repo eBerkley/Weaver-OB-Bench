@@ -204,8 +204,15 @@ func Serve(ctx context.Context, s *Server) error {
 			}
 			fn(w, r)
 		}
-		return weaver.InstrumentHandlerFunc(label, handler)
+
+		return weaver.InstrumentHandlerFunc(label, handler,
+			weaver.InstrumentationOptions{SampleInterval: 5 * time.Second},
+		)
 	}
+
+	// instrument = func(label string, fn func(http.ResponseWriter, *http.Request), methods []string) http.Handler {
+	// 	return http.HandlerFunc(fn)
+	// }
 
 	const get = http.MethodGet
 	const post = http.MethodPost

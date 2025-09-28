@@ -9,19 +9,20 @@ metadata:
 spec:
   behavior:
     scaleDown:
+      # stabilizationWindowSeconds: 45
       selectPolicy: Disabled
     scaleUp:
       policies:
-      - periodSeconds: 15
+      - periodSeconds: 30
         type: Pods
         value: 5
-  minReplicas: 2
-  maxReplicas: 4
+  minReplicas: 1
+  maxReplicas: 5
   metrics:
   - resource:
       name: cpu
       target:
-        averageUtilization: 40
+        averageUtilization: 60
         type: Utilization
     type: Resource
   scaleTargetRef:
@@ -45,19 +46,20 @@ metadata:
 spec:
   behavior:
     scaleDown:
+      # stabilizationWindowSeconds: 45
       selectPolicy: Disabled
     scaleUp:
       policies:
-      - periodSeconds: 15
+      - periodSeconds: 30
         type: Pods
-        value: 5
-  minReplicas: 2
-  maxReplicas: 4
+        value: 20
+  minReplicas: 1
+  maxReplicas: 5
   metrics:
   - resource:
       name: cpu
       target:
-        averageUtilization: 40
+        averageUtilization: 60
         type: Utilization
     type: Resource
   scaleTargetRef:
@@ -79,19 +81,20 @@ metadata:
 spec:
   behavior:
     scaleDown:
+      # stabilizationWindowSeconds: 45
       selectPolicy: Disabled
     scaleUp:
       policies:
-      - periodSeconds: 15
+      - periodSeconds: 30
         type: Pods
-        value: 5
-  minReplicas: 2
-  maxReplicas: 4
+        value: 20
+  minReplicas: 1
+  maxReplicas: 5
   metrics:
   - resource:
       name: cpu
       target:
-        averageUtilization: 40
+        averageUtilization: 60
         type: Utilization
     type: Resource
   scaleTargetRef:

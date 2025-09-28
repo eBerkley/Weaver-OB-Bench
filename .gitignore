@@ -31,6 +31,9 @@ vertical_profs
 colocation_old
 benchmark/out-9
 release/base/colocation-9
+dump/product-db
+telemetry/telCol
+jaeger_traces/*
 
 alloc/*-perf*
 alloc/*-freq3*

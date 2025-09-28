@@ -17,7 +17,7 @@ class ConstLoad(LoadTestShape):
     """
     max_users = CONST_USERS # users
     init_users = min(max_users / 2, 3000)
-    ramp_speed = 100 # users per second
+    ramp_speed = float(getenv("LOCUST_RAMP_RATE", "10.0")) # users / second # 100 # users per second
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

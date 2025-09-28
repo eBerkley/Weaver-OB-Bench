@@ -134,11 +134,11 @@ spec:
         resources:
           requests:
             cpu: 1
-            memory: 512Mi
+            memory: 2Gi
             ephemeral-storage: 2Gi
           limits:
             cpu: 1
-            memory: 512Mi
+            memory: 2Gi
 
         ports:
         - containerPort: 5557
@@ -264,7 +264,7 @@ spec:
         resources:
           requests: 
             cpu: "1"
-            memory: "1024Mi"
+            memory: "2048Mi"
           limits:
             cpu: "1"
-            memory: "1024Mi"
+            memory: "2048Mi"

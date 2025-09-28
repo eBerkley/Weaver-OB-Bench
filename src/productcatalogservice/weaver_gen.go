@@ -119,7 +119,7 @@ func (s productCatalogService_local_stub) ListProducts(ctx context.Context) (r0 
 	return s.impl.ListProducts(ctx)
 }
 
-func (s productCatalogService_local_stub) SearchProducts(ctx context.Context, a0 string) (r0 []Product, err error) {
+func (s productCatalogService_local_stub) SearchProducts(ctx context.Context, a0 string, a1 string) (r0 []Product, err error) {
 	// Update metrics.
 	begin := s.searchProductsMetrics.Begin()
 	defer func() { s.searchProductsMetrics.End(begin, err != nil, 0, 0) }()
@@ -136,7 +136,7 @@ func (s productCatalogService_local_stub) SearchProducts(ctx context.Context, a0
 		}()
 	}
 
-	return s.impl.SearchProducts(ctx, a0)
+	return s.impl.SearchProducts(ctx, a0, a1)
 }
 
 // Client stub implementations.
@@ -306,7 +306,7 @@ func (s productCatalogService_client_stub) ListProducts(ctx context.Context) (r0
 	return
 }
 
-func (s productCatalogService_client_stub) SearchProducts(ctx context.Context, a0 string) (r0 []Product, err error) {
+func (s productCatalogService_client_stub) SearchProducts(ctx context.Context, a0 string, a1 string) (r0 []Product, err error) {
 	// Update metrics.
 	var requestBytes, replyBytes int
 	begin := s.searchProductsMetrics.Begin()
@@ -338,11 +338,13 @@ func (s productCatalogService_client_stub) SearchProducts(ctx context.Context, a
 	// Preallocate a buffer of the right size.
 	size := 0
 	size += (4 + len(a0))
+	size += (4 + len(a1))
 	enc := codegen.NewEncoder()
 	enc.Reset(size)
 
 	// Encode arguments.
 	enc.String(a0)
+	enc.String(a1)
 	var shardKey uint64
 
 	// Call the remote method.
@@ -396,7 +398,7 @@ func (s productCatalogService_routed_local_stub) ListProducts(ctx context.Contex
 	return
 }
 
-func (s productCatalogService_routed_local_stub) SearchProducts(ctx context.Context, a0 string) (r0 []Product, err error) {
+func (s productCatalogService_routed_local_stub) SearchProducts(ctx context.Context, a0 string, a1 string) (r0 []Product, err error) {
 	err = errors.New("can not call routed local method on unrouted component")
 	err = errors.Join(weaver.RemoteCallError, err)
 	return
@@ -407,7 +409,7 @@ func (s productCatalogService_routed_local_stub) SearchProducts(ctx context.Cont
 // you run "go build" or "go run".
 var _ codegen.LatestVersion = codegen.Version[[0][24]struct{}](`
 
-ERROR: You generated this file with 'weaver generate' v0.0.0-20250918144923-6c2edaca373f+dirty (codegen
+ERROR: You generated this file with 'weaver generate' v0.0.0-20250922200026-3134eb77cbc3+dirty (codegen
 version v0.24.0). The generated code is incompatible with the version of the
 github.com/eberkley/weaver module that you're using. The weaver module
 version can be found in your go.mod file or by running the following command.
@@ -545,11 +547,13 @@ func (s productCatalogService_server_stub) searchProducts(ctx context.Context, a
 	dec := codegen.NewDecoder(args)
 	var a0 string
 	a0 = dec.String()
+	var a1 string
+	a1 = dec.String()
 
 	// TODO(rgrandl): The deferred function above will recover from panics in the
 	// user code: fix this.
 	// Call the local method.
-	r0, appErr := s.impl.SearchProducts(ctx, a0)
+	r0, appErr := s.impl.SearchProducts(ctx, a0, a1)
 
 	// Encode the results.
 	enc := codegen.NewEncoder()
@@ -582,8 +586,8 @@ func (s productCatalogService_reflect_stub) ListProducts(ctx context.Context) (r
 	return
 }
 
-func (s productCatalogService_reflect_stub) SearchProducts(ctx context.Context, a0 string) (r0 []Product, err error) {
-	err = s.caller("SearchProducts", ctx, []any{a0}, []any{&r0})
+func (s productCatalogService_reflect_stub) SearchProducts(ctx context.Context, a0 string, a1 string) (r0 []Product, err error) {
+	err = s.caller("SearchProducts", ctx, []any{a0, a1}, []any{&r0})
 	return
 }
 

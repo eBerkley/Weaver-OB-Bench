@@ -16,7 +16,10 @@ ProductCollection = "products"
 MongoUser = "root"
 MongoPassword = "productDB"
 
-RedisAddr = "product-redis:6379"
+# RedisAddr = "product-redis:6379"
+# RedisAddr = "prod-redis-redis-cluster:6379"
+RedisRAddr = "prod-redis-replicas:6379"
+RedisWAddr = "prod-redis-master:6379"
 
 ["github.com/eBerkley/Weaver-OB-Bench/cartservice/CartService"]
 RedisAddr = "cart-redis:6379"

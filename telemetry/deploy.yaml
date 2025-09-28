@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: metrics-collector
+  labels:
+    app: metrics-collector
+spec:
+  selector:
+    matchLabels:
+      app: metrics-collector
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: metrics-collector
+    spec:
+      terminationGracePeriodSeconds: 5
+      restartPolicy: Always
+      securityContext:
+        # fsGroup: 1000
+        # runAsGroup: 1000
+        runAsNonRoot: false
+        # runAsUser: 1000
+      dnsPolicy: ClusterFirst
+      serviceAccountName: default
+
+      containers:
+      - name: collector
+        stdin: true
+        tty: true
+        image: docker.io/eberkley/metrics-collector:v0.0.4
+        imagePullPolicy: IfNotPresent
+        command: ['sh', '-c', 'until [ -e doorbell.txt ]; do echo waiting...; sleep 2; done' ]
+
+        resources:
+          requests:
+            cpu: 100m
+            memory: 1Gi
+
+        ports:
+        - containerPort: 80
+          name: comm

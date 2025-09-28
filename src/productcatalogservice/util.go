@@ -1,15 +1,17 @@
 package productcatalogservice
 
 import (
+	"fmt"
 	"hash/fnv"
 )
 
 func redisProductKey(productID string) string {
-	return productID + "-pr"
+	return fmt.Sprintf("%s-pr", productID)
+	// return productID + "-pr"
 }
 
-func redisSearchKey(query string) string {
-	return query + "-kw" // like "keyword"
+func redisSearchKey(query string, category string) string {
+	return fmt.Sprintf("%s-%s-kw", query, category) // like "keyword"
 }
 
 // Gets which index contains the product.

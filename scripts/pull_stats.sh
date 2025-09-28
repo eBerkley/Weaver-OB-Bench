@@ -26,12 +26,13 @@ echo Seconds,CPU Cores > ../benchmark/stats/cpu.csv
 log_debug_info() {  
   local val=$1
 
-  # if [ $(( val % $DEBUG_FREQUENCY )) -eq 0 ]; then
+  if [ $(( val % $DEBUG_FREQUENCY )) -eq 0 ]; then
 
     # echo "=*=*=*=*=*=*=*=*= DEBUG INFO =*=*=*=*=*=*=*=*="
     
     date -d@$SECONDS -u +%H:%M:%S
-    kubectl top po 2>/dev/null | awk 'NR==1 || $1 !~ /^loadgenerator/'
+    # kubectl top po 2>/dev/null | awk 'NR==1 || $1 !~ /^loadgenerator/'
+    kubectl top po 2>/dev/null
     echo
     ./get_replicas.sh
     code=$?
@@ -41,10 +42,20 @@ log_debug_info() {
     else
       rm -f pod_stats.csv
     fi
+    # echo
+    # echo =-=-=-=-=-=-=-= M LOGS =-=-=-=-=-=-=-=
+    # echo
+    # make -C .. logs N=m L=5
+    # echo
+    # echo
+    # echo =-=-=-=-=-=-=-= Pr LOGS =-=-=-=-=-=-=-=
+    # echo
+    # make -C .. logs N=pr L=5
+    # echo
     
     # echo "=*=*=*=*=*=*=*=*= END DEBUG. =*=*=*=*=*=*=*=*="
 
-  # fi
+  fi
 }
 
 iterations=0

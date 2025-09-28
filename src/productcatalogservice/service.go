@@ -25,6 +25,7 @@ import (
 	"github.com/eBerkley/Weaver-OB-Bench/types/money"
 	"github.com/eberkley/weaver"
 	"github.com/redis/go-redis/v9"
+	"go.opentelemetry.io/otel/trace"
 
 	// "go.mongodb.org/mongo-driver/mongo"
 	// "go.mongodb.org/mongo-driver/mongo/options"
@@ -74,7 +75,7 @@ type ProductCatalogService interface {
 	ListProducts(ctx context.Context) ([]Product, error)
 	GetProduct(ctx context.Context, productID string) (Product, error)
 	GetProducts(ctx context.Context, productIDs []string) ([]Product, error)
-	SearchProducts(ctx context.Context, query string) ([]Product, error)
+	SearchProducts(ctx context.Context, query string, category string) ([]Product, error)
 }
 
 type productCatalogConfig struct {
@@ -83,7 +84,10 @@ type productCatalogConfig struct {
 	ProductCollection string
 	MongoUser         string
 	MongoPassword     string
-	RedisAddr         string
+	RedisRAddr        string
+	RedisWAddr        string
+	// RedisAddr         string
+	// RedisAddrs []string
 }
 
 type impl struct {
@@ -91,36 +95,60 @@ type impl struct {
 	weaver.WithConfig[productCatalogConfig]
 
 	mongoClient *mongo.Client
-	redisClient *redis.ClusterClient // *redis.Client
+	// redisClient *redis.ClusterClient
+	// redisClient *redis.Client
+	redisRClient *redis.Client
+	redisWClient *redis.Client
 }
 
 var _ ProductCatalogService = (*impl)(nil)
 
 func (s *impl) Init(ctx context.Context) error {
-	s.redisClient = redis.NewClusterClient(&redis.ClusterOptions{
-		ReadOnly:       true,
-		Addrs:          []string{s.Config().RedisAddr},
-		RouteByLatency: true,
+	// Addrs: s.Config().RedisAddrs,
+	// s.redisClient = redis.NewClusterClient(&redis.ClusterOptions{
+	// 	ReadOnly:       true,
+	// 	Addrs:          []string{s.Config().RedisAddr},
+	// 	RouteByLatency: true,
+	// })
+	// s.redisClient = redis.NewClient(&redis.Options{
+	// 	Addr: s.Config().RedisAddr,
+	// })
+	s.redisRClient = redis.NewClient(&redis.Options{
+		Addr: s.Config().RedisRAddr,
 	})
-
+	s.redisWClient = redis.NewClient(&redis.Options{
+		Addr: s.Config().RedisWAddr,
+	})
+	s.Logger(ctx).Info("In Init function", "raddr", s.Config().RedisRAddr, "waddr", s.Config().RedisWAddr)
 	var res string
 	var err error
-	i := 0
-	for i = range 25 {
-		res, err = s.redisClient.Ping(ctx).Result()
-		if err != nil {
-			s.Logger(ctx).Error("Init: redis.Ping", "err", err)
-		} else {
-			break
-		}
 
-		time.Sleep(time.Second)
+	ping := func(c *redis.Client) (int, error) {
+		i := 0
+		for i = range 25 {
+			res, err = c.Ping(ctx).Result()
+			if err != nil {
+				s.Logger(ctx).Error("Init: redis.Ping", "err", err)
+			} else {
+				return i, nil
+			}
+
+			time.Sleep(time.Second)
+		}
+		return i, err
 	}
 
+	i, err := ping(s.redisRClient)
 	if err != nil {
-		return fmt.Errorf("Could not connect to redis in 25 tries. Err: %w", err)
+		return fmt.Errorf("Could not connect to redisR in 25 tries. Err: %w", err)
 	} else {
-		s.Logger(ctx).Info("Successfully pinged redis.", "attempts", i, "response", res)
+		s.Logger(ctx).Info("Successfully pinged redisR.", "attempts", i, "response", res)
+	}
+	i, err = ping(s.redisWClient)
+	if err != nil {
+		return fmt.Errorf("Could not connect to redisW in 25 tries. Err: %w", err)
+	} else {
+		s.Logger(ctx).Info("Successfully pinged redisW.", "attempts", i, "response", res)
 	}
 
 	uri := fmt.Sprintf("mongodb+srv://%s:%s@%s/?tls=false&authSource=admin", s.Config().MongoUser, s.Config().MongoPassword, s.Config().MongoURI)
@@ -130,7 +158,7 @@ func (s *impl) Init(ctx context.Context) error {
 		ApplyURI(uri).
 		SetServerAPIOptions(serverAPI).
 		SetReadPreference(readpref.Nearest()).
-		SetTimeout(time.Second * 2)
+		SetTimeout(time.Second * 30)
 
 	s.mongoClient, err = mongo.Connect(opts)
 	if err != nil {
@@ -159,30 +187,38 @@ func (s *impl) Init(ctx context.Context) error {
 // We get these from redis if possible,
 // But if we don't get 10 unique prod-keys we get from mongo.
 func (s *impl) ListProducts(ctx context.Context) ([]Product, error) {
+	// sl, _ := s.redisClient.ClusterSlots(ctx).Result()
+	// s.redisClient.ClusterGetKeysInSlot(ctx, 0, maxProducts*2)
 
-	pl := s.redisClient.Pipeline()
-	for range maxProducts {
+	pl := s.redisRClient.Pipeline()
+	for range maxProducts * 2 {
 		pl.RandomKey(ctx)
 	}
 	rnd := make(map[string]struct{})
+	span := trace.SpanFromContext(ctx)
+	span.AddEvent("RandomKey-Start")
 	cmds, err := pl.Exec(ctx)
+	span.AddEvent("RandomKey-End")
 	for _, cmd := range cmds {
 
 		v, err := cmd.(*redis.StringCmd).Result()
 
 		if err != nil || v[len(v)-3:] != "-pr" {
+			// s.Logger(ctx).Info("ListProducts: got bad key")
 			break
 		}
 		rnd[v] = struct{}{}
 	}
 
 	results := make([]Product, 0)
-	if len(rnd) == maxProducts {
+	if len(rnd) >= maxProducts {
 		keys := make([]string, 0, maxProducts)
 		for k := range rnd {
 			keys = append(keys, k)
 		}
-		prods, err := s.redisClient.MGet(ctx, keys...).Result()
+		span.AddEvent("Redis-R-Start")
+		prods, err := s.redisRClient.MGet(ctx, keys...).Result()
+		span.AddEvent("Redis-R-End")
 		if err != nil {
 			return nil, err
 		}
@@ -191,22 +227,29 @@ func (s *impl) ListProducts(ctx context.Context) ([]Product, error) {
 			// Happens if in time between getting the keys and getting their values,
 			// one of the keys got evicted.
 			if !ok {
-				break
+				// s.Logger(ctx).Info("ListProducts: unlikely cache miss")
+				continue
 			}
 			var p Product
 			json.Unmarshal([]byte(str), &p)
 			results = append(results, p)
 		}
 
-		if len(results) == maxProducts {
-			return results, nil
+		if len(results) >= maxProducts {
+			// s.Logger(ctx).Info("ListProducts: Got all data from redis")
+			return results[:maxProducts], nil
 		} else {
 			results = make([]Product, 0)
 		}
 	}
 
+	s.Logger(ctx).Info("ListProducts: Did NOT get all data from redis")
+
 	col := s.mongoClient.Database(s.Config().ProductDatabase).Collection(s.Config().ProductCollection)
+
+	span.AddEvent("Mongo-Start")
 	cur, err := col.Aggregate(ctx, listProductsFilter)
+	span.AddEvent("Mongo-End")
 
 	if err != nil {
 		s.Logger(ctx).Error("ListProduct: Aggregate", "query", listProductsFilter, "err", err)
@@ -224,52 +267,111 @@ func (s *impl) ListProducts(ctx context.Context) ([]Product, error) {
 func (s *impl) GetProduct(ctx context.Context, productID string) (Product, error) {
 
 	var p Product
-	red, err := s.redisClient.Get(ctx, redisProductKey(productID)).Result()
+	span := trace.SpanFromContext(ctx)
+	rKey := redisProductKey(productID)
+	span.AddEvent("Redis-R-Start")
+	red, err := s.redisRClient.Get(ctx, rKey).Result()
+	span.AddEvent("Redis-R-End")
 	if err == nil {
 		json.Unmarshal([]byte(red), &p)
 		return p, nil
 
 	} else if err != redis.Nil {
-		s.Logger(ctx).Error("Error with Redis. Will continue...", "err", err, "id", productID)
+		s.Logger(ctx).Error("Error with Redis. Will continue...", "err", err, "id", rKey)
 	} else {
-		s.Logger(ctx).Error("GetProduct: Not in redis", "id", productID)
+		s.Logger(ctx).Error("GetProduct: Not in redis", "id", rKey)
 	}
 
 	col := s.mongoClient.Database(s.Config().ProductDatabase).Collection(s.Config().ProductCollection)
 	filter := bson.D{
 		{Key: "id", Value: productID},
 	}
-
+	span.AddEvent("Mongo-Start")
 	err = col.FindOne(ctx, filter).Decode(&p)
+	span.AddEvent("Mongo-End")
 	if err != nil {
 		s.Logger(ctx).Error("GetProduct: col.FindOne.Decode", "filter", filter, "err", err)
 		return Product{}, fmt.Errorf("FindOne.Decode: %v", err.Error())
 	}
 
-	// Put into memcache
-	// We assume no err, since we could decode just fine...
-	item, _ := json.Marshal(p)
-	s.redisClient.Set(ctx, redisProductKey(productID), item, 0)
+	// Put into redis
+	item, err := json.Marshal(p)
+	if err != nil {
+		err = fmt.Errorf("json.Marshal(%v): %w", p, err)
+		s.Logger(ctx).Error("Get Product", "err", err)
+		return p, err
+	}
 
-	return p, nil
+	span.AddEvent("Redis-W-Start")
+	err = s.redisWClient.Set(ctx, rKey, string(item), 0).Err()
+	span.AddEvent("Redis-W-End")
+	if err != nil {
+		s.Logger(ctx).Error("GetProduct: redis.Set", "err", err, "key", rKey)
+	}
+
+	return p, err
 }
 
 func (s *impl) GetProducts(ctx context.Context, productIDs []string) ([]Product, error) {
 
 	found := make([]Product, 0)
 	if len(productIDs) == 0 {
+		// s.Logger(ctx).Info("GetProducts got empty productIDs...")
 		return found, nil
 	}
 	missing := make([]string, 0)
-
 	redIDs := make([]string, len(productIDs))
+
+	// redIDs := make(map[int64][]string, len(productIDs))
+
+	// for _, p := range productIDs {
+	// 	k := redisProductKey(p)
+	// 	slot, _ := s.redisClient.ClusterKeySlot(ctx, k).Result()
+	// 	redIDs[slot] = append(redIDs[slot], k)
+	// }
+
+	// for _, ks := range redIDs {
+	// 	res, err := s.redisClient.MGet(ctx, ks...).Result()
+	// 	if err != nil && err != redis.Nil {
+	// 		s.Logger(ctx).Error("GetProducts: Problem with Redis. Will continue...", "err", err, "ids", ks)
+	// 		missing = append(missing, productIDs...)
+	// 		break
+	// 	} else {
+	// 		for j, it := range res {
+	// 			// it = string | nil
+	// 			str, ok := it.(string)
+	// 			if !ok {
+	// 				// it = nil, so value is missing
+	// 				realVal := ks[j][0 : len(ks[j])-3]
+	// 				missing = append(missing, realVal)
+	// 				continue
+	// 			}
+	// 			var p Product
+	// 			err := json.Unmarshal([]byte(str), &p)
+	// 			if err != nil {
+	// 				s.Logger(ctx).Error("Redis unmarshal", "err", err, "value", str)
+	// 				realVal := ks[j][0 : len(ks[j])-3]
+	// 				missing = append(missing, realVal)
+	// 				continue
+	// 			}
+
+	// 			found = append(found, p)
+	// 		}
+	// 	}
+	// }
+
 	for i, p := range productIDs {
 		redIDs[i] = redisProductKey(p)
 	}
-	res, err := s.redisClient.MGet(ctx, redIDs...).Result()
+
+	span := trace.SpanFromContext(ctx)
+	span.AddEvent("Redis-R-Start")
+	res, err := s.redisRClient.MGet(ctx, redIDs...).Result()
+	span.AddEvent("Redis-R-End")
 
 	if err != nil && err != redis.Nil {
-		s.Logger(ctx).Error("Problem with Redis. Will continue...", "err", err, "ids", productIDs)
+		s.Logger(ctx).Error("GetProducts: Problem with Redis. Will continue...", "err", err, "ids", redIDs)
+		missing = productIDs
 
 	} else {
 		for i, it := range res {
@@ -294,6 +396,7 @@ func (s *impl) GetProducts(ctx context.Context, productIDs []string) ([]Product,
 
 	// No cache misses
 	if len(missing) == 0 {
+		// s.Logger(ctx).Info("GetProducts completed successfully", "numProducts", len(productIDs))
 		return found, nil
 	}
 
@@ -309,8 +412,9 @@ func (s *impl) GetProducts(ctx context.Context, productIDs []string) ([]Product,
 			Value: missing,
 		}},
 	}}
-
+	span.AddEvent("Mongo-Start")
 	cur, err := col.Find(ctx, filter)
+	span.AddEvent("Mongo-End")
 	if err != nil {
 		s.Logger(ctx).Error("GetProducts: col.Find", "filter", filter, "err", err)
 		return nil, fmt.Errorf("Find: %v", err.Error())
@@ -323,7 +427,7 @@ func (s *impl) GetProducts(ctx context.Context, productIDs []string) ([]Product,
 
 	// ps now has all the missing data.
 	// We have to send a separate memcached.Set req for each key,
-	//	so we do it in the background.
+
 	redisSet := make(map[string]string)
 	for _, p := range ps {
 		b, err := json.Marshal(p)
@@ -331,48 +435,116 @@ func (s *impl) GetProducts(ctx context.Context, productIDs []string) ([]Product,
 			s.Logger(ctx).Error("json.Marshal", "err", err, "product", p)
 			return nil, err
 		}
-		redisSet[redisProductKey(p.ID)] = string(b)
+		k := redisProductKey(p.ID)
+		redisSet[k] = string(b)
 	}
-	err = s.redisClient.MSet(ctx, redisSet).Err()
+	span.AddEvent("Redis-W-Start")
+	err = s.redisWClient.MSet(ctx, redisSet).Err()
+	span.AddEvent("Redis-W-End")
+	if err != nil {
+		err = fmt.Errorf("redis.MSet(%v): %w", redisSet, err)
+		s.Logger(ctx).Error("GetProducts", "err", err)
+	}
 
-	return append(found, ps...), nil
+	// redisSet := make(map[int64]map[string]string)
+	// for _, p := range ps {
+	// 	b, err := json.Marshal(p)
+	// 	if err != nil {
+	// 		s.Logger(ctx).Error("json.Marshal", "err", err, "product", p)
+	// 		return nil, err
+	// 	}
+	// 	k := redisProductKey(p.ID)
+	// 	slot, _ := s.redisClient.ClusterKeySlot(ctx, k).Result()
+	// 	if redisSet[slot] == nil {
+	// 		redisSet[slot] = make(map[string]string)
+	// 	}
+	// 	redisSet[slot][k] = string(b)
+	// }
+	// for _, set := range redisSet {
+	// 	err = s.redisClient.MSet(ctx, set).Err()
+	// 	if err != nil {
+	// 		err = fmt.Errorf("redis.MSet(%v): %w", set, err)
+	// 		s.Logger(ctx).Error("GetProducts", "err", err)
+	// 	}
+	// }
+
+	return append(found, ps...), err
 }
 
-func (s *impl) SearchProducts(ctx context.Context, query string) ([]Product, error) {
+func (s *impl) SearchProducts(ctx context.Context, query string, category string) ([]Product, error) {
 	var ps []Product
+	logger := s.Logger(ctx).With("method", "SearchProducts", "q", query, "category", category)
+	if query == "" && category == "" {
+		return []Product{}, nil
+	}
+
+	rKey := redisSearchKey(query, category)
 
 	// Check in Redis
-	redisResult, err := s.redisClient.Get(ctx, redisSearchKey(query)).Result()
+	span := trace.SpanFromContext(ctx)
+	span.AddEvent("Redis-R-Start")
+	redisResult, err := s.redisRClient.Get(ctx, rKey).Result()
+	span.AddEvent("Redis-R-End")
+
 	if err == nil {
 
 		err = json.Unmarshal([]byte(redisResult), &ps)
 
 		if err != nil {
 			err = fmt.Errorf("SearchProducts: json.Unmarshal(redis): %v, redisResult: %v", err, redisResult)
-			s.Logger(ctx).Error(err.Error())
+			logger.Error(err.Error())
 			return nil, err
 		}
+		// logger.Info("found in redis.", "len", len(ps))
 		return ps, nil
 
 	} else if err != redis.Nil {
-		s.Logger(ctx).Error("SearchProducts: redis.Get. Continuing...", "err", err, "query", redisSearchKey(query))
+		logger.Error("SearchProducts: redis.Get. Continuing...", "err", err, "key", rKey)
 	} else {
-		s.Logger(ctx).Info("SearchProducts: not in redis", "query", query)
+		logger.Info("SearchProducts: not in redis", "key", rKey)
 	}
 
 	// not in redis
 
 	col := s.mongoClient.Database(s.Config().ProductDatabase).Collection(s.Config().ProductCollection, nearest)
 
-	filter := bson.D{
-		{Key: "name", Value: bson.D{
-			{Key: "$regex", Value: query},
-		}},
+	// filter := bson.D{
+	// 	{Key: "name", Value: bson.D{
+	// 		{Key: "$regex", Value: query},
+	// 	}},
+	// }
+	var filter bson.D
+
+	if category == "" {
+		filter = bson.D{{
+			Key: "$text",
+			Value: bson.D{{
+				Key:   "$search",
+				Value: query,
+			}},
+		}}
+	} else if query == "" {
+		filter = bson.D{{
+			Key:   "categories",
+			Value: category,
+		}}
+	} else {
+		filter = bson.D{
+			{
+				Key:   "$text",
+				Value: bson.D{{Key: "$search", Value: query}},
+			}, {
+				Key:   "categories",
+				Value: category,
+			},
+		}
 	}
 
 	opts := options.Find().SetLimit(maxProducts)
 
+	span.AddEvent("Mongo-Start")
 	cur, err := col.Find(ctx, filter, opts)
+	span.AddEvent("Mongo-End")
 	if err != nil {
 		s.Logger(ctx).Error("SearchProducts: col.Find", "filter", filter, "err", err)
 		return nil, fmt.Errorf("Find: %v", err.Error())
@@ -389,10 +561,11 @@ func (s *impl) SearchProducts(ctx context.Context, query string) ([]Product, err
 		s.Logger(ctx).Error("SearchProducts: Marshal redis value", "err", err)
 		return ps, err
 	}
-
-	err = s.redisClient.Set(ctx, redisSearchKey(query), string(bs), 0).Err()
+	span.AddEvent("Redis-W-Start")
+	err = s.redisWClient.Set(ctx, rKey, string(bs), 0).Err()
+	span.AddEvent("Redis-W-End")
 	if err != nil {
-		s.Logger(ctx).Error("SearchProducts: set redis value", "err", err, "key", redisSearchKey(query), "val", string(bs))
+		s.Logger(ctx).Error("SearchProducts: set redis value", "err", err, "key", rKey, "val", string(bs))
 		return ps, err
 	}
 

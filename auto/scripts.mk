@@ -82,10 +82,28 @@ check_smt:
 toggle_smt:
 	./scripts/hyperthreading.sh 2
 
+mongo_logs:
+	kubectl exec -it $(N) -- tail -20 /opt/bitnami/mongodb/logs/mongodb.log
 
-stop:
-	./scripts/stop.sh
-	minikube delete
+logs:	
+	@if [[ -n "$(L)" ]]; then \
+		lines=$(L); \
+	else \
+		lines=10; \
+	fi; \
+	kubectl logs --selector=serviceweaver/group=$(N) --tail=$$lines
+
+logs_one:
+	@if [[ -n "$(L)" ]]; then lines=$(L); else lines=10; fi; \
+	kubectl get po --selector=serviceweaver/group=$(N) -o name \
+		| head -1 | xargs -I % kubectl logs % --tail=$$lines 
+
+logs_all_one:
+	@kubectl get po --selector=serviceweaver/group=$(N) -o name \
+		| head -1 | xargs -I % kubectl logs %
+
+logs_all_all:
+	@kubectl logs --selector=serviceweaver/group=$(N) --tail=-1
 
 LOGS_FILE ?= ./logs.txt
 

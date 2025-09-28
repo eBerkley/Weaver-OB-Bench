@@ -8,7 +8,7 @@ WEAVER ?= ./weaver/cmd/weaver/weaver # weaver
 SHELL := /bin/bash
 CONFIG_FILE ?= CONFIG.cfg
 
-INIT_VERSION=v0.0.11
+INIT_VERSION=v0.0.20
 
 include .env 
 include locust.env
@@ -108,7 +108,7 @@ else ifeq ($(BENCH_TYPE), ALLOC)
 	LOCUST_CONST_USERS   := 2500
 	LOCUST_SLOWLOAD_RAMP := 1000
 	LOCUST_SLOWER_PAUSE  := 45
-	LOCUST_WAIT_TIME     := 300		
+	LOCUST_WAIT_TIME     := 400		
 
 else ifeq ($(BENCH_TYPE), PERF)
 	METRIC_ENABLE   := false
@@ -204,7 +204,50 @@ pre_deploy: check_docker check_loadgen bin_build $(WEAVER_GEN_YAML) $(LOAD_GEN_Y
 	
 	@echo pre deploy check / code gen complete.
 
-rebuild_init: 
+# Couldn't find a better way to do this
+define REDIS_CONFIG
+	maxmemory 400mb 
+	maxmemory-policy allkeys-lru
+endef
+
+deploy_prod_redis:
+	@if [[ -z "$(shell helm list --no-headers | awk '{print $$1}' | grep prod-redis)" ]]; then \
+		helm install prod-redis bitnami/redis -f release/aux/helm/redis.yaml \
+			--set commonConfiguration="$$REDIS_CONFIG" \
+			--set global.security.allowInsecureImages=true \
+			--set replica.replicaCount=4 \
+			--set global.defaultStorageClass=local-path \
+			--set master.persistence.enabled=false \
+			--set replica.persistence.enabled=false \
+			--set auth.enabled=false \
+			--set master.resources.requests.cpu=1 \
+			--set master.resources.limits.cpu=1 \
+			--set master.resources.requests.memory=1Gi \
+			--set master.resources.limits.memory=1Gi \
+			--set replica.resources.requests.cpu=1 \
+			--set replica.resources.limits.cpu=1 \
+			--set replica.resources.requests.memory=1Gi \
+			--set replica.resources.limits.memory=1Gi \
+			--timeout 15m \
+			--wait; \
+		fi
+
+# 	@if [[ -z "$(shell helm list --no-headers | awk '{print $$1}' | grep prod-redis)" ]]; then \
+# 		helm install prod-redis bitnami/redis-cluster -f release/aux/redis-cluster.yaml \
+# 			--set cluster.nodes=6 \
+# 			--set cluster.replicas=1 \
+# 			--set global.defaultStorageClass=local-path \
+# 			--set persistence.enabled=false \
+# 			--set usePassword=false \
+# 			--set redis.resources.requests.cpu=1 \
+# 			--set redis.resources.limits.cpu=1 \
+# 			--set redis.resources.requests.memory=1Gi \
+# 			--set redis.resources.limits.memory=1Gi \
+# 			--timeout 15m \
+# 			--wait; \
+# 	fi
+
+rebuild_init: regen_prod_db
 	docker build . -f src/productcatalogservice/product_gen/Dockerfile \
 	 	--build-arg BASE_DIR=src/productcatalogservice \
 		-t docker.io/eberkley/ob-mongo-init:$(INIT_VERSION) && \
@@ -221,19 +264,22 @@ rebuild_init:
 #		Set the service pointing to mongos instances to a headless service
 #		Use the `mongodb+srv` connection string type so that mongodb clients are aware of new mongos instances
 # 	Set readPreference=nearest for all clients, since it is a read-only but frequently accessed database.
-
+#  		kubectl apply -f release/aux/mongo-hpa.yaml && 
+# --set global.defaultStorageClass=local-path
+# 		helm install mongo bitnami/mongodb-sharded -f release/aux/mongo.yaml
 deploy_mongo:
-# 		helm install mongo bitnami/mongodb-sharded -f release/aux/mongo.yaml 
 	@if [[ -z "$(shell helm list --no-headers | awk '{print $$1}' | grep mongo)" ]]; then \
-		helm install mongo ./release/aux/helm/mongodb-sharded -f release/aux/mongo.yaml \
-			--set global.defaultStorageClass=local-path \
+		helm install mongo ./release/aux/helm/mongodb-sharded -f release/aux/helm/mongo.yaml \
+			--set configsvr.persistence.enabled=false \
+			--set shardsvr.persistence.enabled=false \
 			--set global.security.allowInsecureImages=true \
 			--set shards=2 \
 			--set shardsvr.dataNode.replicaCount=2 \
+			--set mongos.replicaCount=2 \
 			--set auth.rootPassword=productDB \
 			--set configsvr.replicaCount=3 \
-			--set configsvr.resources.requests.cpu=50m \
-			--set configsvr.resources.limits.cpu=50m \
+			--set configsvr.resources.requests.cpu=25m \
+			--set configsvr.resources.limits.cpu=25m \
 			--set configsvr.resources.requests.memory=1Gi \
 			--set configsvr.resources.limits.memory=1Gi \
 			--set mongos.resources.requests.cpu=1 \
@@ -244,33 +290,26 @@ deploy_mongo:
 			--set shardsvr.dataNode.resources.limits.cpu=1 \
 			--set shardsvr.dataNode.resources.requests.memory=2Gi \
 			--set shardsvr.dataNode.resources.limits.memory=2Gi \
-			--set mongos.replicaCount=2 \
 			--set service.clusterIP=None \
 			--timeout 15m \
 			--wait && \
-		kubectl apply -f release/aux/mongo-hpa.yaml && \
-		sleep 3 && \
-		kubectl run mongo-init-client \
-			--rm -it --image docker.io/eberkley/ob-mongo-init:$(INIT_VERSION) \
-			--image-pull-policy='IfNotPresent'; \
+		./scripts/restore_mongo.sh; \
 	fi
 
-# 	--set common.mongodbEnableNumactl=true
 
 debug_mongo:
-	@echo 'mongosh admin --host mongo-mongodb-sharded --authenticationDatabase admin -u root -p productDB'
-	@echo "mongosh 'mongodb+srv://root:productDB@mongo-mongodb-sharded.default.svc.cluster.local/?tls=false&authSource=admin'"
+# 	@echo 'mongosh admin --host mongo-mongodb-sharded --authenticationDatabase admin -u root -p productDB'
+	@echo mongosh 'mongodb+srv://root:productDB@mongo-mongodb-sharded.default.svc.cluster.local/product-db?tls=false&authSource=admin&readPreference=nearest'
 	@kubectl run --namespace default mongo-debug --rm -it --restart='Never' \
 		--image docker.io/eberkley/ob-mongo-init:$(INIT_VERSION) \
 		--image-pull-policy='IfNotPresent' \
 		--command bash
 
-mongo_logs:
-	kubectl exec -it $(N) -- tail -20 /opt/bitnami/mongodb/logs/mongodb.log
+regen_prod_db:
+	@-rm -rf dump/product-db
+	@cd src/productcatalogservice/product_gen && go build && ./product_gen
 
-logs:
-	@kubectl get po --selector=serviceweaver/group=$(N) -o name \
-		| head -1 | xargs -I % kubectl logs %
+
 
 delete_mongo:
 	-@if [[ -n "$(shell helm list --no-headers | awk '{print $$1}' | grep mongo)" ]]; then \
@@ -290,24 +329,51 @@ delete_app:
 	-@kubectl delete hpa --selector=serviceweaver/app=ob
 	-@kubectl delete svc --selector=serviceweaver/app=ob
 
-	-@kubectl delete svc --selector=app=product-redis
-	-@kubectl delete configmap --selector=app=product-redis
 	-@kubectl delete svc --selector=app=cart-redis
 	-@kubectl delete configmap --selector=app=cart-redis
-	-@kubectl delete deploy --selector=app=product-redis
 	-@kubectl delete deploy --selector=app=cart-redis
+
+# 	-@kubectl delete svc --selector=app=product-redis
+# 	-@kubectl delete configmap --selector=app=product-redis
+# 	-@kubectl delete deploy --selector=app=product-redis
 
 delete_all: delete_load delete_app delete_mongo
 
+# -f release/aux/helm/jaeger.yaml 
+# --set storage.type=memory 
+# --set collector.cmdlineParams.collector.queue-size="5000" 
+# 	This is being set in helm/jaeger rn
+
+deploy_jaeger:
+	@if [[ "$(TRACE_ENABLE)" = "true" ]] && [[ -z "$(shell helm list --no-headers | awk '{print $$1}' | grep jaeger)" ]]; then \
+		echo "jaeger is enabled, deploying jaeger"; \
+		helm install jaeger jaegertracing/jaeger \
+			-f release/aux/helm/jaeger.yaml \
+			--set collector.replicaCount=2 \
+			--set provisionDataStore.elasticsearch=true \
+			--set provisionDataStore.cassandra=false \
+			--set storage.type=elasticsearch \
+			--set elasticsearch.master.masterOnly=true \
+			--set elasticsearch.master.replicaCount=2 \
+			--set elasticsearch.ingest.replicaCount=1 \
+			--set elasticsearch.data.replicaCount=2 \
+			--set elasticsearch.coordinating.replicaCount=1 \
+			--set collector.service.otlp.http.name="otlp-http" \
+			--set collector.service.otlp.http.port="4318" \
+			--set collector.service.otlp.grpc.name="otlp-grpc" \
+			--set collector.service.otlp.grpc.port="4317" \
+			--timeout 15m \
+			--wait; \
+	fi
 
 # release/generated/gen.yaml and release/generated/loadgen.yaml
-deploy: pre_deploy deploy_mongo delete_load delete_app
+deploy: delete_load delete_app pre_deploy deploy_mongo deploy_prod_redis
 	@echo deploying onlineboutique, loadgenerator...| tee -a $(LOGS_FILE)
 	@# Remove any old deployment.
 # 	@-kubectl delete all --all >>$(LOGS_FILE) 2>&1
-	@kubectl apply -f release/aux/product-redis.yaml >> $(LOGS_FILE) 2>&1
-	@kubectl apply -f release/aux/cart-redis.yaml >> $(LOGS_FILE) 2>&1
-	@sleep 15
+# 	@kubectl apply -f release/aux/product-redis.yaml >> $(LOGS_FILE) 2>&1
+	@kubectl apply -f release/aux/cart-redis.yaml --request-timeout=2m >> $(LOGS_FILE) 2>&1
+	@sleep 5
 
 	@echo creating OB ... >> $(LOGS_FILE)
 	@kubectl apply -f $(WEAVER_GEN_YAML) >> $(LOGS_FILE) 2>&1
@@ -315,12 +381,13 @@ deploy: pre_deploy deploy_mongo delete_load delete_app
 
 	@echo creating loadgenerator... >> $(LOGS_FILE)
 	@kubectl apply -f $(LOAD_GEN_YAML) >> $(LOGS_FILE) 2>&1
-	@if [ "$(TRACE_ENABLE)" = "true" ]; then \
-		echo "Jaeger is enabled, starting to collect trace" ; \
-	    kubectl apply -f $(JAEGER_TRACE_YAML) >> $(DEBUG_OUTPUT) 2>&1; \
-	else \
-	    echo "Skipping Jaeger deployment." >> $(DEBUG_OUTPUT); \
-	fi
+
+# 	@if [ "$(TRACE_ENABLE)" = "true" ]; then \
+# 		echo "Jaeger is enabled, starting to collect trace" ; \
+# 	    kubectl apply -f $(JAEGER_TRACE_YAML) >> $(DEBUG_OUTPUT) 2>&1; \
+# 	else \
+# 	    echo "Skipping Jaeger deployment." >> $(DEBUG_OUTPUT); \
+# 	fi
 
 	@if [ "$(METRIC_ENABLE)" = "true" ]; then \
 		echo "prometheus is enabled, starting to collect metrics" ; \
@@ -386,17 +453,17 @@ $(KUBE_BIN): $(KUBE_SRC) $(WEAVER)
 	go build -C weaver-kube/cmd/weaver-kube
 	cp ./weaver-kube/cmd/weaver-kube/weaver-kube $(WEAVER_BIN_PATH)
 
-# $(TRACE_BIN): weaver-kube/examples/telemetry-traces/main.go $(KUBE_SRC) $(WEAVER)
-# 	(cd weaver-kube/examples/telemetry-traces && go build -o telemetry-traces .)
-# 	cp ./weaver-kube/examples/telemetry-traces/telemetry-traces $(WEAVER_BIN_PATH)
+$(TRACE_BIN): weaver-kube/examples/telemetry-traces/main.go $(KUBE_SRC) $(WEAVER)
+	(cd weaver-kube/examples/telemetry-traces && go build -o telemetry-traces .)
+	cp ./weaver-kube/examples/telemetry-traces/telemetry-traces $(WEAVER_BIN_PATH)
 
 # $(METRIC_BIN): weaver-kube/examples/telemetry-metrics/main.go $(KUBE_SRC) $(WEAVER)
 # 	(cd weaver-kube/examples/telemetry-metrics && go build -o telemetry-metrics .)
 # 	cp ./weaver-kube/examples/telemetry-metrics/telemetry-metrics $(WEAVER_BIN_PATH)
 
 #rebuild the binary if weaver kube src was modified
-# bin_build: $(KUBE_BIN) $(TRACE_BIN) $(METRIC_BIN)
-bin_build: $(KUBE_BIN)
+bin_build: $(KUBE_BIN) $(TRACE_BIN) $(METRIC_BIN)
+# bin_build: $(KUBE_BIN)
 
 # if deployment specifications or src code was modified,
 # 	Update Weaver kubernetes yaml

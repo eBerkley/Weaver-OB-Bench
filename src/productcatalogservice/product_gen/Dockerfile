@@ -6,6 +6,6 @@ WORKDIR /build/init
 COPY ${BASE_DIR}/products products
 
 COPY ${BASE_DIR}/product_gen/init.js .
-COPY ${BASE_DIR}/product_gen/run.sh .
+COPY ${BASE_DIR}/product_gen/scripts/* .
 
-ENTRYPOINT [ "./run.sh" ]
+ENTRYPOINT [ "./init.sh" ]

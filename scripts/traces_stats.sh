@@ -40,7 +40,7 @@ mkdir -p "../jaeger_traces"
 
 
 # Start Kubernetes port forwarding for Jaeger
-JAEGER_SERVICE_NAME="jaeger"
+JAEGER_SERVICE_NAME="jaeger-query"
 JAEGER_NAMESPACE="default"
 LOCAL_PORT=16686
 FETCH_INTERVAL=10
@@ -49,7 +49,13 @@ OUTPUT_DIR="../jaeger_traces"
 SERVICE_NAME="ob"           # Service to filter traces
 
 echo "Starting Kubernetes port forwarding for Jaeger..."
-kubectl port-forward svc/${JAEGER_SERVICE_NAME} -n ${JAEGER_NAMESPACE} ${LOCAL_PORT}:16686 &
+kubectl port-forward --namespace default \
+  $(kubectl get pods --namespace default -l \
+    "app.kubernetes.io/instance=jaeger,app.kubernetes.io/component=query" \
+    -o jsonpath="{.items[0].metadata.name}") \
+  $LOCAL_PORT:16686 &
+
+# kubectl port-forward svc/${JAEGER_SERVICE_NAME} -n ${JAEGER_NAMESPACE} ${LOCAL_PORT}:16686 &
 PORT_FORWARD_PID=$!
 trap "echo 'Stopping port forwarding...'; kill ${PORT_FORWARD_PID}; exit" INT TERM
 
@@ -133,9 +139,9 @@ if [[ $SECONDS -lt 150 ]]; then
   sleep 1000
 fi
 
-Echo "Post-processing jaeger traces..."
+echo "Post-processing jaeger traces..."
 python3 ../benchmark/jaeger_trace.py "${OUTPUT_DIR}"
-
+cp "${OUTPUT_DIR}/aggregated_traces.csv" ../benchmark/stats/aggregated_traces.csv
 # rm -rf "${OUTPUT_DIR}"/*.json
 
 echo "Done."
