@@ -100,6 +100,11 @@ for name in $(get_group_names); do
 
     fi
 
+    if [[ $HPA_DISABLED = "true" ]]; then
+      max_replicas=$min_replicas
+      cpu_util=100
+    fi
+    
     scaling_spec=$(\
       sed -z -e s#\<MIN_REPLICAS\>#$min_replicas#g \
       -e s#\<MAX_REPLICAS\>#$max_replicas#g \

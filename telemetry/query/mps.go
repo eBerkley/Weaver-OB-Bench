@@ -32,21 +32,41 @@ type MethodMetricResult struct {
 	Remote    bool   `json:"remote"`
 }
 
-// conv: map[canonical name]abbr
-func (mmr *MethodMetricResult) Key(conv map[string]string) string {
+type Method struct {
+	IsRemote bool
+	Abbr     string
+	Name     string
+}
+
+func (m Method) String() string {
+
 	prefix := "L"
-	if mmr.Remote {
+	if m.IsRemote {
 		prefix = "R"
 	}
 
-	return fmt.Sprintf("(%s).%s.%s", prefix, conv[mmr.Component], mmr.Method)
+	return fmt.Sprintf("(%s).%s.%s", prefix, m.Abbr, m.Name)
+}
+
+// conv: map[canonical name]abbr
+func (mmr *MethodMetricResult) Key(conv map[string]string) Method {
+
+	return Method{
+		IsRemote: mmr.Remote,
+		Abbr:     conv[mmr.Component],
+		Name:     mmr.Method,
+	}
 }
 
 type MethodMetrics BaseKeyValResp[MethodMetricResult]
 
 // conv: map[canonical name]abbr
-func (mm *MethodMetrics) GetMetrics(conv map[string]string) map[string]float32 {
-	metMap := make(map[string]float32)
+//
+// ret: map[Method]mps
+//
+// Method.String(): <L|R>.<abbr>.<method>
+func (mm *MethodMetrics) GetMetrics(conv map[string]string) map[Method]float32 {
+	metMap := make(map[Method]float32)
 	for _, m := range mm.Data.Result {
 		k := m.Metric.Key(conv)
 		v, err := strconv.ParseFloat(m.GetValue(), 32)

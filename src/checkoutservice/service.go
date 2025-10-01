@@ -132,11 +132,11 @@ type orderPrep struct {
 }
 
 func (s *impl) prepareOrderItemsAndShippingQuoteFromCart(ctx context.Context, userID, userCurrency string, address shippingservice.Address) (out orderPrep, duration time.Duration, err error) {
-	logger := s.Logger(ctx).With("user_id", userID, "user_currency", userCurrency)
+	// logger := s.Logger(ctx).With("user_id", userID, "user_currency", userCurrency)
 	getCartTime := time.Now()
 	cartItems, err := s.cartService.Get().GetCart(ctx, userID)
 	duration += time.Since(getCartTime)
-	logger.Info("Got cart", "duration", time.Since(getCartTime))
+	// logger.Info("Got cart", "duration", time.Since(getCartTime))
 
 	if err != nil {
 		err = fmt.Errorf("failed to get user cart during checkout: %w", err)
@@ -147,7 +147,7 @@ func (s *impl) prepareOrderItemsAndShippingQuoteFromCart(ctx context.Context, us
 	var d time.Duration
 	orderItems, d, err = s.prepOrderItems(ctx, cartItems, userCurrency)
 	duration += d
-	logger.Info("Prepared order items", "duration", d)
+	// logger.Info("Prepared order items", "duration", d)
 	if err != nil {
 		err = fmt.Errorf("failed to prepare order: %w", err)
 		return
@@ -156,7 +156,7 @@ func (s *impl) prepareOrderItemsAndShippingQuoteFromCart(ctx context.Context, us
 	getQuoteTime := time.Now()
 	shippingUSD, err := s.shippingService.Get().GetQuote(ctx, address, cartItems)
 	duration += time.Since(getQuoteTime)
-	logger.Info("Got shipping quote", "duration", time.Since(getQuoteTime))
+	// logger.Info("Got shipping quote", "duration", time.Since(getQuoteTime))
 	if err != nil {
 		err = fmt.Errorf("failed to get shipping quote: %w", err)
 		return
@@ -164,7 +164,7 @@ func (s *impl) prepareOrderItemsAndShippingQuoteFromCart(ctx context.Context, us
 	convertTime := time.Now()
 	shippingPrice, err := s.currencyService.Get().Convert(ctx, shippingUSD, userCurrency)
 	duration += time.Since(convertTime)
-	logger.Info("Converted shipping price", "duration", time.Since(convertTime))
+	// logger.Info("Converted shipping price", "duration", time.Since(convertTime))
 	if err != nil {
 		err = fmt.Errorf("failed to convert shipping cost to currency: %w", err)
 		return

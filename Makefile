@@ -8,13 +8,15 @@ WEAVER ?= ./weaver/cmd/weaver/weaver # weaver
 SHELL := /bin/bash
 CONFIG_FILE ?= CONFIG.cfg
 
-INIT_VERSION=v0.0.20
+INIT_VERSION=v0.0.22
 
 include .env 
 include locust.env
 include docker.env
 
 include $(CONFIG_FILE)
+
+CFG_FILES := .env locust.env docker.env $(CONFIG_FILE)
 
 ifeq ($(VERBOSE), 1)
 	DEBUG_OUTPUT := $(LOGS_FILE)
@@ -100,6 +102,7 @@ else ifeq ($(BENCH_TYPE), ALLOC)
 	CPU_UTIL_ENABLE := false
 	VERTICAL_PROF   := false
 	RUNTIME_METRIC_ENABLE := false
+	HPA_DISABLED := false
 
 	LOCUST_RESET_CONN := 1
 
@@ -206,18 +209,22 @@ pre_deploy: check_docker check_loadgen bin_build $(WEAVER_GEN_YAML) $(LOAD_GEN_Y
 
 # Couldn't find a better way to do this
 define REDIS_CONFIG
-	maxmemory 400mb 
+	maxmemory 350mb 
 	maxmemory-policy allkeys-lru
 endef
 
+
+# -f release/aux/helm/redis.yaml 
 deploy_prod_redis:
 	@if [[ -z "$(shell helm list --no-headers | awk '{print $$1}' | grep prod-redis)" ]]; then \
-		helm install prod-redis bitnami/redis -f release/aux/helm/redis.yaml \
+		echo "deploying product redis"; \
+		helm install prod-redis bitnami/redis \
+			--set image.repository="bitnamilegacy/redis" \
 			--set commonConfiguration="$$REDIS_CONFIG" \
 			--set global.security.allowInsecureImages=true \
-			--set replica.replicaCount=4 \
+			--set replica.replicaCount=$(REDIS_PRODUCT_CACHE_REPLICAS) \
 			--set global.defaultStorageClass=local-path \
-			--set master.persistence.enabled=false \
+			--set master.persistence.enabled=true \
 			--set replica.persistence.enabled=false \
 			--set auth.enabled=false \
 			--set master.resources.requests.cpu=1 \
@@ -230,7 +237,36 @@ deploy_prod_redis:
 			--set replica.resources.limits.memory=1Gi \
 			--timeout 15m \
 			--wait; \
-		fi
+	fi
+
+delete_prod_redis:
+	@-helm uninstall prod-redis
+
+deploy_cart_redis:
+	@if [[ -z "$(shell helm list --no-headers | awk '{print $$1}' | grep cart-redis)" ]]; then \
+		echo "deploying cart redis"; \
+		helm install cart-redis bitnami/redis -f release/aux/helm/redis.yaml \
+			--set image.repository="bitnamilegacy/redis" \
+		 	--set global.security.allowInsecureImages=true \
+			--set replica.replicaCount=$(REDIS_CART_CACHE_REPLICAS) \
+			--set global.defaultStorageClass=local-path \
+			--set master.persistence.enabled=false \
+			--set replica.persistence.enabled=false \
+			--set auth.enabled=false \
+			--set master.resources.requests.cpu=1 \
+			--set master.resources.limits.cpu=1 \
+			--set master.resources.requests.memory=2Gi \
+			--set master.resources.limits.memory=2Gi \
+			--set replica.resources.requests.cpu=1 \
+			--set replica.resources.limits.cpu=1 \
+			--set replica.resources.requests.memory=2Gi \
+			--set replica.resources.limits.memory=2Gi \
+			--timeout 15m \
+			--wait; \
+	fi
+
+delete_cart_redis:
+	@-helm uninstall cart-redis
 
 # 	@if [[ -z "$(shell helm list --no-headers | awk '{print $$1}' | grep prod-redis)" ]]; then \
 # 		helm install prod-redis bitnami/redis-cluster -f release/aux/redis-cluster.yaml \
@@ -266,22 +302,46 @@ rebuild_init: regen_prod_db
 # 	Set readPreference=nearest for all clients, since it is a read-only but frequently accessed database.
 #  		kubectl apply -f release/aux/mongo-hpa.yaml && 
 # --set global.defaultStorageClass=local-path
+# --set configsvr.persistence.enabled=false 
+# --set shardsvr.persistence.enabled=false 
 # 		helm install mongo bitnami/mongodb-sharded -f release/aux/mongo.yaml
-deploy_mongo:
-	@if [[ -z "$(shell helm list --no-headers | awk '{print $$1}' | grep mongo)" ]]; then \
-		helm install mongo ./release/aux/helm/mongodb-sharded -f release/aux/helm/mongo.yaml \
-			--set configsvr.persistence.enabled=false \
-			--set shardsvr.persistence.enabled=false \
-			--set global.security.allowInsecureImages=true \
-			--set shards=2 \
-			--set shardsvr.dataNode.replicaCount=2 \
-			--set mongos.replicaCount=2 \
-			--set auth.rootPassword=productDB \
-			--set configsvr.replicaCount=3 \
-			--set configsvr.resources.requests.cpu=25m \
+#			--set common.extraEnvVars='[{name:ALLOW_EMPTY_PASSWORD,value:yes}]' 
+# --set global.defaultStorageClass=local-path 
+# --set service.clusterIP=None 
+# --set global.defaultStorageClass=local-path 
+# -f release/aux/helm/mongo.yaml 
+# helm install mongo ./release/aux/helm/mongodb-sharded 
+# 			--set configsvr.resources.requests.cpu=25m \
 			--set configsvr.resources.limits.cpu=25m \
 			--set configsvr.resources.requests.memory=1Gi \
-			--set configsvr.resources.limits.memory=1Gi \
+			--set configsvr.resources.limits.memory=1Gi 
+
+deploy_mongo:
+# 	helm install mongo bitnami/mongodb-sharded \
+# 		-f release/aux/helm/mongo.yaml \
+# 		--set image.repository="bitnami/mongodb-sharded" \
+# 		--set global.security.allowInsecureImages=true \
+# 		--set configsvr.persistence.enabled=false \
+# 		--set shardsvr.persistence.enabled=false \
+# 		--set shards=$(MONGO_SHARDS) \
+# 		--set shardsvr.dataNode.replicaCount=$(MONGO_SHARD_REPLICAS) \
+# 		--set mongos.replicaCount=$(MONGO_ROUTER_REPLICAS) \
+# 		--set auth.rootPassword=productDB \
+# 		--set configsvr.replicaCount=1 
+
+
+	@if [[ -z "$(shell helm list --no-headers | awk '{print $$1}' | grep mongo)" ]]; then \
+		echo "deploying mongoDB"; \
+		helm install mongo bitnami/mongodb-sharded -f release/aux/helm/mongo.yaml \
+			--set image.repository="bitnami/mongodb-sharded" \
+			--set global.security.allowInsecureImages=true \
+			--set configsvr.persistence.enabled=false \
+			--set shardsvr.persistence.enabled=false \
+			--set shards=$(MONGO_SHARDS) \
+			--set shardsvr.dataNode.replicaCount=$(MONGO_SHARD_REPLICAS) \
+			--set mongos.replicaCount=$(MONGO_ROUTER_REPLICAS) \
+			--set auth.rootPassword=productDB \
+			--set configsvr.replicaCount=3 \
 			--set mongos.resources.requests.cpu=1 \
 			--set mongos.resources.limits.cpu=1 \
 			--set mongos.resources.requests.memory=2Gi \
@@ -290,7 +350,6 @@ deploy_mongo:
 			--set shardsvr.dataNode.resources.limits.cpu=1 \
 			--set shardsvr.dataNode.resources.requests.memory=2Gi \
 			--set shardsvr.dataNode.resources.limits.memory=2Gi \
-			--set service.clusterIP=None \
 			--timeout 15m \
 			--wait && \
 		./scripts/restore_mongo.sh; \
@@ -299,8 +358,15 @@ deploy_mongo:
 
 debug_mongo:
 # 	@echo 'mongosh admin --host mongo-mongodb-sharded --authenticationDatabase admin -u root -p productDB'
-	@echo mongosh 'mongodb+srv://root:productDB@mongo-mongodb-sharded.default.svc.cluster.local/product-db?tls=false&authSource=admin&readPreference=nearest'
 	@kubectl run --namespace default mongo-debug --rm -it --restart='Never' \
+		--image docker.io/eberkley/ob-mongo-init:$(INIT_VERSION) \
+		--image-pull-policy='IfNotPresent' \
+		--command mongosh 'mongodb+srv://root:productDB@mongo-mongodb-sharded.default.svc.cluster.local/product-db?tls=false&authSource=admin&readPreference=nearest'
+
+debug_mongo_bash:
+# 	@echo 'mongosh admin --host mongo-mongodb-sharded --authenticationDatabase admin -u root -p productDB'
+	@echo mongosh "'mongodb+srv://root:productDB@mongo-mongodb-sharded.default.svc.cluster.local/product-db?tls=false&authSource=admin&readPreference=nearest'"
+	@kubectl run --namespace default mongo-debug-bash --rm -it --restart='Never' \
 		--image docker.io/eberkley/ob-mongo-init:$(INIT_VERSION) \
 		--image-pull-policy='IfNotPresent' \
 		--command bash
@@ -309,13 +375,11 @@ regen_prod_db:
 	@-rm -rf dump/product-db
 	@cd src/productcatalogservice/product_gen && go build && ./product_gen
 
-
-
+# kubectl delete pvc --selector=app.kubernetes.io/instance=mongo; 
 delete_mongo:
 	-@if [[ -n "$(shell helm list --no-headers | awk '{print $$1}' | grep mongo)" ]]; then \
 		helm uninstall mongo; \
 		kubectl delete -f release/aux/mongo-hpa.yaml; \
-		kubectl delete pvc --selector=app.kubernetes.io/instance=mongo; \
 	fi
 
 delete_load:
@@ -323,15 +387,17 @@ delete_load:
 	-@kubectl delete deploy --selector=role=loadgenerator-worker
 	-@kubectl delete svc --selector=app=loadgenerator
 
-delete_app: 
+
+# delete_app: delete_cart_redis
+delete_app:
 	-@kubectl delete deploy --selector=serviceweaver/app=ob
 	-@kubectl delete configmap --selector=serviceweaver/app=ob
 	-@kubectl delete hpa --selector=serviceweaver/app=ob
 	-@kubectl delete svc --selector=serviceweaver/app=ob
 
-	-@kubectl delete svc --selector=app=cart-redis
-	-@kubectl delete configmap --selector=app=cart-redis
-	-@kubectl delete deploy --selector=app=cart-redis
+# 	-@kubectl delete svc --selector=app=cart-redis
+# 	-@kubectl delete configmap --selector=app=cart-redis
+# 	-@kubectl delete deploy --selector=app=cart-redis
 
 # 	-@kubectl delete svc --selector=app=product-redis
 # 	-@kubectl delete configmap --selector=app=product-redis
@@ -339,11 +405,8 @@ delete_app:
 
 delete_all: delete_load delete_app delete_mongo
 
-# -f release/aux/helm/jaeger.yaml 
-# --set storage.type=memory 
 # --set collector.cmdlineParams.collector.queue-size="5000" 
 # 	This is being set in helm/jaeger rn
-
 deploy_jaeger:
 	@if [[ "$(TRACE_ENABLE)" = "true" ]] && [[ -z "$(shell helm list --no-headers | awk '{print $$1}' | grep jaeger)" ]]; then \
 		echo "jaeger is enabled, deploying jaeger"; \
@@ -366,14 +429,18 @@ deploy_jaeger:
 			--wait; \
 	fi
 
-# release/generated/gen.yaml and release/generated/loadgen.yaml
-deploy: delete_load delete_app pre_deploy deploy_mongo deploy_prod_redis
-	@echo deploying onlineboutique, loadgenerator...| tee -a $(LOGS_FILE)
-	@# Remove any old deployment.
+# kubectl patch <pod|job|ingress|pvc> <name-of-resource> 
+# 		-p '{"metadata":{"finalizers":[]}}' – type=merge
+
+#
+# Deploy jaeger only fires the script if TRACE_ENABLE = true
+deploy: delete_load delete_app pre_deploy deploy_mongo deploy_prod_redis deploy_cart_redis deploy_jaeger
+# 	@echo deploying onlineboutique, loadgenerator...| tee -a $(LOGS_FILE)
+# 	@# Remove any old deployment.
 # 	@-kubectl delete all --all >>$(LOGS_FILE) 2>&1
 # 	@kubectl apply -f release/aux/product-redis.yaml >> $(LOGS_FILE) 2>&1
-	@kubectl apply -f release/aux/cart-redis.yaml --request-timeout=2m >> $(LOGS_FILE) 2>&1
-	@sleep 5
+# 	@kubectl apply -f release/aux/cart-redis.yaml --request-timeout=2m >> $(LOGS_FILE) 2>&1
+# 	@sleep 5
 
 	@echo creating OB ... >> $(LOGS_FILE)
 	@kubectl apply -f $(WEAVER_GEN_YAML) >> $(LOGS_FILE) 2>&1

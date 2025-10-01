@@ -27,16 +27,20 @@ import (
 type cartStore struct {
 	logger *slog.Logger
 	// cache  cartCache
-	cache *redis.Client
+	// cache *redis.Client
+	redisRClient *redis.Client
+	redisWClient *redis.Client
 }
 
-func newCartStore(logger *slog.Logger, cache *redis.Client) (*cartStore, error) {
-	return &cartStore{logger: logger, cache: cache}, nil
+// func newCartStore(logger *slog.Logger, cache *redis.Client) (*cartStore, error) {
+func newCartStore(logger *slog.Logger, rcache *redis.Client, wcache *redis.Client) (*cartStore, error) {
+	return &cartStore{logger: logger, redisRClient: rcache, redisWClient: wcache}, nil
 }
 
 func (c *cartStore) AddItem(ctx context.Context, userID, productID string, quantity int32) (duration time.Duration, err error) {
 	epoch := time.Now()
-	err = c.cache.HIncrBy(ctx, userID, productID, int64(quantity)).Err()
+	// err = c.cache.HIncrBy(ctx, userID, productID, int64(quantity)).Err()
+	err = c.redisWClient.HIncrBy(ctx, userID, productID, int64(quantity)).Err()
 	duration = time.Since(epoch)
 	if err != nil && err != redis.Nil {
 		c.logger.Error("AddItem: HIncrBy", "userID", userID, "productID", productID, "err", err)
@@ -47,7 +51,8 @@ func (c *cartStore) AddItem(ctx context.Context, userID, productID string, quant
 
 func (c *cartStore) EmptyCart(ctx context.Context, userID string) (time.Duration, error) {
 	epoch := time.Now()
-	err := c.cache.Del(ctx, userID).Err()
+	// err := c.cache.Del(ctx, userID).Err()
+	err := c.redisWClient.Del(ctx, userID).Err()
 	duration := time.Since(epoch)
 	if err != nil && err != redis.Nil {
 		err = fmt.Errorf("cache.Del(%v): %w", userID, err)
@@ -59,7 +64,8 @@ func (c *cartStore) EmptyCart(ctx context.Context, userID string) (time.Duration
 func (c *cartStore) GetCart(ctx context.Context, userID string) ([]CartItem, time.Duration, error) {
 	epoch := time.Now()
 	cart := make([]CartItem, 0)
-	res, err := c.cache.HGetAll(ctx, userID).Result()
+	// res, err := c.cache.HGetAll(ctx, userID).Result()
+	res, err := c.redisRClient.HGetAll(ctx, userID).Result()
 	duration := time.Since(epoch)
 	if err == redis.Nil {
 		return cart, duration, nil

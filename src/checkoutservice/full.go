@@ -42,7 +42,7 @@ type impl struct {
 func (s *impl) PlaceOrder(ctx context.Context, req PlaceOrderRequest) (types.Order, []productcatalogservice.Product, error) {
 	initTime := time.Now()
 	logger := s.Logger(ctx).With("user_id", req.UserID, "user_currency", req.UserCurrency)
-	logger.Info("[PlaceOrder]")
+	// logger.Info("[PlaceOrder]")
 	prep, duration, err := s.prepareOrderItemsAndShippingQuoteFromCart(ctx, req.UserID, req.UserCurrency, req.Address)
 	if err != nil {
 		return types.Order{}, nil, err
@@ -77,7 +77,7 @@ func (s *impl) PlaceOrder(ctx context.Context, req PlaceOrderRequest) (types.Ord
 	getProductsTime := time.Now()
 	out, err := s.catalogService.Get().GetProducts(ctx, recommendationIDs)
 	duration += time.Since(getProductsTime)
-	logger.Info("Got products", "duration", time.Since(getProductsTime))
+	// logger.Info("Got products", "duration", time.Since(getProductsTime))
 	if err != nil {
 		logger.Error("PlaceOrder: GetProducts", "recommendationIDs", recommendationIDs, "err", err)
 		return types.Order{}, nil, fmt.Errorf("failed to get recommended product info: %w", err)
@@ -123,7 +123,7 @@ func (s *impl) PlaceOrder(ctx context.Context, req PlaceOrderRequest) (types.Ord
 	chargeTime := time.Now()
 	txID, err := s.paymentService.Get().Charge(ctx, total, req.CreditCard)
 	duration += time.Since(chargeTime)
-	logger.Info("made transaction", "duration", time.Since(chargeTime))
+	// logger.Info("made transaction", "duration", time.Since(chargeTime))
 
 	if err != nil {
 		return types.Order{}, nil, fmt.Errorf("failed to charge card: %w", err)
@@ -133,7 +133,7 @@ func (s *impl) PlaceOrder(ctx context.Context, req PlaceOrderRequest) (types.Ord
 	shipOrderTime := time.Now()
 	shippingTrackingID, err := s.shippingService.Get().ShipOrder(ctx, req.Address, prep.cartItems)
 	duration += time.Since(shipOrderTime)
-	logger.Info("Got shipping tracking ID", "duration", time.Since(shipOrderTime))
+	// logger.Info("Got shipping tracking ID", "duration", time.Since(shipOrderTime))
 
 	if err != nil {
 		return types.Order{}, nil, fmt.Errorf("shipping error: %w", err)
@@ -142,7 +142,7 @@ func (s *impl) PlaceOrder(ctx context.Context, req PlaceOrderRequest) (types.Ord
 	cartTime := time.Now()
 	_ = s.cartService.Get().EmptyCart(ctx, req.UserID)
 	duration += time.Since(cartTime)
-	logger.Info("Emptied cart", "duration", time.Since(cartTime))
+	// logger.Info("Emptied cart", "duration", time.Since(cartTime))
 	order := types.Order{
 		OrderID:            uuid.New().String(),
 		ShippingTrackingID: shippingTrackingID,
@@ -154,7 +154,7 @@ func (s *impl) PlaceOrder(ctx context.Context, req PlaceOrderRequest) (types.Ord
 	emailTime := time.Now()
 	err = s.emailService.Get().SendOrderConfirmation(ctx, req.Email, order)
 	duration += time.Since(emailTime)
-	logger.Info("Sent order confirmation email", "duration", time.Since(emailTime))
+	// logger.Info("Sent order confirmation email", "duration", time.Since(emailTime))
 
 	if err != nil {
 		logger.Error("failed to send order confirmation", "err", err, "email", req.Email)

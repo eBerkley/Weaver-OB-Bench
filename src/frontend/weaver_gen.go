@@ -76,7 +76,7 @@ var _ weaver.Main = (*main_routed_local_stub)(nil)
 // you run "go build" or "go run".
 var _ codegen.LatestVersion = codegen.Version[[0][24]struct{}](`
 
-ERROR: You generated this file with 'weaver generate' v0.0.0-20250922200026-3134eb77cbc3+dirty (codegen
+ERROR: You generated this file with 'weaver generate' v0.0.0-20250928185155-8645e4cb4dae+dirty (codegen
 version v0.24.0). The generated code is incompatible with the version of the
 github.com/eberkley/weaver module that you're using. The weaver module
 version can be found in your go.mod file or by running the following command.

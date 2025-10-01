@@ -8,6 +8,10 @@ export_allocations:
 check_docker: 
 	@./make_scripts/check_docker.sh
 
+
+test_vars:
+	@./make_scripts/test_vars.sh
+
 # minikube_start:
 # 	@ lines=$(shell minikube status | wc -l);\
 # 	if [ $$lines -le 5 ]; then\
@@ -22,7 +26,8 @@ check_docker:
 # 	fi 
 
 k3s_start:
-	@sudo k3s server --kubelet-arg=config=$$PWD/release/aux/kubelet.conf --disable traefik
+	@sudo k3s server --kubelet-arg=config=$$PWD/release/aux/kubelet.conf
+# 	@sudo k3s server --kubelet-arg=config=$$PWD/release/aux/kubelet.conf --disable traefik
 
 graph:
 	python3 benchmark/analyze.py -m graph_many -n "$$NAME" -g "$$TYPE"

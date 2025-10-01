@@ -39,7 +39,9 @@ type CartService interface {
 }
 
 type cartConfig struct {
-	RedisAddr string
+	// RedisAddr string
+	RedisRAddr string
+	RedisWAddr string
 }
 
 type impl struct {
@@ -50,29 +52,60 @@ type impl struct {
 }
 
 func (s *impl) Init(ctx context.Context) error {
-	client := redis.NewClient(&redis.Options{
-		Addr: s.Config().RedisAddr,
+	// client := redis.NewClient(&redis.Options{
+	// 	Addr: s.Config().RedisAddr,
+	// })
+	redisRClient := redis.NewClient(&redis.Options{
+		Addr:     s.Config().RedisRAddr,
+		PoolSize: 100,
 	})
+	redisWClient := redis.NewClient(&redis.Options{
+		Addr: s.Config().RedisWAddr,
+	})
+
 	var res string
 	var err error
-	i := 0
-	for i = range 25 {
-		res, err = client.Ping(ctx).Result()
-		if err != nil {
-			s.Logger(ctx).Error("Init: redis.Ping", "err", err)
-		} else {
-			break
+	// i := 0
+	// for i = range 25 {
+	// 	res, err = client.Ping(ctx).Result()
+	// 	if err != nil {
+	// 		s.Logger(ctx).Error("Init: redis.Ping", "err", err)
+	// 	} else {
+	// 		break
+	// 	}
+
+	// 	time.Sleep(time.Second)
+	// }
+
+	ping := func(c *redis.Client) (int, error) {
+		i := 0
+		for i = range 25 {
+			res, err = c.Ping(ctx).Result()
+			if err != nil {
+				s.Logger(ctx).Error("Init: redis.Ping", "err", err)
+			} else {
+				return i, nil
+			}
+
+			time.Sleep(time.Second)
 		}
-
-		time.Sleep(time.Second)
+		return i, err
 	}
-
+	i, err := ping(redisRClient)
 	if err != nil {
-		return fmt.Errorf("Could not connect to memcached in 25 tries. Err: %w", err)
+		return fmt.Errorf("Could not connect to redisR in 25 tries. Err: %w", err)
 	} else {
-		s.Logger(ctx).Info("Successfully pinged redis.", "attempts", i, "response", res)
+		s.Logger(ctx).Info("Successfully pinged redisR.", "attempts", i, "response", res)
 	}
-	store, err := newCartStore(s.Logger(ctx), client)
+
+	i, err = ping(redisWClient)
+	if err != nil {
+		return fmt.Errorf("Could not connect to redisW in 25 tries. Err: %w", err)
+	} else {
+		s.Logger(ctx).Info("Successfully pinged redisW.", "attempts", i, "response", res)
+	}
+
+	store, err := newCartStore(s.Logger(ctx), redisRClient, redisWClient)
 	s.store = store
 
 	// go func() {

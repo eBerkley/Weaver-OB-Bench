@@ -22,7 +22,11 @@ RedisRAddr = "prod-redis-replicas:6379"
 RedisWAddr = "prod-redis-master:6379"
 
 ["github.com/eBerkley/Weaver-OB-Bench/cartservice/CartService"]
-RedisAddr = "cart-redis:6379"
+# RedisAddr = "cart-redis:6379"
+RedisRAddr = "cart-redis-replicas:6379"
+RedisWAddr = "cart-redis-master:6379"
+
+
 
 [gke]
 regions = ["us-west1"]

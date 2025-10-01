@@ -141,6 +141,19 @@ func (c *Collector) GetE2ELat() error {
 	return nil
 }
 
+func (c *Collector) GetMPS() error {
+	var mm query.MethodMetrics
+	now := time.Now()
+	if err := c.getJson(query.QUERY_MPS, &mm); err != nil {
+		return fmt.Errorf("Collector.GetMPS: %w", err)
+	}
+
+	metMap := mm.GetMetrics(c.revComps)
+
+	fmt.Printf("MPS: %v\n", metMap)
+	return nil
+}
+
 func (c *Collector) getJson(url string, target any) error {
 	r, err := c.promClient.Get(url)
 	if err != nil {

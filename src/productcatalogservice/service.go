@@ -114,7 +114,8 @@ func (s *impl) Init(ctx context.Context) error {
 	// 	Addr: s.Config().RedisAddr,
 	// })
 	s.redisRClient = redis.NewClient(&redis.Options{
-		Addr: s.Config().RedisRAddr,
+		Addr:     s.Config().RedisRAddr,
+		PoolSize: 200,
 	})
 	s.redisWClient = redis.NewClient(&redis.Options{
 		Addr: s.Config().RedisWAddr,
@@ -191,7 +192,7 @@ func (s *impl) ListProducts(ctx context.Context) ([]Product, error) {
 	// s.redisClient.ClusterGetKeysInSlot(ctx, 0, maxProducts*2)
 
 	pl := s.redisRClient.Pipeline()
-	for range maxProducts * 2 {
+	for range maxProducts + 2 {
 		pl.RandomKey(ctx)
 	}
 	rnd := make(map[string]struct{})
@@ -279,7 +280,7 @@ func (s *impl) GetProduct(ctx context.Context, productID string) (Product, error
 	} else if err != redis.Nil {
 		s.Logger(ctx).Error("Error with Redis. Will continue...", "err", err, "id", rKey)
 	} else {
-		s.Logger(ctx).Error("GetProduct: Not in redis", "id", rKey)
+		s.Logger(ctx).Warn("GetProduct: Cache miss", "id", rKey)
 	}
 
 	col := s.mongoClient.Database(s.Config().ProductDatabase).Collection(s.Config().ProductCollection)
@@ -400,7 +401,7 @@ func (s *impl) GetProducts(ctx context.Context, productIDs []string) ([]Product,
 		return found, nil
 	}
 
-	s.Logger(ctx).Info("GetProducts: cache miss", "numIDs", len(productIDs), "num missing", len(missing))
+	s.Logger(ctx).Warn("GetProducts: cache miss", "numIDs", len(productIDs), "num missing", len(missing))
 
 	// Have to fetch some data from mongo...
 	col := s.mongoClient.Database(s.Config().ProductDatabase).Collection(s.Config().ProductCollection)
@@ -423,6 +424,12 @@ func (s *impl) GetProducts(ctx context.Context, productIDs []string) ([]Product,
 	if err := cur.All(ctx, &ps); err != nil {
 		s.Logger(ctx).Error("GetProducts: cursor.All", "err", err)
 		return nil, fmt.Errorf("cursor.All: %v", err.Error())
+	}
+
+	if len(ps) != len(missing) {
+		err = fmt.Errorf("mongo.Get: missing data: expected %d, got %d", len(missing), len(ps))
+		s.Logger(ctx).Error("GetProducts: mongo.Get: missing data", "expected", len(missing), "got", len(ps), "missingIDs", missing)
+		return nil, err
 	}
 
 	// ps now has all the missing data.
@@ -501,7 +508,7 @@ func (s *impl) SearchProducts(ctx context.Context, query string, category string
 	} else if err != redis.Nil {
 		logger.Error("SearchProducts: redis.Get. Continuing...", "err", err, "key", rKey)
 	} else {
-		logger.Info("SearchProducts: not in redis", "key", rKey)
+		logger.Warn("SearchProducts: Cache miss", "key", rKey)
 	}
 
 	// not in redis
